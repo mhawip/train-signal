@@ -93,7 +93,7 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-03 — Next.js application skeleton
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-01
 - **why:** The frame everything else is built in. Getting strict mode and the testing
   setup right now avoids retrofitting later.
