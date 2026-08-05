@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Secrets — never commit these
+.env
+.env.local
+.env*.local
+
+# Raw open data. Multi-gigabyte downloads.
+# Only derived outputs in data/ are committed.
+data/raw/
+*.csv.gz
+pipeline/tmp/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+.lighthouseci/
+
+# Agent loop logs — useful locally, noise in the repo
+agent/logs/
+
+# Editors and OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
