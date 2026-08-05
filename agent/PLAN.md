@@ -18,6 +18,41 @@ and writes to it last.
 
 Nothing here is user-visible. All of it determines whether the rest goes well.
 
+### P0-00 — Competitive analysis: train-signal.vercel.app
+- **owner:** product-manager
+- **status:** todo
+- **depends:** —
+- **why:** Found 2026-08-05 while looking up our Vercel URL. An existing app at
+  <https://train-signal.vercel.app> (not ours — it owns the subdomain we wanted) solves
+  close to the same problem: from/to/date, the same four networks, a service picker, a
+  journey timeline with **Good / OK / Poor / None** bands over a Leaflet map, and a data
+  source toggle between *"Measured (Ookla tiles)"* and *"Modelled (masts + terrain)"*.
+
+  This is prior art for the core idea, so we should understand it deliberately rather
+  than discover it at launch. Matt's read, which is the working hypothesis: **we can beat
+  it on both data and design.**
+
+  On data — Ookla tiles are crowdsourced from wherever people happen to use their
+  phones, which weights to roads, homes and towns. Mast-and-terrain modelling is a
+  prediction. Neither observes the railway directly. Yellow-train measurements are taken
+  on the track, at roof height, which is a better instrument for this specific question.
+  Confirm that reasoning holds rather than assuming it.
+
+  On design — our brief bets on a single plain-English sentence ("Best window: 14:35 –
+  15:20") with the timeline as supporting evidence. Theirs leads with a map. A map is
+  the obvious choice and probably the wrong one: it shows *where* signal is, when the
+  user's actual question is *when*. It is also very hard to make AAA-accessible.
+- **acceptance:**
+  - [ ] Their output reviewed on 2–3 well-known routes, including a notspot-heavy one
+  - [ ] Where they are genuinely better, written down plainly — no defensiveness
+  - [ ] Their accessibility assessed; note what we must beat, not merely match
+  - [ ] Findings in `specs/competitive-analysis.md` with a clear statement of our
+        differentiation
+  - [ ] Anything that changes our approach raised as a brief amendment, not applied
+        silently
+  - [ ] **Do not copy their design or code.** Understand the problem space; make our own
+        choices.
+
 ### P0-01 — Accessibility constraints document
 - **owner:** accessibility-specialist
 - **status:** done
