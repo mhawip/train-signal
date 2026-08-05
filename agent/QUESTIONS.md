@@ -68,7 +68,7 @@ Put them in `.env.local` as `NR_FEEDS_USER` and `NR_FEEDS_PASS`, and add them to
 
 ## Q3 — GitHub repository
 
-**Status:** answered (awaiting `gh` install)
+**Status:** done 2026-08-05 — <https://github.com/mhawip/train-signal>
 **Filed:** 2026-08-04 (setup)
 **Blocks:** P0-02 (remote repo and CI)
 
@@ -87,12 +87,23 @@ be set up unattended.
 
 ## Q4 — Vercel project
 
-**Status:** open
+**Status:** open — ready to do, repo now exists
 **Filed:** 2026-08-04 (setup)
 **Blocks:** P0-05 (deployment)
 
-Once the GitHub repo exists, connect it at <https://vercel.com/new>. Import the repo,
-accept the Next.js defaults, and add the environment variables from Q1 and Q2.
+1. <https://vercel.com/signup> — **sign up with GitHub**, which saves connecting the
+   accounts separately later
+2. Add New → Project → import `mhawip/train-signal`
+3. Next.js is detected automatically; accept the defaults
+4. Before the first deploy, expand **Environment Variables** and add `DARWIN_API_KEY`,
+   `NR_FEEDS_USER`, `NR_FEEDS_PASS` — same values as `.env.local`. Set each for
+   Production, Preview and Development.
+5. Leave **Deployment Protection** off. It puts preview URLs behind auth, and the
+   accessibility suite runs against previews — if those need a login the a11y checks
+   silently can't reach them, which looks like everything passing.
+
+The first deploy will fail. That is expected: there is no Next.js app yet, only the
+agent scaffolding. P0-03 builds the skeleton, P0-05 confirms the deploy goes green.
 
 Confirm the production URL here once it's live so the agents can reference it in tests.
 

@@ -37,15 +37,22 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-02 — Repository, CI and quality gates
 - **owner:** devops
-- **status:** blocked
-- **blocked-on:** QUESTIONS.md Q3 (GitHub repo)
-- **depends:** —
+- **status:** todo
+- **depends:** P0-03
 - **why:** CI is the only reviewer. Until the gates exist, autonomous work is unsafe.
+- **note:** Repo and protection done 2026-08-05 — <https://github.com/mhawip/train-signal>,
+  public, PRs required, 0 approvals, auto-merge and delete-branch-on-merge enabled,
+  force pushes blocked. **Required status checks are deliberately empty**: requiring
+  checks that don't yet exist would deadlock every PR. Adding them is part of this task
+  and must happen in the same change as the workflow itself. Depends on P0-03 because
+  there is no `npm run verify` to run until the app skeleton exists.
 - **acceptance:**
-  - [ ] Git repo initialised, pushed to GitHub, `main` protected
+  - [x] Git repo initialised, pushed to GitHub, `main` protected
+  - [x] Auto-merge enabled
   - [ ] GitHub Actions: typecheck, lint, unit, a11y, Lighthouse, secret scan
   - [ ] `npm run verify` runs locally exactly what CI runs
-  - [ ] Auto-merge on green enabled
+  - [ ] Those checks added to branch protection as *required*, once they exist and have
+        passed at least once
   - [ ] Pipeline completes in under 5 minutes
   - [ ] Pre-commit guard against large files
 
