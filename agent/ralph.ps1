@@ -42,6 +42,29 @@ if (-not (Test-Path $LogDir))     { New-Item -ItemType Directory -Path $LogDir -
 
 Set-Location $RepoRoot
 
+# winget installs GitHub CLI to a location that only lands on PATH in shells started
+# after the install. A loop that cannot find gh fails at the PR step every iteration
+# and the reason is not obvious from the log, so resolve it here instead.
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    $ghCandidates = @(
+        "$env:ProgramFiles\GitHub CLI",
+        "${env:ProgramFiles(x86)}\GitHub CLI",
+        "$env:LOCALAPPDATA\Programs\GitHub CLI"
+    )
+    foreach ($dir in $ghCandidates) {
+        if (Test-Path (Join-Path $dir 'gh.exe')) {
+            $env:PATH = "$dir;$env:PATH"
+            Write-Host "  Found gh at $dir - added to PATH for this session." -ForegroundColor DarkGray
+            break
+        }
+    }
+}
+
+if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
+    Write-Host '  gh not found. Iterations will commit and push but cannot open PRs.' -ForegroundColor Yellow
+    Write-Host '  Fix with: winget install GitHub.cli' -ForegroundColor Yellow
+}
+
 if ($Once) { $MaxIterations = 1 }
 
 $prompt    = Get-Content $PromptFile -Raw
