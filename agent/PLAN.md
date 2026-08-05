@@ -20,7 +20,7 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-01 — Accessibility constraints document
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** Everything downstream is designed against this. It has to exist first —
   retrofitting AAA does not work, and this is the task that prevents it.
