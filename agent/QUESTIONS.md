@@ -10,7 +10,7 @@ To answer: edit the question, add your answer under **Answer:**, and change stat
 
 ## Q1 — Rail Data Marketplace API key
 
-**Status:** open
+**Status:** account created 2026-08-05 — key to be pasted into `.env.local` by Matt
 **Filed:** 2026-08-04 (setup)
 **Blocks:** P1-01 (rail data integration)
 
@@ -32,7 +32,7 @@ project's environment variables.
 
 ## Q2 — Network Rail SCHEDULE feed credentials
 
-**Status:** open
+**Status:** account created 2026-08-05 — credentials to be pasted into `.env.local` by Matt
 **Filed:** 2026-08-04 (setup)
 **Blocks:** P1-02 (8-week timetable)
 
@@ -50,20 +50,20 @@ Put them in `.env.local` as `NR_FEEDS_USER` and `NR_FEEDS_PASS`, and add them to
 
 ## Q3 — GitHub repository
 
-**Status:** open
+**Status:** answered (awaiting `gh` install)
 **Filed:** 2026-08-04 (setup)
 **Blocks:** P0-02 (remote repo and CI)
 
-Needed before anything can be pushed or deployed:
+**Answer:** GitHub account is **`mhawip`**, personal. Repository name **`train-signal`**,
+public — decided by default to match the directory; say if you'd prefer something more
+public-facing and it can be renamed cheaply before there's any traffic.
 
-1. Repository name — `train-signal`, or something more public-facing?
-2. Personal account or an organisation?
-3. `gh` CLI isn't installed on this machine. Either install it
-   (`winget install GitHub.cli`) and run `gh auth login`, or create the repo in the
-   browser and I'll use the git remote directly. The CLI makes the PR workflow much
-   smoother, so it's worth the two minutes.
+Commit identity is set to `mhawip@users.noreply.github.com` rather than a personal
+address, since the repo is public and commit emails are scrapeable.
 
-**Answer:**
+Remaining: `gh` CLI is not installed on this machine. Once
+`winget install GitHub.cli` and `gh auth login` are done, the remote and PR workflow can
+be set up unattended.
 
 ---
 
