@@ -20,19 +20,19 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-01 — Accessibility constraints document
 - **owner:** accessibility-specialist
-- **status:** in-progress
+- **status:** done
 - **depends:** —
 - **why:** Everything downstream is designed against this. It has to exist first —
   retrofitting AAA does not work, and this is the task that prevents it.
 - **acceptance:**
-  - [ ] `specs/accessibility.md` exists
-  - [ ] Every WCAG 2.2 AAA criterion that applies is listed, with what it means *for
+  - [x] `specs/accessibility.md` exists
+  - [x] Every WCAG 2.2 AAA criterion that applies is listed, with what it means *for
         this product specifically* — not restated from the spec
-  - [ ] Colour contrast requirements stated as concrete ratios against named surfaces
-  - [ ] The signal-timeline problem addressed head-on: how bands stay distinguishable
+  - [x] Colour contrast requirements stated as concrete ratios against named surfaces
+  - [x] The signal-timeline problem addressed head-on: how bands stay distinguishable
         with colour removed
-  - [ ] The text-equivalent table specified as a first-class feature, not a fallback
-  - [ ] Testing approach defined: what's automated, what must be manual, and the honest
+  - [x] The text-equivalent table specified as a first-class feature, not a fallback
+  - [x] Testing approach defined: what's automated, what must be manual, and the honest
         limits of axe-core at AAA
 
 ### P0-02 — Repository, CI and quality gates
