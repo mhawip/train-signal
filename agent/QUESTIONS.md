@@ -14,17 +14,35 @@ To answer: edit the question, add your answer under **Answer:**, and change stat
 **Filed:** 2026-08-04 (setup)
 **Blocks:** P1-01 (rail data integration)
 
-Darwin's Live Departure Board Web Service needs an API key, and accounts can only be
-created by you — I can't register on your behalf.
+**Corrected 2026-08-05.** The original instructions named a product that does not exist.
+There is no catalogue entry called "LDBWS" or "Live Departure Board Web Service
+(LDBWS) — Public" — `LDBWS` appears only in product *descriptions*, which is why
+searching for it by name is unhelpful.
 
-1. Go to <https://raildata.org.uk> and create an account
-2. Open the Data Product Catalogue, search for `LDBWS`
-3. Subscribe to **Live Departure Board Web Service (LDBWS) — Public** (free, approved
-   instantly)
-4. Copy the API key
+The catalogue actually lists five separate departure-board products, all free:
 
-Put it in `.env.local` as `DARWIN_API_KEY=...` (gitignored), and add it to the Vercel
-project's environment variables.
+- Live Arrival Board
+- Live Next Departures Board
+- Live Fastest Departures Board ← **not this one**
+- Live Arrival and Departure Boards
+- **Live Departure Board** ← this is the one we want
+
+Steps, verified against the live site:
+
+1. Sign in at <https://raildata.org.uk>. **Product pages render blank when signed
+   out**, which makes browsing while logged out look broken.
+2. Data product catalogue (at `/dashboard/dataProducts` — "dashboard" appears in the
+   path even when signed out)
+3. Search `Live Departure Board`
+4. Subscribe to **Live Departure Board**, accept the licence — free, instant
+5. Dashboard → My subscriptions → open the product → Specification / API tab → copy
+   the **Consumer key**. That string is the value for `DARWIN_API_KEY`.
+
+Avoid *Live Fastest Departures Board* — different product, won't authenticate against
+the standard departure-board endpoint.
+
+Cost: the catalogue labels this **OPEN**, the free tier. Darwin SOAP APIs are free to
+5 million requests per 4-week railway period; we will not get close.
 
 **Answer:**
 
