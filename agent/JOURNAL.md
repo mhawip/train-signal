@@ -107,3 +107,30 @@ started). No `npm run verify` target yet.
 
 **Next:** P0-01 done unblocks P0-03 (Next.js skeleton, owner: developer). P0-03 is the
 next highest-priority unblocked task and itself unblocks P0-02, P0-04, and P1-03.
+
+---
+
+## 2026-08-06T09:23:00Z — P0-03 — developer
+
+**Did:** Shipped the Next.js application skeleton. The previous iteration had set up all
+the files (app/page.tsx, app/layout.tsx, app/globals.css, app/page.test.ts,
+e2e/accessibility.spec.ts, package.json, tsconfig.json, vitest.config.ts,
+playwright.config.ts, next.config.ts, .eslintrc.json) but had not committed them.
+This iteration assessed the state, ran verify, confirmed everything passed, and shipped.
+
+What was built:
+- Next.js 15 App Router, React 19, TypeScript strict (`"strict": true`, `noEmit`)
+- `eslint-plugin-jsx-a11y` at `plugin:jsx-a11y/strict`, `@typescript-eslint/no-explicit-any: error`
+- Vitest 3 with include pattern `**/*.test.{ts,tsx}`, excludes `.next` and `e2e`
+- Playwright + `@axe-core/playwright` testing the home page against wcag2a, wcag2aa, wcag2aaa, wcag21a, wcag21aa, wcag22aa, best-practice
+- `globals.css` grounded in the accessibility constraints: 1.5 line-height, `max-width: 40rem` (~80ch), `prefers-reduced-motion` media query, `:focus-visible` at #0044cc (≥3:1 contrast per 2.4.13), no justified text
+- `npm run verify` = typecheck + lint + test + test:a11y, all in sequence
+
+**Verify:** Pass. Typecheck clean, lint clean (deprecation warning on `next lint` — not an error), 1 unit test passed, 1 a11y test passed.
+
+**Learned:**
+- `next lint` prints a deprecation notice ("will be removed in Next.js 16") but still exits 0 and reports no errors. Not a blocker for now; worth switching to the ESLint CLI before it becomes one.
+- The Playwright a11y test runs chromium only for now. CI will want to run this headlessly; the playwright.config.ts already sets `forbidOnly: !!process.env.CI` and `retries: 2` in CI, which is correct.
+- The `webServer` config in playwright.config.ts uses `npm run dev` (not `npm run build && npm run start`). In CI, `next build` + `next start` is more representative. Worth noting for the devops CI task (P0-02).
+
+**Next:** P0-03 done unblocks P0-02 (CI/quality gates, owner: devops), P0-04 (design system, owner: designer), and P1-03 (station reference data, owner: data-engineer). P0-02 is the highest priority next: without CI gates, autonomous work is unsafe.

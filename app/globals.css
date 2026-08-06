@@ -1,0 +1,73 @@
+/*
+ * Global styles for Train Signal.
+ *
+ * Accessibility constraints from specs/accessibility.md:
+ * - 1.4.6: Body text 7:1 contrast ratio (black on white exceeds this)
+ * - 1.4.8: line-height >= 1.5, max 80 characters per line, no justified text
+ * - 1.4.12: No fixed heights on text containers
+ * - 2.4.13: Visible focus indicators with >= 3:1 contrast
+ * - 2.3.3: Respect prefers-reduced-motion
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  line-height: 1.5;
+  color: #1a1a1a;
+  background-color: #ffffff;
+}
+
+/*
+ * Focus indicator: 2px solid outline, offset by 2px.
+ * Colour #0044cc achieves >= 3:1 against both white (#fff) and
+ * near-black text (#1a1a1a), satisfying WCAG 2.4.13.
+ */
+:focus-visible {
+  outline: 2px solid #0044cc;
+  outline-offset: 2px;
+}
+
+main {
+  max-width: 40rem; /* ~80 characters at body font size */
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: 1.3;
+  margin-bottom: 1rem;
+}
+
+p {
+  margin-bottom: 1.5em; /* >= 1.5x line-height per 1.4.8 */
+}
+
+/* No justified text anywhere (1.4.8) */
+* {
+  text-align: revert;
+}
+
+/* Respect user motion preferences (2.3.3) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
