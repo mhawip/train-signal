@@ -93,17 +93,17 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-03 — Next.js application skeleton
 - **owner:** developer
-- **status:** in-progress
+- **status:** done
 - **depends:** P0-01
 - **why:** The frame everything else is built in. Getting strict mode and the testing
   setup right now avoids retrofitting later.
 - **acceptance:**
-  - [ ] Next.js App Router, TypeScript strict, no `any`
-  - [ ] Vitest configured and running
-  - [ ] Playwright + axe-core configured at AAA ruleset
-  - [ ] `eslint-plugin-jsx-a11y` at strictest settings
-  - [ ] A trivial page passes the full a11y suite
-  - [ ] `npm run verify` green
+  - [x] Next.js App Router, TypeScript strict, no `any`
+  - [x] Vitest configured and running
+  - [x] Playwright + axe-core configured at AAA ruleset
+  - [x] `eslint-plugin-jsx-a11y` at strictest settings
+  - [x] A trivial page passes the full a11y suite
+  - [x] `npm run verify` green
 
 ### P0-04 — Design system
 - **owner:** designer

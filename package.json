@@ -1,0 +1,36 @@
+{
+  "name": "train-signal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:a11y": "playwright test",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run test:a11y"
+  },
+  "dependencies": {
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@playwright/test": "^1.52.0",
+    "@testing-library/react": "^16.3.0",
+    "@types/node": "^22.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.32.0",
+    "@typescript-eslint/parser": "^8.32.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^15.3.3",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.0"
+  }
+}
