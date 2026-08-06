@@ -72,7 +72,7 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-02 — Repository, CI and quality gates
 - **owner:** devops
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-03
 - **why:** CI is the only reviewer. Until the gates exist, autonomous work is unsafe.
 - **note:** Repo and protection done 2026-08-05 — <https://github.com/mhawip/train-signal>,
