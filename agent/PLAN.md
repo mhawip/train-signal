@@ -133,17 +133,17 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-06 — Accessible component primitives
 - **owner:** developer
-- **status:** in-progress
+- **status:** done
 - **depends:** P0-04
 - **why:** Form controls are where accessibility usually fails. Build them once,
   correctly, and every feature inherits it.
 - **acceptance:**
-  - [ ] Text input, combobox (station search), date/time picker, radio group, button
-  - [ ] Native semantics wherever possible; ARIA only where genuinely needed
-  - [ ] Full keyboard operation, visible focus at enhanced contrast
-  - [ ] Errors associated programmatically and announced
-  - [ ] Each has a passing axe AAA test
-  - [ ] `prefers-reduced-motion` and forced-colours respected
+  - [x] Text input, combobox (station search), date/time picker, radio group, button
+  - [x] Native semantics wherever possible; ARIA only where genuinely needed
+  - [x] Full keyboard operation, visible focus at enhanced contrast
+  - [x] Errors associated programmatically and announced
+  - [x] Each has a passing axe AAA test
+  - [x] `prefers-reduced-motion` and forced-colours respected
 
 ---
 

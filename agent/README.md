@@ -60,6 +60,28 @@ work; it has to be upstream. `PLAN.md` dependencies enforce this.
 Runs continuously. `-Once` for a single iteration, `-MaxIterations <n>` to cap it.
 Stop it at any time with Ctrl-C — state is on disk, nothing is lost.
 
+### Pausing
+
+Ctrl-C mid-iteration kills the agent mid-task, which can leave a feature branch with
+uncommitted work. To stop on an iteration boundary instead, create `agent/PAUSE`:
+
+```powershell
+New-Item agent/PAUSE          # pause before the next iteration starts
+Remove-Item agent/PAUSE       # resume
+```
+
+The loop checks for it before each iteration and waits while it exists, so it is safe
+to create at any time — including while an iteration is running.
+
+Pause before editing `PLAN.md`, the brief, or `QUESTIONS.md`. Step 5 of the loop runs
+`git add -A`, so an edit made mid-iteration can be swept into an unrelated PR.
+
+### Usage limits
+
+If a subscription limit is hit, the loop reads the reset time from the message and
+sleeps until then rather than counting it as a failure. `-Once` reports and exits
+instead of waiting.
+
 ## Watching it
 
 - `agent/JOURNAL.md` — what happened

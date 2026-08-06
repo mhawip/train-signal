@@ -29,6 +29,10 @@ test-results/
 # Agent loop logs — useful locally, noise in the repo
 agent/logs/
 
+# Pause sentinel. Local control only — and the loop's `git add -A` would
+# otherwise commit it into whatever branch happens to be open.
+agent/PAUSE
+
 # Editors and OS
 .DS_Store
 Thumbs.db
