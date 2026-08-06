@@ -191,3 +191,30 @@ gh api repos/mhawip/train-signal/branches/main/protection \
 ```
 P0-02 completion unblocks P0-05 (Vercel deployment). P0-04 (design system) and P1-03
 (station reference data) were already unblocked by P0-03.
+
+---
+
+## 2026-08-06T10:00:00Z — P0-02 — orchestrator
+
+**Did:** Merged stale PR #4 (P0-03, which the previous iteration had committed but not
+merged). Took P0-02 as the next highest-priority task (journal had identified it as
+critical; without CI, autonomous work is unsafe). Dispatched to devops agent, which
+built the full CI pipeline. Confirmed `npm run verify` passes locally. Merged PR #5.
+
+**Verify:** Pass. `npm run verify` green on the branch before merge.
+
+**Learned:**
+- When a previous iteration leaves a PR open but marked done in PLAN.md, check for
+  open PRs early — PR #4 was unmerged and needed to be closed before meaningful work
+  could proceed.
+- Required status checks cannot be added until the CI workflow has reported at least
+  once. The next step is to wait for the first CI run on a subsequent PR, then run the
+  `gh api` command documented in the P0-02 journal entry to enable branch protection.
+- The Lighthouse CI step uses `npx @lhci/cli autorun` (not installed as a project dep).
+  This means it will always download on each CI run. Acceptable for now.
+
+**Next:** P0-02 done. Three unblocked todos remain: P0-00 (competitive analysis,
+product-manager), P0-04 (design system, designer), P1-03 (station reference data,
+data-engineer). P0-04 is the next most important — the design system must exist before
+component primitives (P0-06) and the visual timeline (P1-06) can be built. P0-00
+(competitive analysis) also has no dependencies and should run in parallel or next.
