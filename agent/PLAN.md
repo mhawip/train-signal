@@ -20,7 +20,7 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-00 — Competitive analysis: train-signal.vercel.app
 - **owner:** product-manager
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** Found 2026-08-05 while looking up our Vercel URL. An existing app at
   <https://train-signal.vercel.app> (not ours — it owns the subdomain we wanted) solves
