@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:a11y": "playwright test",
-    "verify": "npm run typecheck && npm run lint && npm run test && npm run test:a11y"
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run test:a11y",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "dependencies": {
     "next": "^15.3.3",
