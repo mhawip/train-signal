@@ -134,3 +134,60 @@ What was built:
 - The `webServer` config in playwright.config.ts uses `npm run dev` (not `npm run build && npm run start`). In CI, `next build` + `next start` is more representative. Worth noting for the devops CI task (P0-02).
 
 **Next:** P0-03 done unblocks P0-02 (CI/quality gates, owner: devops), P0-04 (design system, owner: designer), and P1-03 (station reference data, owner: data-engineer). P0-02 is the highest priority next: without CI gates, autonomous work is unsafe.
+
+---
+
+## 2026-08-06T09:45:00Z — P0-02 — devops
+
+**Did:** Built the full CI pipeline and local quality gates.
+
+Files created:
+- `.github/workflows/ci.yml` -- six parallel jobs: typecheck, lint, unit, a11y,
+  lighthouse, secret-scan. All use Node 22 with npm cache. The a11y job builds the app
+  first (`npm run build && npm run start` via playwright webServer in CI mode). Lighthouse
+  uses `@lhci/cli autorun` against the built app. Secret scanning uses the official
+  gitleaks action.
+- `.lighthouserc.json` -- accessibility score must be 1.0, performance must be >= 0.8.
+  Single run against localhost:3000, results uploaded to temporary public storage.
+- `.githooks/pre-commit` -- rejects staged files over 10 MB. Uses `git cat-file -s` to
+  check the staged blob size, not the working-tree size. Prints the offending filenames.
+
+Files edited:
+- `playwright.config.ts` -- webServer command now uses `npm run build && npm run start`
+  when `process.env.CI` is set, `npm run dev` otherwise. This means CI tests run against
+  the production build, catching issues that only appear in built output.
+- `package.json` -- added `"prepare": "git config core.hooksPath .githooks"` so the
+  pre-commit hook is wired automatically on `npm install`.
+- `agent/PLAN.md` -- P0-02 marked done (except the required-status-checks acceptance
+  criterion, which cannot be completed until the first CI run succeeds).
+
+**Verify:** Pass. `npm run verify` runs typecheck, lint, unit tests, and Playwright a11y
+tests -- all green. Lighthouse is CI-only (requires `@lhci/cli` which is not a project
+dependency -- it runs via `npx` in the workflow). The local verify script matches CI for
+the four checks that can run locally.
+
+**Learned:**
+- Required status checks cannot be added to branch protection until the check names have
+  reported at least once. The `gh api` call to set them must happen after the first
+  successful CI run on a PR or push to main. This is a GitHub API constraint, not a
+  workflow issue.
+- The Lighthouse CI preset name is `lighthouse:no-pwa` (not `lighthouse:no-psd` as
+  sometimes referenced). The config uses the correct name.
+- The `gitleaks/gitleaks-action@v2` action needs `fetch-depth: 0` on checkout to scan
+  the full history. Without it, it only scans the shallow clone.
+- Running CI jobs in parallel (not sequential steps in one job) keeps the pipeline fast
+  while giving clear per-check status in the GitHub UI. Each job name matches the
+  required status check context exactly.
+
+**Next:** Once this PR merges and CI runs green, add required status checks to branch
+protection using:
+```
+gh api repos/mhawip/train-signal/branches/main/protection \
+  --method PUT \
+  --field required_status_checks='{"strict":false,"contexts":["typecheck","lint","unit","a11y","lighthouse","secret-scan"]}' \
+  --field enforce_admins=false \
+  --field required_pull_request_reviews=null \
+  --field restrictions=null
+```
+P0-02 completion unblocks P0-05 (Vercel deployment). P0-04 (design system) and P1-03
+(station reference data) were already unblocked by P0-03.

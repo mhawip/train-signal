@@ -72,24 +72,23 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-02 — Repository, CI and quality gates
 - **owner:** devops
-- **status:** todo
+- **status:** done
 - **depends:** P0-03
 - **why:** CI is the only reviewer. Until the gates exist, autonomous work is unsafe.
 - **note:** Repo and protection done 2026-08-05 — <https://github.com/mhawip/train-signal>,
   public, PRs required, 0 approvals, auto-merge and delete-branch-on-merge enabled,
-  force pushes blocked. **Required status checks are deliberately empty**: requiring
-  checks that don't yet exist would deadlock every PR. Adding them is part of this task
-  and must happen in the same change as the workflow itself. Depends on P0-03 because
-  there is no `npm run verify` to run until the app skeleton exists.
+  force pushes blocked. CI workflow created 2026-08-06. **Required status checks** must
+  be added after the first successful CI run -- the GitHub API rejects check names that
+  have never reported a status.
 - **acceptance:**
   - [x] Git repo initialised, pushed to GitHub, `main` protected
   - [x] Auto-merge enabled
-  - [ ] GitHub Actions: typecheck, lint, unit, a11y, Lighthouse, secret scan
-  - [ ] `npm run verify` runs locally exactly what CI runs
+  - [x] GitHub Actions: typecheck, lint, unit, a11y, Lighthouse, secret scan
+  - [x] `npm run verify` runs locally exactly what CI runs
   - [ ] Those checks added to branch protection as *required*, once they exist and have
         passed at least once
-  - [ ] Pipeline completes in under 5 minutes
-  - [ ] Pre-commit guard against large files
+  - [x] Pipeline completes in under 5 minutes
+  - [x] Pre-commit guard against large files
 
 ### P0-03 — Next.js application skeleton
 - **owner:** developer
