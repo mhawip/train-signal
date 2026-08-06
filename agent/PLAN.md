@@ -85,7 +85,7 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
   - [x] Auto-merge enabled
   - [x] GitHub Actions: typecheck, lint, unit, a11y, Lighthouse, secret scan
   - [x] `npm run verify` runs locally exactly what CI runs
-  - [ ] Those checks added to branch protection as *required*, once they exist and have
+  - [x] Those checks added to branch protection as *required*, once they exist and have
         passed at least once
   - [x] Pipeline completes in under 5 minutes
   - [x] Pre-commit guard against large files
@@ -133,7 +133,7 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-06 — Accessible component primitives
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-04
 - **why:** Form controls are where accessibility usually fails. Build them once,
   correctly, and every feature inherits it.
