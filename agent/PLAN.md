@@ -106,7 +106,7 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-04 — Design system
 - **owner:** designer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-01, P0-03
 - **why:** Establishes the palette and type scale against the 7:1 constraint before any
   component exists, so components inherit compliance rather than fighting for it.
