@@ -106,18 +106,18 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-04 — Design system
 - **owner:** designer
-- **status:** todo
+- **status:** done
 - **depends:** P0-01, P0-03
 - **why:** Establishes the palette and type scale against the 7:1 constraint before any
   component exists, so components inherit compliance rather than fighting for it.
 - **acceptance:**
-  - [ ] `specs/design-system.md` documents tokens, scales, and the reasoning
-  - [ ] Every text/background pair verified at 7:1 (4.5:1 large), computed not eyeballed
-  - [ ] Signal band treatments defined and legible in greyscale
-  - [ ] Type scale respects 80ch line length and 1.5 line spacing
-  - [ ] All targets 44×44 minimum
-  - [ ] Implemented as real design tokens in the codebase
-  - [ ] Light and dark schemes both meeting AAA
+  - [x] `specs/design-system.md` documents tokens, scales, and the reasoning
+  - [x] Every text/background pair verified at 7:1 (4.5:1 large), computed not eyeballed
+  - [x] Signal band treatments defined and legible in greyscale
+  - [x] Type scale respects 80ch line length and 1.5 line spacing
+  - [x] All targets 44×44 minimum
+  - [x] Implemented as real design tokens in the codebase
+  - [x] Light and dark schemes both meeting AAA
 
 ### P0-05 — Vercel deployment
 - **owner:** devops

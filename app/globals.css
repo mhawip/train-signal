@@ -1,13 +1,172 @@
 /*
  * Global styles for Train Signal.
  *
- * Accessibility constraints from specs/accessibility.md:
- * - 1.4.6: Body text 7:1 contrast ratio (black on white exceeds this)
- * - 1.4.8: line-height >= 1.5, max 80 characters per line, no justified text
+ * Design system: specs/design-system.md
+ * Accessibility constraints: specs/accessibility.md
+ *
+ * Key WCAG requirements enforced here:
+ * - 1.4.6: Body text 7:1 contrast ratio (computed, see design-system.md)
+ * - 1.4.8: line-height >= 1.5, max 80ch line length, no justified text
  * - 1.4.12: No fixed heights on text containers
  * - 2.4.13: Visible focus indicators with >= 3:1 contrast
  * - 2.3.3: Respect prefers-reduced-motion
+ * - 2.5.5: Interactive targets >= 44x44 CSS px
  */
+
+/* ================================================================
+ * DESIGN TOKENS -- LIGHT SCHEME
+ *
+ * Every colour pair is verified at WCAG AAA contrast ratios.
+ * See specs/design-system.md section 8 for the full contrast matrix.
+ * ================================================================ */
+:root {
+  /* --- Page colours --- */
+  /* #1a1a1a on #ffffff = 17.40:1 (need 7:1) */
+  --color-page-bg: #ffffff;
+  --color-page-fg: #1a1a1a;
+
+  /* --- Secondary text --- */
+  /* #595959 on #ffffff = 7.00:1 (need 7:1) */
+  --color-muted: #595959;
+
+  /* --- Error text --- */
+  /* #6e1111 on #ffffff = 11.99:1 (need 7:1) */
+  --color-error: #6e1111;
+
+  /* --- Form fields --- */
+  --color-field-bg: #ffffff;
+  /* #5c5c5c on #ffffff = 6.69:1 (non-text, need 3:1) */
+  --color-field-border: #5c5c5c;
+
+  /* --- Focus indicator --- */
+  /* #0044cc on #ffffff = 7.78:1 (need 3:1 for focus) */
+  --color-focus: #0044cc;
+
+  /* --- Signal band backgrounds --- */
+  /* Voice + video: solid fill, no pattern. #1a1a1a on #d4e8d7 = 13.53:1 */
+  --band-good-bg: #d4e8d7;
+  --band-good-fg: #1a1a1a;
+
+  /* Voice only: diagonal hatching. #1a1a1a on #f0e4c0 = 13.73:1 */
+  --band-ok-bg: #f0e4c0;
+  --band-ok-fg: #1a1a1a;
+  --band-ok-stripe: rgba(0, 0, 0, 0.15);
+
+  /* No signal: crosshatch. #1a1a1a on #dcdcdc = 12.69:1 */
+  --band-none-bg: #dcdcdc;
+  --band-none-fg: #1a1a1a;
+  --band-none-stripe: rgba(0, 0, 0, 0.12);
+
+  /* Tunnel: solid dark. #f0f0f0 on #2d2d2d = 12.08:1 */
+  --band-tunnel-bg: #2d2d2d;
+  --band-tunnel-fg: #f0f0f0;
+
+  /* --- Band borders --- */
+  /* #5c5c5c vs good (#d4e8d7) = 5.20:1, vs ok (#f0e4c0) = 5.27:1,
+   * vs none (#dcdcdc) = 4.88:1. All pass 3:1. */
+  --band-border: #5c5c5c;
+  /* #7a7a7a vs tunnel (#2d2d2d) = 3.21:1, vs page (#fff) = 4.29:1 */
+  --band-tunnel-border: #7a7a7a;
+
+  /* --- Typography --- */
+  --font-size-xs: 0.75rem;   /* 12px */
+  --font-size-sm: 0.875rem;  /* 14px */
+  --font-size-base: 1rem;    /* 16px */
+  --font-size-lg: 1.25rem;   /* 20px */
+  --font-size-xl: 1.5rem;    /* 24px -- WCAG "large text" threshold */
+  --font-size-2xl: 2rem;     /* 32px */
+
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+
+  --line-height-body: 1.5;
+  --line-height-heading: 1.3;
+
+  /* --- Layout --- */
+  --max-width-text: 40rem;   /* ~80 characters at 16px (1.4.8) */
+
+  /* --- Spacing (4px base) --- */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-12: 3rem;    /* 48px */
+
+  /* --- Interactive targets (2.5.5) --- */
+  --target-min: 2.75rem; /* 44px at default font size */
+
+  /* --- Border radius --- */
+  --radius-sm: 0.25rem; /* 4px */
+  --radius-md: 0.5rem;  /* 8px */
+}
+
+/* ================================================================
+ * DESIGN TOKENS -- DARK SCHEME
+ *
+ * Applied via prefers-color-scheme. Every pair re-verified at AAA.
+ * See specs/design-system.md section 8 for the full contrast matrix.
+ * ================================================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* #e8e8e8 on #121212 = 15.29:1 */
+    --color-page-bg: #121212;
+    --color-page-fg: #e8e8e8;
+
+    /* #a0a0a0 on #121212 = 7.16:1 */
+    --color-muted: #a0a0a0;
+
+    /* #ff9999 on #121212 = 9.16:1 */
+    --color-error: #ff9999;
+
+    --color-field-bg: #1e1e1e;
+    /* #999999 on #121212 = 6.58:1 (non-text, need 3:1) */
+    --color-field-border: #999999;
+
+    /* #6699ff on #121212 = 6.75:1 */
+    --color-focus: #6699ff;
+
+    /* #e8e8e8 on #1e3a22 = 10.18:1 */
+    --band-good-bg: #1e3a22;
+    --band-good-fg: #e8e8e8;
+
+    /* #e8e8e8 on #3d351c = 9.94:1 */
+    --band-ok-bg: #3d351c;
+    --band-ok-fg: #e8e8e8;
+    --band-ok-stripe: rgba(255, 255, 255, 0.15);
+
+    /* #e8e8e8 on #4a4a4a = 7.23:1 */
+    --band-none-bg: #4a4a4a;
+    --band-none-fg: #e8e8e8;
+    --band-none-stripe: rgba(255, 255, 255, 0.12);
+
+    /* #c8c8c8 on #0a0a0a = 11.83:1 */
+    --band-tunnel-bg: #0a0a0a;
+    --band-tunnel-fg: #c8c8c8;
+
+    /* #999999 vs all dark bands >= 3.11:1 */
+    --band-border: #999999;
+    --band-tunnel-border: #999999;
+  }
+}
+
+/* ================================================================
+ * SIGNAL BAND PATTERNS
+ *
+ * These patterns provide non-colour cues for each band (1.4.1).
+ * Each band is distinguished by pattern + icon + label, not colour.
+ * Designed greyscale-first: patterns differ in density and angle.
+ * ================================================================ */
+
+/* Voice + video: solid fill, no pattern (clean = good) */
+/* Voice only: 45-degree diagonal hatching, 2px lines, 8px spacing */
+/* No signal: dense crosshatch, 2px lines, 6px spacing */
+/* Tunnel: solid dark fill, no pattern needed (value alone distinguishes) */
+
+/* ================================================================
+ * RESET AND BASE STYLES
+ * ================================================================ */
 
 *,
 *::before,
@@ -24,31 +183,47 @@ html {
 body {
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
     Arial, sans-serif;
-  line-height: 1.5;
-  color: #1a1a1a;
-  background-color: #ffffff;
+  line-height: var(--line-height-body);
+  color: var(--color-page-fg);
+  background-color: var(--color-page-bg);
 }
 
 /*
  * Focus indicator: 2px solid outline, offset by 2px.
- * Colour #0044cc achieves >= 3:1 against both white (#fff) and
- * near-black text (#1a1a1a), satisfying WCAG 2.4.13.
+ * Light: #0044cc on #ffffff = 7.78:1 (need 3:1).
+ * Dark: #6699ff on #121212 = 6.75:1 (need 3:1).
+ * Satisfies WCAG 2.4.13.
  */
 :focus-visible {
-  outline: 2px solid #0044cc;
+  outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
 main {
-  max-width: 40rem; /* ~80 characters at body font size */
+  max-width: var(--max-width-text);
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: var(--space-8) var(--space-4);
 }
 
 h1 {
-  font-size: 2rem;
-  line-height: 1.3;
-  margin-bottom: 1rem;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin-bottom: var(--space-4);
+}
+
+h2 {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin-bottom: var(--space-3);
+}
+
+h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin-bottom: var(--space-2);
 }
 
 p {

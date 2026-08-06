@@ -218,3 +218,77 @@ product-manager), P0-04 (design system, designer), P1-03 (station reference data
 data-engineer). P0-04 is the next most important — the design system must exist before
 component primitives (P0-06) and the visual timeline (P1-06) can be built. P0-00
 (competitive analysis) also has no dependencies and should run in parallel or next.
+
+---
+
+## 2026-08-06T10:30:00Z — P0-04 — designer
+
+**Did:** Built the complete design system as CSS custom properties in `app/globals.css`
+and documented every decision in `specs/design-system.md`.
+
+What was built:
+
+- **Palette:** Single-hue value ramp (not traffic-light). Signal quality maps to
+  lightness, which degrades to greyscale by construction. Both light and dark schemes
+  defined with every text/background pair computed at WCAG AAA ratios.
+
+- **Signal bands:** Four treatments (voice+video, voice-only, no signal, tunnel), each
+  with three redundant non-colour cues: fill pattern (solid / 45-degree hatching / dense
+  crosshatch / solid dark), icon (checkmark / phone / X / tunnel), and text label.
+  Patterns defined as CSS `repeating-linear-gradient` specifications. Band boundaries
+  use visible borders (2px) achieving 3:1 against adjacent fills.
+
+- **Key palette decisions:**
+  - Light: `#1a1a1a` on `#ffffff` (17.40:1). Band fills range from `#d4e8d7` (sage)
+    through `#f0e4c0` (cream) and `#dcdcdc` (grey) to `#2d2d2d` (near-black tunnel).
+    All text-on-band pairs exceed 12:1.
+  - Dark: `#e8e8e8` on `#121212` (15.29:1). Band fills inverted. Weakest pair is
+    `#e8e8e8` on `#4a4a4a` (no-signal) at 7.23:1, which passes.
+  - Band borders: `#5c5c5c` (light) and `#999999` (dark) provide 3:1+ against all
+    adjacent band fills. Tunnel gets `#7a7a7a` in light mode (3.21:1 vs tunnel fill).
+
+- **Typography:** System font stack, 6-step rem scale (0.75-2rem), line-height 1.5
+  (body) / 1.3 (headings), max-width 40rem for 80-character lines.
+
+- **Spacing:** 4px-base scale (0.25rem to 3rem), 6 steps.
+
+- **Interactive targets:** `--target-min: 2.75rem` (44px) documented with enforcement
+  strategy per element type.
+
+- **Focus indicators:** `#0044cc` (light, 7.78:1 vs page) and `#6699ff` (dark, 6.75:1
+  vs page), 2px solid with 2px offset.
+
+- **Low confidence:** Dashed border overlay + "(low confidence)" text label. Not a
+  fourth band — an overlay on any band.
+
+- **Contrast matrix:** Full computed table in design-system.md section 8, covering every
+  text/background pair and every non-text element pair, with the WCAG relative luminance
+  formula applied. No eyeballed values.
+
+**Verify:** Pass. `npm run verify` green — typecheck, lint, 1 unit test, 1 Playwright
+a11y test all pass.
+
+**Learned:**
+
+- Achieving 3:1 between all adjacent band fills AND 7:1 text on each band is
+  mathematically impossible when you have four bands spanning the full lightness range.
+  The solution is to use borders as the non-text contrast boundary between bands, not
+  the fills themselves. This is the correct interpretation of 1.4.11: the border is the
+  graphical boundary.
+
+- A single border colour cannot serve both light fills and dark fills at 3:1. The tunnel
+  band needs its own lighter border (`#7a7a7a` in light mode) while the three lighter
+  bands share `#5c5c5c`. In dark mode, `#999999` works for all bands.
+
+- The greyscale equivalents of the three lighter bands (good ~224, ok ~227, none ~220)
+  are too similar to distinguish by value alone. This is by design — pattern and label
+  are the primary differentiators, not lightness. The hatching vs crosshatch vs solid
+  distinction works in greyscale because it is a texture difference, not a value
+  difference.
+
+- `#595959` on white gives exactly 7.00:1 — the darkest permissible muted/placeholder
+  text. Any lighter and it fails AAA body text contrast.
+
+**Next:** P0-04 done unblocks P0-06 (accessible component primitives, developer) and
+contributes to P1-06 (visual timeline). P0-06 is the next highest-priority unblocked
+task — form controls need to exist before the journey form (P1-04) can be built.
