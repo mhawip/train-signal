@@ -417,3 +417,33 @@ Key findings in the analysis:
 - JOURNAL.md on main only goes up to P0-04. P0-00 and P0-06 journal entries live on their respective branches and will squash-merge. This means journal entries may appear slightly out of chronological order in main history — acceptable.
 
 **Next:** P1-03 unblocks P2-01 (thin vertical slice) and P2-02 (track geometry). P0-06 (pending PR #7 merge) unblocks P1-04 (journey form). P2-02 (track geometry) is the next most useful unblocked task after these PRs merge — it has no credentials dependency and provides named tunnels critical to the product.
+
+---
+
+## 2026-08-07T13:45:00Z — P1-04 — developer
+
+**Did:** Completed and shipped the journey form. A previous iteration had written three files (`JourneyForm.tsx`, `StationCombobox.tsx`, `journey-params.ts`) but died before fixing lint errors or committing. This iteration finished the work.
+
+Files created/modified:
+- `app/components/JourneyForm.tsx` — five-field form (origin, destination, date, time, network). Validation with error summary, focus management, URL param serialisation. State encoded in URL so results are shareable.
+- `app/components/StationCombobox.tsx` — accessible ARIA combobox pattern (`role="combobox"` + `role="listbox"` + `role="option"`). Keyboard navigation via `aria-activedescendant`. Auto-resolves CRS codes on blur. Live region announces result counts for screen readers.
+- `app/lib/journey-params.ts` — URL param serialisation/deserialisation, date utilities, network type.
+- `app/lib/journey-params.test.ts` — 8 unit tests covering all exports.
+- `app/globals.css` — added CSS for `.ts-combobox__*`, `.ts-error-summary`, `.ts-form__actions`, plus forced-colours overrides.
+- `app/page.tsx` — now renders `<JourneyForm>` wrapped in `<Suspense>` (required for `useSearchParams`).
+- `app/results/page.tsx` — placeholder results page (the form target). Shows journey params; "under construction" message.
+
+Lint fixes applied:
+- Removed unused `fromName`/`toName` state from `JourneyForm` (the combobox manages its own display value internally).
+- Removed unused `generatedId`/`useId` from `StationCombobox`.
+- Changed `<ul role="listbox">` / `<li role="option">` to `<div role="listbox">` / `<div role="option">` to satisfy `jsx-a11y/no-noninteractive-element-to-interactive-role`. ARIA semantics are identical; `<div>` has no implicit role so the lint rule does not apply.
+
+**Verify:** Pass. `npm run verify` green: typecheck clean, lint clean, 60 unit tests (8 files), 2 Playwright a11y tests (home page + components demo).
+
+**Learned:**
+- `jsx-a11y/no-noninteractive-element-to-interactive-role` fires on `<ul role="listbox">` and `<li role="option">` because `<ul>` and `<li>` have implicit non-interactive roles ("list" and "listitem"). The fix is `<div role="listbox">` — `<div>` has no implicit role so the lint rule does not apply. ARIA behaviour is identical.
+- `useSearchParams()` in Next.js App Router must be inside a `<Suspense>` boundary at the server component level; otherwise Next.js throws a build-time error. The Suspense wrapper belongs in the server component (page.tsx), not inside the client component.
+- The option items need `tabIndex={-1}` (not focusable via Tab, but programmatically focusable) for the lint rule `interactive-supports-focus`. Focus is actually managed via `aria-activedescendant` on the combobox input — keyboard users never Tab into the listbox — but the lint rule still requires the option elements to be programmatically focusable.
+- The 320px / 400% zoom acceptance criterion was not independently verified in this iteration — the axe a11y test passes, and the CSS uses fluid units and flex-wrap throughout, but a human visual check at 320px should still happen in P1-07.
+
+**Next:** P1-04 done unblocks P1-05 (journey timeline, text-equivalent first, developer). P1-05 is the next highest-priority unblocked task. P2-02 (track geometry) is also unblocked (depends only on P1-03) and has no credentials dependency — worth dispatching in parallel if the loop permits.
