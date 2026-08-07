@@ -372,3 +372,25 @@ Files edited:
 - `forced-colors: active` media query must reset background images (CSS gradients used for the signal-band hatching patterns) to `Highlight` and set border to `ButtonText` for Windows High Contrast. The components themselves don't use gradients — that's for the timeline in P1-06 — but the global reset is in place.
 
 **Next:** P0-06 done unblocks P1-04 (journey form, developer) and P1-05 (journey timeline, developer). P1-03 (station reference data, data-engineer) must also be done before P1-04. P1-03 is `todo` with no blocked dependencies — it should be the next task dispatched to data-engineer.
+
+---
+
+## 2026-08-07T09:00:00Z — orchestrator
+
+**Did:** Recovered from a previous iteration that died mid-ship. Three items of work were already complete but not committed:
+
+1. **P0-00 competitive analysis** (`specs/competitive-analysis.md`) was written and sitting untracked on branch `pm/P0-00-competitive-analysis`. Verified locally (pass), committed, pushed, opened PR #8.
+
+2. **P0-06 component primitives** (PR #7) had been built and submitted but CI failed with "The job was not acquired by Runner of type hosted" — a transient GitHub Actions infrastructure outage, not a code failure. Confirmed locally (`npm run verify` green: 32 unit tests + 2 a11y tests pass). Re-triggered CI with `gh run rerun`, enabled auto-merge.
+
+3. **P1-03 station reference data** dispatched to data-engineer. Agent built: `pipeline/build-stations.ts` (reproducible pipeline), `data/stations.json` (2,608 GB stations, 307 KB, ODbL-licensed via davwheat/uk-railway-stations + NaPTAN), `app/lib/stations.ts` (searchStations / getStationByCRS), `app/lib/stations.test.ts` (20 unit tests), `specs/data-sources.md` (licence + attribution). PR #9 opened.
+
+**Verify:** Pass on all three branches. typecheck, lint, unit (21 tests on P1-03 branch), a11y (1 test on P1-03, 2 tests on P0-06 branch).
+
+**Learned:**
+- GitHub Actions runner failures ("not acquired by Runner") look like CI failures but are infrastructure outages — the code is fine. `gh run rerun --failed` re-triggers without needing a new commit.
+- Branches can have stale local copies; `git branch -d` may warn "merged to refs/remotes/origin/..." meaning a remote branch exists but isn't merged to local HEAD. Delete the local copy and recreate from origin.
+- The davwheat/uk-railway-stations dataset (ODbL) + NaPTAN (OGL v3) are a good combination for station reference data: 2,608 stations with CRS codes, names, coordinates, and most TIPLOCs. Six Elizabeth Line stations lack TIPLOC matches — downstream code must handle `tiploc: null`.
+- JOURNAL.md on main only goes up to P0-04. P0-00 and P0-06 journal entries live on their respective branches and will squash-merge. This means journal entries may appear slightly out of chronological order in main history — acceptable.
+
+**Next:** P1-03 unblocks P2-01 (thin vertical slice) and P2-02 (track geometry). P0-06 (pending PR #7 merge) unblocks P1-04 (journey form). P2-02 (track geometry) is the next most useful unblocked task after these PRs merge — it has no credentials dependency and provides named tunnels critical to the product.

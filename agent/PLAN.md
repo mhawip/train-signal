@@ -181,15 +181,15 @@ first.
 
 ### P1-03 — Station reference data
 - **owner:** data-engineer
-- **status:** todo
+- **status:** done
 - **depends:** P0-03
 - **why:** Needed for the form's station search. Independent of credentials, so it can
   proceed while Q1/Q2 are outstanding.
 - **acceptance:**
-  - [ ] All GB stations: name, CRS, TIPLOC, coordinates
-  - [ ] Search handles partial matches, abbreviations, and common misspellings
-  - [ ] Disambiguates same-named stations
-  - [ ] Committed to `data/`, small enough to ship to the client
+  - [x] All GB stations: name, CRS, TIPLOC, coordinates
+  - [x] Search handles partial matches, abbreviations, and common misspellings
+  - [x] Disambiguates same-named stations
+  - [x] Committed to `data/`, small enough to ship to the client
 
 ### P1-04 — Journey form
 - **owner:** developer
