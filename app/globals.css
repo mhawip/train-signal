@@ -246,3 +246,224 @@ p {
     scroll-behavior: auto !important;
   }
 }
+
+/* ================================================================
+ * COMPONENT STYLES
+ *
+ * Form primitives: TextInput, Combobox, DateTimeInput, RadioGroup,
+ * Button. Each enforces the 44px minimum target size (2.5.5) and
+ * uses design tokens for consistent contrast and spacing.
+ * ================================================================ */
+
+/* --- Visually hidden (accessible to screen readers) --- */
+.ts-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* --- Field wrapper --- */
+.ts-field {
+  margin-bottom: var(--space-4);
+}
+
+/* Reset fieldset styling when used as a field wrapper */
+fieldset.ts-field {
+  border: none;
+  padding: 0;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.ts-field__label {
+  display: block;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  margin-bottom: var(--space-1);
+  color: var(--color-page-fg);
+}
+
+/* When a legend is used as the label (fieldset groups) */
+legend.ts-field__label {
+  padding: 0;
+  float: left;
+  width: 100%;
+  margin-bottom: var(--space-1);
+}
+
+/* Clear the float from the legend so subsequent content flows normally */
+legend.ts-field__label + * {
+  clear: both;
+}
+
+.ts-field__hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-bottom: var(--space-1);
+}
+
+.ts-field__error {
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+/* Only show error text when it has content.
+ * The element is always in the DOM for aria-live announcements,
+ * but takes no space when empty. */
+.ts-field__error:empty {
+  display: none;
+}
+
+/* --- Text input / Combobox --- */
+.ts-field__input {
+  display: block;
+  width: 100%;
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  line-height: var(--line-height-body);
+  color: var(--color-page-fg);
+  background-color: var(--color-field-bg);
+  border: 2px solid var(--color-field-border);
+  border-radius: var(--radius-sm);
+}
+
+.ts-field__input--error {
+  border-color: var(--color-error);
+}
+
+/* --- DateTimeInput --- */
+.ts-datetime__inputs {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.ts-datetime__group {
+  flex: 1;
+  min-width: 8rem;
+}
+
+/* --- RadioGroup --- */
+.ts-radiogroup__options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/*
+ * The label is the tap target for each radio option.
+ * min-height ensures 44px target size (2.5.5).
+ * Padding fills the target area so the whole label is clickable.
+ */
+.ts-radiogroup__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--color-field-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  color: var(--color-page-fg);
+}
+
+.ts-radiogroup__label:has(:checked) {
+  border-color: var(--color-focus);
+  background-color: var(--color-field-bg);
+}
+
+.ts-radiogroup__input {
+  /* Keep the native radio visible and accessible.
+   * Ensure the radio itself meets minimum size via width/height. */
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.ts-radiogroup__text {
+  font-size: var(--font-size-base);
+}
+
+/* --- Button --- */
+.ts-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--target-min);
+  min-width: var(--target-min);
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-body);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 2px solid var(--color-page-fg);
+}
+
+.ts-button--primary {
+  background-color: var(--color-page-fg);
+  color: var(--color-page-bg);
+}
+
+.ts-button--secondary {
+  background-color: var(--color-page-bg);
+  color: var(--color-page-fg);
+}
+
+.ts-button[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ================================================================
+ * FORCED COLOURS (Windows High Contrast Mode)
+ *
+ * In forced-colors mode, background colours and images are suppressed.
+ * We ensure all information remains visible through borders and
+ * system colours (1.4.8).
+ * ================================================================ */
+@media (forced-colors: active) {
+  .ts-field__input {
+    border-color: ButtonText;
+    background-color: ButtonFace;
+    color: ButtonText;
+  }
+
+  .ts-field__input--error {
+    border-color: Mark;
+  }
+
+  .ts-field__error {
+    color: Mark;
+  }
+
+  .ts-button {
+    border-color: ButtonText;
+  }
+
+  .ts-button--primary {
+    background-color: ButtonText;
+    color: ButtonFace;
+  }
+
+  .ts-radiogroup__label {
+    border-color: ButtonText;
+  }
+
+  .ts-radiogroup__label:has(:checked) {
+    border-color: Highlight;
+  }
+}
