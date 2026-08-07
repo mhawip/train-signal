@@ -181,7 +181,7 @@ first.
 
 ### P1-03 — Station reference data
 - **owner:** data-engineer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-03
 - **why:** Needed for the form's station search. Independent of credentials, so it can
   proceed while Q1/Q2 are outstanding.
