@@ -193,7 +193,7 @@ first.
 
 ### P1-04 — Journey form
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-06, P1-03
 - **why:** The entry point. Under 15 seconds from landing to submission.
 - **acceptance:**
