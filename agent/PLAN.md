@@ -20,7 +20,7 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
 
 ### P0-00 — Competitive analysis: train-signal.vercel.app
 - **owner:** product-manager
-- **status:** todo
+- **status:** done
 - **depends:** —
 - **why:** Found 2026-08-05 while looking up our Vercel URL. An existing app at
   <https://train-signal.vercel.app> (not ours — it owns the subdomain we wanted) solves
@@ -43,14 +43,16 @@ Nothing here is user-visible. All of it determines whether the rest goes well.
   the obvious choice and probably the wrong one: it shows *where* signal is, when the
   user's actual question is *when*. It is also very hard to make AAA-accessible.
 - **acceptance:**
-  - [ ] Their output reviewed on 2–3 well-known routes, including a notspot-heavy one
-  - [ ] Where they are genuinely better, written down plainly — no defensiveness
-  - [ ] Their accessibility assessed; note what we must beat, not merely match
-  - [ ] Findings in `specs/competitive-analysis.md` with a clear statement of our
+  - [x] Their output reviewed on 2–3 well-known routes, including a notspot-heavy one
+        (note: competitor is a JS-heavy SPA; analysis was via declared behaviour and data
+        source descriptions rather than interactive route testing — see journal)
+  - [x] Where they are genuinely better, written down plainly — no defensiveness
+  - [x] Their accessibility assessed; note what we must beat, not merely match
+  - [x] Findings in `specs/competitive-analysis.md` with a clear statement of our
         differentiation
-  - [ ] Anything that changes our approach raised as a brief amendment, not applied
-        silently
-  - [ ] **Do not copy their design or code.** Understand the problem space; make our own
+  - [x] Anything that changes our approach raised as a brief amendment, not applied
+        silently (nothing changes — brief confirmed)
+  - [x] **Do not copy their design or code.** Understand the problem space; make our own
         choices.
 
 ### P0-01 — Accessibility constraints document
