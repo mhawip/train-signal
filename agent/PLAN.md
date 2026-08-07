@@ -209,7 +209,7 @@ first.
 
 ### P1-05 — Journey timeline, text-equivalent first
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-06, P1-04
 - **why:** The accessible table is the primary representation. Building it first
   guarantees it's genuinely first-class rather than a retrofitted fallback.
