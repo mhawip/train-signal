@@ -513,6 +513,131 @@ legend.ts-field__label + * {
 }
 
 /* ================================================================
+ * RESULTS PAGE
+ *
+ * Skip link, back link, notice banner, and the journey details table.
+ * ================================================================ */
+
+/* --- Skip link (2.4.1) ---
+ * Visually hidden until focused, then shown at the top of the viewport.
+ * Meets 44px target size (2.5.5). */
+.ts-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 100;
+  padding: var(--space-3) var(--space-4);
+  background-color: var(--color-page-fg);
+  color: var(--color-page-bg);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  text-decoration: none;
+  min-height: var(--target-min);
+  display: inline-flex;
+  align-items: center;
+}
+
+.ts-skip-link:focus {
+  position: fixed;
+  top: var(--space-2);
+  left: var(--space-2);
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+
+/* --- Notice banner (informational, not an error) --- */
+.ts-notice {
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-field-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-page-fg);
+  background-color: var(--color-page-bg);
+  margin-bottom: var(--space-6);
+}
+
+/* --- Back link (44px target via padding, 2.5.5) --- */
+.ts-back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-base);
+  color: var(--color-focus);
+  text-decoration: underline;
+}
+
+/* --- Results page navigation --- */
+.ts-results-nav {
+  margin-top: var(--space-6);
+}
+
+/* ================================================================
+ * JOURNEY DETAILS TABLE
+ *
+ * Semantic HTML table for the text-equivalent timeline.
+ * This is the primary accessible representation of the journey
+ * (specs/accessibility.md section 7).
+ *
+ * WCAG requirements:
+ * - 1.3.1: <caption>, <thead>, <th scope>, <tfoot>
+ * - 1.4.6: All text 7:1 -- #1a1a1a on #ffffff = 17.40:1
+ * - 1.4.8: line-height 1.5, no justified text, max 80ch
+ * - 1.4.10: overflow-x: auto on wrapper for 320px reflow
+ * ================================================================ */
+
+/* Wrapper provides horizontal scroll at narrow viewports.
+ * role="region" and tabindex="0" are set in the component
+ * so it is keyboard-scrollable (specs/accessibility.md 7.4). */
+.ts-table-wrapper {
+  overflow-x: auto;
+  margin-bottom: var(--space-6);
+}
+
+.ts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
+}
+
+.ts-table__caption {
+  caption-side: top;
+  text-align: left;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  padding: var(--space-2) var(--space-2) var(--space-3);
+  color: var(--color-page-fg);
+}
+
+.ts-table th,
+.ts-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  color: var(--color-page-fg);
+  border-bottom: 1px solid var(--color-field-border);
+}
+
+.ts-table thead th {
+  font-weight: var(--font-weight-bold);
+  border-bottom: 2px solid var(--color-field-border);
+}
+
+.ts-table tfoot th,
+.ts-table tfoot td {
+  font-weight: var(--font-weight-bold);
+  border-bottom: none;
+  border-top: 2px solid var(--color-field-border);
+}
+
+.ts-table tbody th {
+  font-weight: var(--font-weight-normal);
+}
+
+/* ================================================================
  * FORCED COLOURS (Windows High Contrast Mode)
  *
  * In forced-colors mode, background colours and images are suppressed.
@@ -569,5 +694,15 @@ legend.ts-field__label + * {
   .ts-error-summary__heading,
   .ts-error-summary__list a {
     color: Mark;
+  }
+
+  .ts-table th,
+  .ts-table td {
+    border-color: ButtonText;
+  }
+
+  .ts-skip-link {
+    background-color: Highlight;
+    color: HighlightText;
   }
 }

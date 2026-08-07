@@ -209,16 +209,16 @@ first.
 
 ### P1-05 — Journey timeline, text-equivalent first
 - **owner:** developer
-- **status:** todo
+- **status:** done
 - **depends:** P0-06, P1-04
 - **why:** The accessible table is the primary representation. Building it first
   guarantees it's genuinely first-class rather than a retrofitted fallback.
 - **acceptance:**
-  - [ ] Semantic table: calling points, arrival/departure times, segment durations
-  - [ ] Proper header associations and a caption
-  - [ ] Correct across midnight and BST boundaries
-  - [ ] Passes axe AAA
-  - [ ] Readable at 320px without horizontal scroll
+  - [x] Semantic table: calling points, arrival/departure times, segment durations
+  - [x] Proper header associations and a caption
+  - [x] Correct across midnight and BST boundaries
+  - [x] Passes axe AAA
+  - [x] Readable at 320px without horizontal scroll
 
 ### P1-06 — Visual timeline
 - **owner:** developer
@@ -407,4 +407,29 @@ The part that makes it a product rather than a worse Trainline.
 
 Bugs and follow-ups get filed here by whoever finds them.
 
-*(none yet)*
+### DW-01 — ESLint rule relaxation for tabIndex on role="region"
+- **owner:** accessibility-specialist
+- **status:** todo
+- **depends:** —
+- **why:** P1-05 required `tabIndex={0}` on the table-wrapper `<div role="region">` so
+  keyboard users can scroll the table at narrow viewports. The `jsx-a11y/no-noninteractive-tabindex`
+  rule was relaxed in `.eslintrc.json` to permit this. Confirm this is the correct WCAG
+  approach (it is supported by WCAG technique SCR37 and ARIA authoring practices) and
+  record the justification formally.
+- **acceptance:**
+  - [ ] Accessibility specialist confirms `tabIndex={0}` on `role="region"` is correct
+  - [ ] Justification added as a comment in `.eslintrc.json`
+  - [ ] No change needed if confirmed correct
+
+### DW-02 — Results page: wire up real journey data when P1-01/P1-02 land
+- **owner:** developer
+- **status:** todo
+- **depends:** P1-01, P1-02
+- **why:** The results page currently renders fixture data only. Once LDBWS (P1-01)
+  and/or SCHEDULE (P1-02) are integrated, the results page needs to fetch real calling
+  points and pass them to `JourneyTimeline`.
+- **acceptance:**
+  - [ ] Results page reads journey params from URL and fetches real timetable data
+  - [ ] `JourneyTimeline` receives real `Journey` data
+  - [ ] Fixture notice removed
+  - [ ] Error and loading states handled

@@ -447,3 +447,31 @@ Lint fixes applied:
 - The 320px / 400% zoom acceptance criterion was not independently verified in this iteration — the axe a11y test passes, and the CSS uses fluid units and flex-wrap throughout, but a human visual check at 320px should still happen in P1-07.
 
 **Next:** P1-04 done unblocks P1-05 (journey timeline, text-equivalent first, developer). P1-05 is the next highest-priority unblocked task. P2-02 (track geometry) is also unblocked (depends only on P1-03) and has no credentials dependency — worth dispatching in parallel if the loop permits.
+
+---
+
+## 2026-08-07T14:30:00Z — P1-05 — developer
+
+**Did:** Built the journey timeline text-equivalent table, making it the primary accessible representation of the results page.
+
+Files created:
+- `app/lib/journey-types.ts` — `CallingPoint` and `Journey` TypeScript interfaces
+- `app/components/JourneyTimeline.tsx` — server component rendering a semantic `<table>` with `<caption>`, `<thead>` (`<th scope="col">`), `<tbody>` (`<th scope="row">` per station), `<tfoot>` (total duration). Exports `parseTimeToMinutes`, `elapsedMinutes`, `formatDuration` utilities. Midnight crossing handled correctly in elapsed time arithmetic.
+- `app/components/JourneyTimeline.test.tsx` — 18 unit tests covering time parsing, elapsed time, duration formatting, midnight crossing, row count, en dashes for origin/terminus, caption content
+- `e2e/results.spec.ts` — Playwright axe-core test for the results page, 0 AAA violations
+
+Files modified:
+- `app/results/page.tsx` — replaced placeholder with: `generateMetadata` for dynamic title, skip link to `#journey-table`, `<h1>` with journey description, fixture notice paragraph, `<JourneyTimeline>` with Leeds→KGX fixture, "Back to search" nav link meeting 44px target
+- `app/globals.css` — added `.ts-skip-link`, `.ts-notice`, `.ts-back-link`, `.ts-results-nav`, `.ts-table-wrapper` (overflow-x: auto), `.ts-table`, `.ts-table__caption`, table header/body/footer cell styles, forced-colors support
+- `.eslintrc.json` — relaxed `jsx-a11y/no-noninteractive-tabindex` to allow `tabIndex` on `role="region"` elements (required for keyboard-scrollable table wrapper)
+
+**Verify:** Pass. `npm run verify` green: typecheck clean, lint clean, 78 unit tests (9 files), 3 Playwright a11y tests (0 violations on home, components-demo, and results pages).
+
+**Learned:**
+- The table wrapper needs `role="region"`, `aria-label`, and `tabIndex={0}` so keyboard users who cannot use a mouse can scroll the table horizontally at narrow viewports (320px). This triggers `jsx-a11y/no-noninteractive-tabindex`, but `role="region"` is a landmark role so it is interactive in the accessibility sense — the ESLint rule is overly strict here. The correct fix is a lint exception, not removing `tabIndex`.
+- A `<tfoot>` for total duration is valuable — it gives screen reader users a clear summary without having to navigate back through all rows, and it is semantic HTML that assistive technologies understand natively.
+- The midnight crossing test case is critical: if stop 2 arrives at 00:20 and origin departed at 23:45, naive subtraction gives a negative number. Fix: if elapsed < 0, add 1440 (minutes in a day). This covers same-night services.
+- `generateMetadata` in Next.js App Router receives `searchParams` as a `Promise` — must be awaited exactly as in `page.tsx`. Reusing the same async pattern from the page component avoids a second implementation.
+- The fixture journey (Leeds→KGX) is hardcoded because P1-01 and P1-02 are blocked on credentials. A disclaimer notice makes this transparent to users and avoids confusion. DW-02 tracks the wire-up once APIs are available.
+
+**Next:** P1-05 done unblocks P1-06 (visual timeline, developer). P1-07 (accessibility review of Phase 1) depends on P1-04, P1-05, P1-06 — can be dispatched after P1-06 lands. P2-02 (track geometry) has no credential dependency and is also ready to dispatch.
