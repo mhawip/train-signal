@@ -222,7 +222,7 @@ first.
 
 ### P1-06 — Visual timeline
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-04, P1-05
 - **why:** Progressive enhancement over the table, for people who want the shape of the
   journey at a glance.
