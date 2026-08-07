@@ -428,6 +428,90 @@ legend.ts-field__label + * {
   cursor: not-allowed;
 }
 
+/* --- StationCombobox --- */
+.ts-combobox__wrapper {
+  position: relative;
+}
+
+/* The listbox uses display:none via the [hidden] attribute controlled by React.
+ * These styles apply when the listbox is visible. */
+.ts-combobox__listbox {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  list-style: none;
+  margin: 0;
+  padding: var(--space-1) 0;
+  background-color: var(--color-field-bg);
+  border: 2px solid var(--color-field-border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.ts-combobox__option {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  font-size: var(--font-size-base);
+  color: var(--color-page-fg);
+  min-height: var(--target-min);
+}
+
+.ts-combobox__option--active {
+  background-color: var(--color-focus);
+  color: var(--color-page-bg);
+}
+
+.ts-combobox__option-name {
+  flex: 1;
+}
+
+.ts-combobox__option-crs {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+.ts-combobox__option--active .ts-combobox__option-crs {
+  color: var(--color-page-bg);
+}
+
+/* --- Error summary (shown at top of form when validation fails) --- */
+.ts-error-summary {
+  padding: var(--space-4);
+  border: 3px solid var(--color-error);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-6);
+}
+
+.ts-error-summary__heading {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-error);
+  margin-bottom: var(--space-2);
+}
+
+.ts-error-summary__list {
+  list-style: disc;
+  padding-left: var(--space-6);
+}
+
+.ts-error-summary__list a {
+  color: var(--color-error);
+  font-size: var(--font-size-base);
+}
+
+/* --- Form actions (submit button row) --- */
+.ts-form__actions {
+  margin-top: var(--space-6);
+}
+
 /* ================================================================
  * FORCED COLOURS (Windows High Contrast Mode)
  *
@@ -465,5 +549,25 @@ legend.ts-field__label + * {
 
   .ts-radiogroup__label:has(:checked) {
     border-color: Highlight;
+  }
+
+  .ts-combobox__listbox {
+    border-color: ButtonText;
+    background-color: ButtonFace;
+  }
+
+  .ts-combobox__option--active {
+    background-color: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  .ts-error-summary {
+    border-color: Mark;
+  }
+
+  .ts-error-summary__heading,
+  .ts-error-summary__list a {
+    color: Mark;
   }
 }
