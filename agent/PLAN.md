@@ -222,16 +222,16 @@ first.
 
 ### P1-06 — Visual timeline
 - **owner:** developer
-- **status:** in-progress
+- **status:** done
 - **depends:** P0-04, P1-05
 - **why:** Progressive enhancement over the table, for people who want the shape of the
   journey at a glance.
 - **acceptance:**
-  - [ ] Vertical timeline, calling points anchored with times
-  - [ ] Built to the design system
-  - [ ] Legible in greyscale
-  - [ ] Decorative elements hidden from assistive tech; no duplicate announcements
-  - [ ] Respects `prefers-reduced-motion`
+  - [x] Vertical timeline, calling points anchored with times
+  - [x] Built to the design system
+  - [x] Legible in greyscale
+  - [x] Decorative elements hidden from assistive tech; no duplicate announcements
+  - [x] Respects `prefers-reduced-motion`
 
 ### P1-07 — Accessibility review of Phase 1
 - **owner:** accessibility-specialist

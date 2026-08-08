@@ -638,6 +638,115 @@ legend.ts-field__label + * {
 }
 
 /* ================================================================
+ * VISUAL TIMELINE
+ *
+ * Decorative vertical timeline showing journey shape: stations,
+ * times, and proportional segment heights. This is a progressive
+ * enhancement over the text-equivalent table.
+ *
+ * The entire component is aria-hidden="true" -- screen readers
+ * use the table. See specs/accessibility.md section 6.
+ *
+ * Signal bands are not shown yet (Phase 2). Segments use a
+ * neutral grey to show journey structure only.
+ * ================================================================ */
+
+.ts-visual-timeline {
+  margin-bottom: var(--space-8);
+}
+
+.ts-visual-timeline__heading {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  margin-bottom: var(--space-4);
+}
+
+.ts-visual-timeline__track {
+  padding-left: var(--space-2);
+}
+
+/* Each segment group contains: stop (node + label), segment bar,
+ * and optionally a final stop for the last segment. */
+.ts-visual-timeline__segment-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* A stop is a station node + label, displayed in a row */
+.ts-visual-timeline__stop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: var(--space-6);
+}
+
+/* Station node: a circle on the timeline spine.
+ * Intermediate stations are filled circles. */
+.ts-visual-timeline__node {
+  width: 0.75rem;  /* 12px */
+  height: 0.75rem;
+  border-radius: 50%;
+  background-color: var(--color-page-fg);
+  flex-shrink: 0;
+  border: 2px solid var(--color-page-fg);
+}
+
+/* Terminus nodes (origin and destination) are hollow rings,
+ * visually distinct from intermediate filled circles. */
+.ts-visual-timeline__node--terminus {
+  width: 1rem;  /* 16px — slightly larger */
+  height: 1rem;
+  background-color: var(--color-page-bg);
+  border: 3px solid var(--color-page-fg);
+  /* Negative margin to keep alignment with smaller nodes */
+  margin-left: -0.125rem;
+}
+
+/* Label block: station name and time side by side */
+.ts-visual-timeline__label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.ts-visual-timeline__station-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-page-fg);
+}
+
+.ts-visual-timeline__time {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+/* Segment: the vertical bar between station nodes.
+ * Height is set inline (proportional to duration).
+ * Uses a neutral colour since signal bands are Phase 2. */
+.ts-visual-timeline__segment {
+  width: 4px;
+  /* Centre the bar under the node circle (12px / 2 - 4px / 2 = 4px offset) */
+  margin-left: calc(0.375rem - 2px);
+  background-color: var(--color-field-border);
+  border-left: 1px solid var(--band-border);
+  border-right: 1px solid var(--band-border);
+}
+
+/* At 320px viewport, the timeline must still fit without
+ * horizontal scroll (1.4.10). Station names wrap naturally
+ * because the label uses flex-wrap. */
+@media (max-width: 20rem) {
+  .ts-visual-timeline__label {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+/* ================================================================
  * FORCED COLOURS (Windows High Contrast Mode)
  *
  * In forced-colors mode, background colours and images are suppressed.
@@ -704,5 +813,22 @@ legend.ts-field__label + * {
   .ts-skip-link {
     background-color: Highlight;
     color: HighlightText;
+  }
+
+  /* Visual timeline: ensure borders remain visible when
+   * background colours are suppressed (specs/accessibility.md 6.4). */
+  .ts-visual-timeline__node {
+    border-color: ButtonText;
+    background-color: ButtonText;
+  }
+
+  .ts-visual-timeline__node--terminus {
+    border-color: ButtonText;
+    background-color: ButtonFace;
+  }
+
+  .ts-visual-timeline__segment {
+    border-color: ButtonText;
+    background-color: ButtonText;
   }
 }
