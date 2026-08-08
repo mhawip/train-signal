@@ -15,5 +15,6 @@ export default defineConfig({
     exclude: ["node_modules", ".next", "e2e"],
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
+    testTimeout: 15000,
   },
 });

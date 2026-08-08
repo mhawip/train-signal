@@ -502,3 +502,95 @@ Note: `npm run build` fails locally with a `<Html>` prerender error on `/500` an
 - The local build failure (`<Html>` import error on static error pages) is caused by the non-standard local `NODE_ENV` and does not affect CI. Worth noting in QUESTIONS.md if it becomes a blocker, but the `npm run dev` path works.
 
 **Next:** P1-06 done completes all dependencies for P1-07 (accessibility review of Phase 1, accessibility-specialist). P1-07 is now the highest-priority `todo` task. Also newly unblocked: nothing new — P2-00 (RDM yellow train evaluation) has no dependencies and is worth picking up in parallel.
+
+---
+
+## 2026-08-08T12:30:00Z — P1-07 — accessibility-specialist
+**Did:** Completed the Phase 1 accessibility review: a full criterion-by-criterion audit
+of the home page (journey form) and results page (text-equivalent table + visual
+timeline) against every applicable WCAG 2.2 AAA criterion.
+
+**Three changes made:**
+
+1. **DW-01 confirmed and documented.** `tabIndex={0}` on `role="region"` is the correct
+   WCAG approach for keyboard-scrollable table wrappers. Migrated `.eslintrc.json` to
+   `.eslintrc.cjs` so the rule exception has a proper comment citing WCAG technique SCR37
+   and the WAI-ARIA Authoring Practices Guide.
+
+2. **1.4.8 paragraph spacing fixed.** `p { margin-bottom: 1.5em }` (24px at 16px base)
+   failed the 1.4.8 requirement for paragraph spacing at least 1.5x line spacing. With
+   `line-height: 1.5` (24px), required spacing is 36px = 2.25em. Changed to `2.25em`.
+
+3. **Vitest testTimeout increased to 15000ms.** The default 5000ms was causing transient
+   first-test timeouts in every component test file due to jsdom environment
+   initialization overhead. Not an accessibility issue but required to make
+   `npm run verify` pass reliably.
+
+**Two findings filed as new tasks:**
+
+- **DW-03:** Missing `<header>` and `<footer>` landmarks in `app/layout.tsx`. Our own
+  spec (accessibility.md 2.2, 1.3.1) requires them. Not a strict AAA criterion breach
+  (no single criterion mandates specific landmark types), but they are needed for the
+  accessibility statement page (P3-03) and for consistent site identification.
+
+- **DW-04:** No skip link on the home page. Currently not needed (nothing to skip), but
+  will be required once DW-03 adds a header. Depends on DW-03.
+
+**Audit summary — what passed:**
+
+- **1.1.1:** Visual timeline `aria-hidden="true"` correctly hides decorative content.
+- **1.3.1:** Table uses `<caption>`, `<th scope="col">`, `<th scope="row">`, `<tfoot>`.
+  Form uses `<fieldset>`, `<legend>`, `<label>`. Heading hierarchy correct (h1, h2).
+- **1.3.5/1.3.6:** No personal data fields; `autocomplete="off"` on station search is
+  acceptable. All landmarks and components have programmatic purpose.
+- **1.4.1:** Visual timeline has no signal bands yet (Phase 2). Decorative spine only.
+  Greyscale test is moot until signal bands are rendered. Filed no issue because the
+  design system already specifies pattern + icon + label redundancy.
+- **1.4.6:** Body text #1a1a1a on #ffffff = 17.40:1. Muted #595959 on #ffffff = 7.00:1
+  (exact threshold). Error #6e1111 = 11.99:1. All pass.
+- **1.4.8:** Line height 1.5, max-width 40rem (~80ch), no justified text, paragraph
+  spacing fixed to 2.25em (36px). `forced-colors` overrides present.
+- **1.4.10:** Table wrapper has `overflow-x: auto` with `role="region"` + `tabIndex={0}`
+  for keyboard scrolling. Visual timeline uses `flex-wrap` and stacks at 320px.
+- **1.4.11:** Field borders #5c5c5c on #ffffff = 6.69:1 (need 3:1). Focus ring = 7.78:1.
+  Band borders and timeline nodes use page foreground (17.40:1).
+- **2.1.1/2.1.3:** Combobox supports ArrowDown/Up, Enter, Escape, Tab. No traps.
+- **2.2.3/3.2.5:** No auto-refresh, no timeouts, no animations. Reduced motion respected.
+- **2.4.1:** Skip link on results page works. Home page has no skip link but nothing to
+  skip (filed DW-04 for when header is added).
+- **2.4.2:** Page titles descriptive ("Train Signal -- Check your journey signal",
+  "Leeds to London Kings Cross, 14 August 2026 -- Train Signal").
+- **2.4.8:** User always knows where they are via page title and heading.
+- **2.4.9:** "Back to search" makes sense in isolation. "Skip to journey details" is
+  descriptive.
+- **2.4.13:** Focus ring 2px solid #0044cc, 2px offset, 7.78:1 contrast.
+- **2.5.5:** All targets meet 44px minimum via `min-height: var(--target-min)`.
+- **3.1.5:** All user-facing copy is plain English. Error messages name the field.
+- **3.3.1/3.3.6:** Error summary with `role="alert"`, focus management, field error
+  links. Submission is reversible (URL params preserved, back button works).
+- **4.1.2:** Combobox ARIA pattern correct: `role="combobox"`, `aria-expanded`,
+  `aria-activedescendant`, `aria-controls`, `aria-autocomplete="list"`.
+- **4.1.3:** Live region announces station search results. Error messages use
+  `aria-live="polite"`.
+
+**Verify:** Pass. `npm run verify` green: typecheck clean, lint clean, 87 unit tests
+passed, 3 Playwright AAA a11y tests passed (0 violations).
+
+**Learned:**
+- WCAG 1.4.8 paragraph spacing requires 1.5x the line spacing, not 1.5x the font size.
+  With `line-height: 1.5` on 16px text, line spacing is 24px, so paragraph spacing must
+  be at least 36px (2.25em), not 24px (1.5em). This is a common miscalculation.
+- `.eslintrc.json` does not support comments. Migrating to `.eslintrc.cjs` is the clean
+  solution when rule exceptions need documented justification. ESLint resolves the
+  config file automatically.
+- The Vitest default testTimeout of 5000ms is too tight for this machine when running
+  jsdom-environment component tests. The first test in each file pays the environment
+  setup cost. 15000ms gives headroom without masking genuinely slow tests.
+- Phase 1 is in solid shape for AAA. The two filed issues (DW-03, DW-04) are structural
+  improvements (landmarks and skip links) that become necessary when more chrome is added,
+  not current compliance failures. The real test comes in Phase 2 when signal bands land
+  on the timeline and 1.4.1 (use of colour) becomes the critical criterion.
+
+**Next:** P1-07 done. Phase 1 is complete. The next highest-priority unblocked tasks are
+P2-00 (evaluate RDM yellow-train product, data-engineer) and DW-03 (add landmarks,
+developer). P2-00 is more valuable because it determines the data strategy for Phase 2.
