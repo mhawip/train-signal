@@ -20,7 +20,8 @@ accumulates on disk, not in context.
 
 | File | Role |
 |---|---|
-| `PLAN.md` | The backlog. Ordered, owned, with acceptance criteria. **The loop's first read and last write.** |
+| `PLAN.md` | The backlog. Ordered, owned, with acceptance criteria. **The loop's first read and last write.** Active and blocked work only. |
+| `PLAN-ARCHIVE.md` | Full detail for every task marked `done`, moved out of `PLAN.md` so the file every loop reads in full doesn't grow without bound. `PLAN.md` keeps a one-line index; open the archive only when you need the history. |
 | `JOURNAL.md` | Append-only. What each loop actually did, including what failed. |
 | `QUESTIONS.md` | Escalations to Matt. Asking does not block — move to other work. |
 | `prompts/ralph.md` | The loop prompt. Identical every iteration. |

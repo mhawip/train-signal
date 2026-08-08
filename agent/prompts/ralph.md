@@ -38,6 +38,12 @@ and whose status is `todo`.
 Skip tasks that are `blocked`, `in-review`, or `done`. If a task has failed three
 times per the journal, mark it `blocked` with the reason and take the next one.
 
+Small discovered-work items that are tightly coupled — same file, same feature, neither
+worth anything shipped alone — may be filed and done as **one** task rather than several.
+Splitting a one-line header addition and a one-line footer addition into two tasks just
+pays dispatch/verify/PR overhead twice for no independent value. Don't bundle unrelated
+work to save iterations; do bundle work that would only ever ship together anyway.
+
 **If nothing is available:**
 - If tasks are blocked only on questions in `QUESTIONS.md`, find work that isn't. There
   is almost always something — tests, docs, refactoring, accessibility review.
@@ -107,9 +113,30 @@ If `gh` is unavailable or unauthenticated, commit to the branch, push, note it i
 
 ## 6. Record
 
-**`PLAN.md`** — mark the task `done`. Add any follow-up tasks discovered. If you built
-UI, file an `accessibility-specialist` review task. If you built a feature, file a `qa`
-test task.
+**`PLAN.md`** — mark the task `done`, then cut its full entry out of `PLAN.md` and paste
+it into `agent/PLAN-ARCHIVE.md` (same format), leaving a one-line pointer in the
+"Completed" index at the top of `PLAN.md`. This is what keeps the file every loop reads
+in full from growing forever. Add any follow-up tasks discovered.
+
+Decide whether the work needs an independent review dispatch, or can be self-certified:
+
+- **File an `accessibility-specialist` review task** for anything that introduces a new
+  component, a new visual treatment, a new interaction or keyboard pattern, or any new
+  use of colour. Same for anything you're not confident about — that's the safe default,
+  per `.claude/agents/developer.md`'s self-certification section.
+- **File a `qa` test task** for anything that changes what a user can do — a new
+  journey, a new state, a new edge case a user could hit.
+- **Self-certify instead** (no separate review task) only for small changes that reuse
+  existing, already-reviewed patterns unchanged and introduce no new visual treatment —
+  e.g. another instance of an existing labelled field, a landmark or skip link built to
+  the pattern `specs/accessibility.md` already specifies. When self-certifying: run the
+  automated a11y suite, and in the journal entry name the specific AAA criteria the
+  change touches and confirm each is met by the existing, already-reviewed pattern —
+  don't just assert it's fine.
+
+This narrows *how many extra dispatches a trivial change costs*, not *what AAA coverage
+requires* — every criterion still has to be met and stated, just without always paying
+for a second fresh-context agent to confirm what the spec already settled.
 
 **`JOURNAL.md`** — append one entry:
 

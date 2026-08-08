@@ -69,9 +69,25 @@ Use the browser tools to actually run what you built and confirm it works. Passi
 and a working app are not the same thing, and the gap between them is where the
 embarrassing bugs live.
 
-When you finish UI work, file an `accessibility-specialist` review task in
-`agent/PLAN.md`. Don't mark your own homework — you've been staring at it too long to
-see it clearly.
+When you finish UI work, decide whether it needs independent review.
+
+**File an `accessibility-specialist` review task** in `agent/PLAN.md` if the change
+introduces a new component, a new visual treatment, a new interaction or keyboard
+pattern, any new use of colour, or anything else genuinely novel. Don't mark your own
+homework on new ground — you've been staring at it too long to see it clearly.
+
+**Self-certify instead** — no separate review task — only when *all* of the following
+hold:
+- The change reuses an existing, already-reviewed primitive or pattern unchanged (e.g.
+  another instance of a labelled field already built, or a landmark/skip link built
+  exactly to what `specs/accessibility.md` already specifies).
+- It introduces no new visual treatment and no new interaction.
+- The automated a11y suite (`npm run test:a11y`) passes against it.
+- You can name, in the journal entry, the specific AAA criteria the change touches and
+  say plainly why the existing pattern already satisfies each one.
+
+If any of those don't hold, or you're not sure, file the review task — that's the safe
+default and costs one extra dispatch, not a compliance gap.
 
 ## Error handling
 
