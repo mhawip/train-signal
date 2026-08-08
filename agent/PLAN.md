@@ -40,6 +40,7 @@ and writes to it last.
 | P1-07 | Accessibility review of Phase 1 | accessibility-specialist |
 | DW-01 | ESLint rule relaxation for tabIndex on role="region" | accessibility-specialist |
 | P2-00 | Evaluate RDM yellow-train product | data-engineer |
+| P2-01 | Thin vertical slice: one route, one operator | data-engineer |
 
 ---
 
@@ -102,22 +103,6 @@ P1-03 through P1-07 are done — see the index above.
 # Phase 2 — Signal
 
 The part that makes it a product rather than a worse Trainline.
-
-### P2-01 — Thin vertical slice: one route, one operator
-- **owner:** data-engineer
-- **status:** in-progress
-- **depends:** P1-03, P2-00
-- **why:** **Highest-risk unknown in the project.** Prove the yellow-train data is dense
-  enough to give useful per-segment verdicts before building a pipeline on the
-  assumption that it is. Do this on a small sample — do not download 5.6 GB first.
-- **acceptance:**
-  - [ ] A sample of the chosen dataset obtained and inspected
-  - [ ] Column structure and MCC/MNC operator mapping documented
-  - [ ] One well-known route analysed end to end for one operator
-  - [ ] Measurement density per km quantified
-  - [ ] Findings written to `specs/signal-model.md`, including a clear verdict on
-        whether the approach is viable
-  - [ ] If not viable, escalate with alternatives rather than proceeding
 
 ### P2-02 — Track geometry and tunnels
 - **owner:** data-engineer

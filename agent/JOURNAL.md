@@ -635,3 +635,48 @@ AAA a11y tests all passed. (Markdown files only — no code change.)
 Ofcom LTE CSV schema, quantify measurement density on one route). DW-03 (header/footer
 landmarks + skip link) is also unblocked and can run in parallel with P2-01 since it's
 a developer task and P2-01 is a data-engineer task.
+
+## 2026-08-08T21:00Z — P2-01 — data-engineer
+**Did:**
+- Merged open PR #14 (P2-00) — all code quality checks were green; Vercel failure is the
+  known infra issue tracked as P0-05/Q4 and does not affect correctness.
+- Ran P2-01: downloaded a stratified 2.3% sample (~414,000 rows) from 10 evenly-spaced
+  positions across the 2.2 GB Ofcom LTE CSV, without downloading the full file.
+- Documented all 18 columns in `specs/signal-model.md`; confirmed operator mapping from
+  actual data (MNC 10=O2, 15=Vodafone, 20=Three, 30=EE). The `operator` column also
+  carries plain-text names.
+- Analysed measurement density on the ECML (Kings Cross to Leeds, 282 km): found
+  15,860 measurements in the 2.3% sample, extrapolating to ~700,000 in the full file
+  (~620 per operator per km average). Density varies 166–1,900 per km.
+- Confirmed `cal_rsrp` (calibrated RSRP) is the correct signal metric — it corrects for
+  per-train cable loss and antenna gain offsets.
+- Wrote viability verdict and confidence-tier thresholds (10+ measurements = confident;
+  3–9 = lower confidence, flag in UI; 0–2 = "No data available").
+- Added two analysis scripts: `pipeline/p2-01-analyse-sample.js` (first 5 MB sequential)
+  and `pipeline/p2-01-analyse-spread.js` (stratified sample across full file).
+- Archived P2-01 to PLAN-ARCHIVE.md; marked done in PLAN.md.
+
+**Verify:** Pass. `npm run verify` green: typecheck, lint, 87 unit tests, 3 Playwright
+AAA a11y tests all passed. (No application code changed — pipeline analysis scripts and
+specs only.)
+
+**Learned:**
+- The Ofcom LTE CSV has an `operator` column with plain-text names alongside MCC/MNC.
+  This makes operator filtering trivially easy — no need to maintain MCC/MNC lookup
+  tables for basic filtering.
+- Measurement density on trunk routes is excellent. The limiting factor for the product
+  is not density on major routes but absence of data on branch lines. The pipeline must
+  track measurement count per segment and degrade gracefully.
+- Ofcom pre-rationalised the data to at most one sample per 10 m, so spatial
+  de-duplication is already done.
+- `cal_rsrp` corrects for per-train cable and antenna offsets that vary by operator
+  and frequency band. The raw `rsrp` values should not be used directly.
+- Roof-height measurements partially offset the data vintage: networks improved since
+  2018–19, but roof-height signal is stronger than inside-carriage signal
+  (metalised windows attenuate 10–30 dB). The net effect is hard to quantify,
+  confirming that hedging language ("expected", "likely") is the correct product stance.
+
+**Next:** P2-01 done unblocks P2-03 (full signal pipeline). P2-02 (track geometry and
+tunnels) is also unblocked (depends only on P1-03). DW-03 (header/footer landmarks +
+skip link) has no dependencies and is also available. Priority order: P2-02 and P2-03
+are Phase 2 critical path; DW-03 is housekeeping that can run between data-engineer tasks.

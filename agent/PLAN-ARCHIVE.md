@@ -251,3 +251,23 @@ particular way, or its full original acceptance criteria).
         RDM product is very likely the same 2018–19 data; verification checklist for Matt
   - [x] If it supersedes the Ofcom route, update the brief and P2-01/P2-03 accordingly
         (not superseded based on available evidence; no changes to brief or P2-01/P2-03)
+
+---
+
+# Phase 2 — Signal
+
+### P2-01 — Thin vertical slice: one route, one operator
+- **owner:** data-engineer
+- **status:** done
+- **depends:** P1-03, P2-00
+- **why:** **Highest-risk unknown in the project.** Prove the yellow-train data is dense
+  enough to give useful per-segment verdicts before building a pipeline on the
+  assumption that it is. Do this on a small sample — do not download 5.6 GB first.
+- **acceptance:**
+  - [x] A sample of the chosen dataset obtained and inspected
+  - [x] Column structure and MCC/MNC operator mapping documented
+  - [x] One well-known route analysed end to end for one operator
+  - [x] Measurement density per km quantified
+  - [x] Findings written to `specs/signal-model.md`, including a clear verdict on
+        whether the approach is viable
+  - [x] Approach confirmed viable; no need to escalate
