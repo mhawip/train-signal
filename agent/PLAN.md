@@ -254,7 +254,7 @@ The part that makes it a product rather than a worse Trainline.
 
 ### P2-00 — Evaluate the Rail Data Marketplace yellow-train product
 - **owner:** data-engineer
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** Discovered 2026-08-05 while helping Matt navigate RDM. The catalogue contains
   **NWR Yellow Train Mobile Network Measurements** (Network Rail, OPEN, file-based):
