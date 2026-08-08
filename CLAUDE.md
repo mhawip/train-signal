@@ -17,7 +17,12 @@ single best window to book a meeting in.
 These are not preferences. Work that breaches them does not merge.
 
 1. **WCAG 2.2 Level AAA.** Every page, every state, every component. This is a design
-   input, not a QA gate. See [specs/accessibility.md](specs/accessibility.md).
+   input, not a QA gate. See [specs/accessibility.md](specs/accessibility.md). Every
+   change is checked against every applicable criterion — always. What varies is only
+   *who* checks it: novel UI gets an independent `accessibility-specialist` review;
+   small reuse of already-reviewed patterns may be self-certified by the developer
+   against the same criteria. See the self-certification section in
+   [.claude/agents/developer.md](.claude/agents/developer.md).
 2. **Never claim accuracy we don't have.** The signal data is a 2018–19 measurement
    snapshot. Language is always "expected" or "likely", never "you will have signal".
    Where measurement density is low, we say so rather than inventing a verdict.

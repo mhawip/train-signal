@@ -11,6 +11,35 @@ accessibility specialist.
 
 ---
 
+## Quick reference
+
+The tokens most tasks actually need, without reading the reasoning behind each one. For
+a new component or visual treatment, read the relevant full section — the reasoning is
+what keeps the next decision consistent with this one.
+
+| Token | Light | Dark |
+|---|---|---|
+| `--color-page-bg` / `--color-page-fg` | `#ffffff` / `#1a1a1a` | `#121212` / `#e8e8e8` |
+| `--color-field-border` | `#5c5c5c` | `#999999` |
+| `--color-focus` | `#0044cc` | `#6699ff` |
+| `--color-error` | `#6e1111` | `#ff9999` |
+| `--color-muted` | `#595959` | `#a0a0a0` |
+
+| Rule | Value |
+|---|---|
+| Spacing base | 4px (`--space-1` = 4px … `--space-12` = 48px) |
+| Interactive target minimum | `--target-min` = 2.75rem (44px) |
+| Focus ring | `outline: 2px solid var(--color-focus); outline-offset: 2px` |
+| Line length | `--max-width-text` = 40rem (~80ch) |
+| Body line height | 1.5 (`--line-height-body`) |
+| Font stack | System fonts only — no web font |
+| Border radius | `--radius-sm` 4px (inputs), `--radius-md` 8px (cards) |
+
+Signal band colours, patterns and the full contrast matrix are in sections 4 and 8 — a
+new band treatment or a new colour pairing needs those, not just this table.
+
+---
+
 ## Contents
 
 1. [Palette](#1-palette)

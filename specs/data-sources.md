@@ -82,6 +82,31 @@ include attribution regardless.
 
 ---
 
+## RDM NWR Yellow Train Mobile Network Measurements (under evaluation)
+
+| Field | Value |
+|---|---|
+| URL | https://raildata.org.uk/dataProduct/P-8e7dbe99-011d-431e-85ad-06efc77217fc/overview |
+| Publisher | Network Rail |
+| Data | "filtered 2G, 4G and 5G mobile network measurements collected from Yellow Train surveys" |
+| Licence | Listed as OPEN in the RDM catalogue; exact terms require sign-in to confirm |
+| Attribution | Unknown until licence terms are verified |
+| Share-alike | Unknown until licence terms are verified |
+| Status | **Not yet integrated. Under evaluation (P2-00).** |
+
+**Current assessment (August 2026):** This product likely contains the same underlying
+data as the Ofcom yellow-train download (June 2018 -- June 2019 measurements), possibly
+re-hosted or lightly pre-processed by Network Rail. The "5G" in the description is likely
+a schema capability rather than actual 5G measurements, since the original programme
+predated UK 5G deployment. Full details require sign-in -- see the verification checklist
+in `specs/signal-model.md`.
+
+If this product turns out to contain genuinely newer measurements or useful
+pre-processing, it may replace or supplement the Ofcom download as the primary signal
+data source.
+
+---
+
 ## UI attribution requirements
 
 The following attribution text must appear in the application (e.g. in a footer or

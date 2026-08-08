@@ -14,6 +14,39 @@ requirements, not suggestions.
 
 ---
 
+## Quick reference
+
+The concrete numbers, for anyone who already knows the shape of the problem and just
+needs the value. This is not a substitute for the full document — for a new component,
+a new visual treatment, a new interaction pattern, or anything involving colour or the
+signal bands, read the relevant full section below. But for a small change that reuses
+an existing pattern unchanged (another labelled field, a landmark, a skip link built to
+the pattern already specified here), this table plus the automated a11y suite is
+normally enough to self-certify against — see `.claude/agents/developer.md`.
+
+| Rule | Value |
+|---|---|
+| Body text contrast | 7:1 (1.4.6) |
+| Large text contrast (≥24px, or ≥18.67px bold) | 4.5:1 (1.4.6) |
+| Non-text / UI component contrast | 3:1 against adjacent colours (1.4.11) |
+| Focus indicator | 2px, 3:1 against both adjacent colours, visible always (2.4.13) |
+| Interactive target size | 44×44 CSS px minimum (2.5.5) |
+| Line length | 80 characters max (1.4.8) |
+| Line height / paragraph spacing | 1.5× / 1.5× line height (1.4.8) |
+| Reading level | Flesch-Kincaid Grade 6–8 (3.1.5) |
+| Colour | Never the only cue — pattern + icon + text label on every signal band (1.4.1) |
+| Skip link | First focusable element on every page (2.4.1) |
+| Landmarks required | `<main>`, `<header>`, `<footer>`, `<form>` (own convention, section 2.2) |
+| Autocomplete | Required on personal-data fields; never `off` without a documented security reason (1.3.5) |
+| Motion | Everything respects `prefers-reduced-motion`; nothing auto-plays, times out, or moves unprompted (2.2.x, 2.3.x) |
+| Status changes (loading, results, errors) | `aria-live`, not focus-stealing (4.1.3) |
+| Form errors | Named in text, adjacent to the field and in a summary, input preserved (3.3.1, 3.3.6) |
+
+Automated tooling (axe-core at `wcag2aaa`) catches roughly a third of AAA issues — see
+section 8 for exactly what it does and doesn't cover. It is necessary, never sufficient.
+
+---
+
 ## Contents
 
 1. [Product surfaces and their risks](#1-product-surfaces-and-their-risks)
