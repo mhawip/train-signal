@@ -235,7 +235,7 @@ first.
 
 ### P1-07 — Accessibility review of Phase 1
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** P1-04, P1-05, P1-06
 - **why:** Independent audit before signal data lands on top.
 - **acceptance:**
