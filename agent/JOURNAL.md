@@ -594,3 +594,44 @@ passed, 3 Playwright AAA a11y tests passed (0 violations).
 **Next:** P1-07 done. Phase 1 is complete. The next highest-priority unblocked tasks are
 P2-00 (evaluate RDM yellow-train product, data-engineer) and DW-03 (add landmarks,
 developer). P2-00 is more valuable because it determines the data strategy for Phase 2.
+
+## 2026-08-08T20:10Z — P2-00 — data-engineer
+**Did:**
+- Iteration started on the `de/P2-00-rdm-yellow-train-evaluation` branch, which a previous
+  iteration had created but not completed. The branch had uncommitted documentation
+  improvements (PLAN-ARCHIVE.md system, self-certification rules, accessibility quick ref).
+  Committed those first as a clean infrastructure commit.
+- Researched the RDM "NWR Yellow Train Mobile Network Measurements" product via public
+  web sources. The product page itself requires sign-in for full metadata, but sufficient
+  public information was found to make a defensible recommendation.
+- Created `specs/signal-model.md` with the full evaluation: data sources compared, key
+  finding documented (the "5G" claim almost certainly predates UK 5G deployment — the
+  original programme ran June 2018 – June 2019), recommendation made (Ofcom download),
+  and a verification checklist for Matt to complete at RDM sign-in.
+- Updated `specs/data-sources.md` to add an RDM section marked as "under evaluation".
+- Added Q5 to `agent/QUESTIONS.md` asking Matt to verify the RDM schema at sign-in.
+- Marked P2-00 done in PLAN.md, archived full entry to PLAN-ARCHIVE.md.
+
+**Verify:** Pass. `npm run verify` green: typecheck, lint, 87 unit tests, 3 Playwright
+AAA a11y tests all passed. (Markdown files only — no code change.)
+
+**Learned:**
+- The RDM "5G" claim in the product description is almost certainly misleading. The Ofcom
+  explanatory document (December 2019) explicitly states 5G measurement was out of scope
+  because operators hadn't deployed it yet. The yellow-train data is 2018–19 regardless
+  of which platform serves it. Don't let "5G" in a catalogue description trigger a false
+  sense of freshness — check the measurement dates.
+- The RDM product page renders blank when not signed in (as noted in Q1). This isn't a
+  data problem — it's a JS-heavy SPA that needs authentication to show content. The
+  overview was accessible via direct URL in this iteration but schema details were not.
+- The PLAN-ARCHIVE.md system (introduced this iteration as uncommitted work from the
+  previous iteration) is working correctly: PLAN.md stays short, the archive has full
+  history. The completed index in PLAN.md is sufficient for dependency checks.
+- A separate Ofcom study from Feb–Mar 2026 (Streetwave, 50 journeys, 24 routes) exists
+  and confirms train signal is still poor in 2026. The raw data is not publicly available
+  for download. This is useful context for product copy but not an ingestible data source.
+
+**Next:** P2-00 done unblocks P2-01 (thin vertical slice: download sample, inspect
+Ofcom LTE CSV schema, quantify measurement density on one route). DW-03 (header/footer
+landmarks + skip link) is also unblocked and can run in parallel with P2-01 since it's
+a developer task and P2-01 is a data-engineer task.

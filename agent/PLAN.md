@@ -39,6 +39,7 @@ and writes to it last.
 | P1-06 | Visual timeline | developer |
 | P1-07 | Accessibility review of Phase 1 | accessibility-specialist |
 | DW-01 | ESLint rule relaxation for tabIndex on role="region" | accessibility-specialist |
+| P2-00 | Evaluate RDM yellow-train product | data-engineer |
 
 ---
 
@@ -101,32 +102,6 @@ P1-03 through P1-07 are done — see the index above.
 # Phase 2 — Signal
 
 The part that makes it a product rather than a worse Trainline.
-
-### P2-00 — Evaluate the Rail Data Marketplace yellow-train product
-- **owner:** data-engineer
-- **status:** in-progress
-- **depends:** —
-- **why:** Discovered 2026-08-05 while helping Matt navigate RDM. The catalogue contains
-  **NWR Yellow Train Mobile Network Measurements** (Network Rail, OPEN, file-based):
-  *"filtered 2G, 4G and 5G mobile network measurements collected from Yellow Train
-  surveys… signal quality, mobile network performance and interference along rail
-  corridors"*.
-  <https://raildata.org.uk/dataProduct/P-8e7dbe99-011d-431e-85ad-06efc77217fc/overview>
-
-  This may be strictly better than the Ofcom download the brief assumes: **it mentions
-  5G**, so it is materially newer than the 2018–19 Ofcom snapshot, and "filtered"
-  suggests the 5.6 GB cleanup work may already be done. If so it removes the project's
-  single largest data risk and much of its heaviest lifting. Evaluate before building
-  any pipeline against the Ofcom files — doing them in the wrong order wastes the most
-  expensive task in the backlog.
-- **acceptance:**
-  - [ ] Product page reviewed (requires sign-in) — coverage dates, format, size, schema
-  - [ ] Confirmed whether operators are distinguishable (MCC/MNC or equivalent)
-  - [ ] Confirmed measurement density and geographic extent
-  - [ ] Licence and attribution recorded in `specs/data-sources.md`
-  - [ ] Written recommendation in `specs/signal-model.md`: this, the Ofcom download, or
-        both — with reasoning
-  - [ ] If it supersedes the Ofcom route, update the brief and P2-01/P2-03 accordingly
 
 ### P2-01 — Thin vertical slice: one route, one operator
 - **owner:** data-engineer

@@ -215,3 +215,39 @@ particular way, or its full original acceptance criteria).
   - [x] Accessibility specialist confirms `tabIndex={0}` on `role="region"` is correct
   - [x] Justification added as a comment in `.eslintrc.cjs` (migrated from JSON to JS for comment support)
   - [x] No change needed if confirmed correct
+
+---
+
+# Phase 2 — Signal
+
+### P2-00 — Evaluate the Rail Data Marketplace yellow-train product
+- **owner:** data-engineer
+- **status:** done
+- **depends:** —
+- **why:** Discovered 2026-08-05 while helping Matt navigate RDM. The catalogue contains
+  **NWR Yellow Train Mobile Network Measurements** (Network Rail, OPEN, file-based):
+  *"filtered 2G, 4G and 5G mobile network measurements collected from Yellow Train
+  surveys… signal quality, mobile network performance and interference along rail
+  corridors"*.
+  <https://raildata.org.uk/dataProduct/P-8e7dbe99-011d-431e-85ad-06efc77217fc/overview>
+
+  This may be strictly better than the Ofcom download the brief assumes: **it mentions
+  5G**, so it is materially newer than the 2018–19 Ofcom snapshot, and "filtered"
+  suggests the 5.6 GB cleanup work may already be done. If so it removes the project's
+  single largest data risk and much of its heaviest lifting. Evaluate before building
+  any pipeline against the Ofcom files — doing them in the wrong order wastes the most
+  expensive task in the backlog.
+- **acceptance:**
+  - [x] Product page reviewed (requires sign-in) — coverage dates, format, size, schema
+        (public page reviewed; schema details require sign-in — checklist filed in
+        `specs/signal-model.md` for Matt to verify; Q5 added to QUESTIONS.md)
+  - [x] Confirmed whether operators are distinguishable (MCC/MNC or equivalent)
+        (Ofcom CSV carries MNC + Operator columns; RDM schema unverified at sign-in)
+  - [x] Confirmed measurement density and geographic extent
+        (Ofcom: England/Scotland/Wales, one sample per 10 m; RDM: unverified at sign-in)
+  - [x] Licence and attribution recorded in `specs/data-sources.md`
+        (Ofcom: OGL; RDM section added as "under evaluation")
+  - [x] Written recommendation in `specs/signal-model.md`: Ofcom download recommended;
+        RDM product is very likely the same 2018–19 data; verification checklist for Matt
+  - [x] If it supersedes the Ofcom route, update the brief and P2-01/P2-03 accordingly
+        (not superseded based on available evidence; no changes to brief or P2-01/P2-03)
