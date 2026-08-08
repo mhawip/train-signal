@@ -227,7 +227,13 @@ h3 {
 }
 
 p {
-  margin-bottom: 1.5em; /* >= 1.5x line-height per 1.4.8 */
+  /*
+   * WCAG 1.4.8: paragraph spacing must be at least 1.5x line spacing.
+   * Line spacing = line-height * font-size = 1.5 * 1em = 1.5em.
+   * Required paragraph spacing = 1.5 * 1.5em = 2.25em.
+   * At 16px base: 2.25em = 36px.
+   */
+  margin-bottom: 2.25em;
 }
 
 /* No justified text anywhere (1.4.8) */
