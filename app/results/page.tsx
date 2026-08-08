@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { JourneyTimeline } from "@/app/components/JourneyTimeline";
+import { VisualTimeline } from "@/app/components/VisualTimeline";
 import type { Journey } from "@/app/lib/journey-types";
 
 /**
@@ -140,6 +141,8 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
       )}
 
       <JourneyTimeline journey={journey} />
+
+      <VisualTimeline journey={journey} />
 
       <nav aria-label="Page navigation" className="ts-results-nav">
         <Link href="/" className="ts-back-link">

@@ -475,3 +475,30 @@ Files modified:
 - The fixture journey (Leeds→KGX) is hardcoded because P1-01 and P1-02 are blocked on credentials. A disclaimer notice makes this transparent to users and avoids confusion. DW-02 tracks the wire-up once APIs are available.
 
 **Next:** P1-05 done unblocks P1-06 (visual timeline, developer). P1-07 (accessibility review of Phase 1) depends on P1-04, P1-05, P1-06 — can be dispatched after P1-06 lands. P2-02 (track geometry) has no credential dependency and is also ready to dispatch.
+
+---
+
+## 2026-08-08T12:00:00Z — P1-06 — developer / orchestrator
+
+**Did:** Shipped the visual timeline component as a progressive enhancement over the text-equivalent table.
+
+Files created:
+- `app/components/VisualTimeline.tsx` — server component rendering a decorative vertical timeline. Calling points are rendered as nodes (hollow circles for terminus, filled for intermediate) with station names and times beside them. Segments between stations are rendered as proportional vertical bars (3px/minute, minimum 48px). The entire `<section>` is `aria-hidden="true"` — screen readers use the table; the visual is supplemental. Imports `elapsedMinutes` from `JourneyTimeline` to compute proportional heights. No client-side JS.
+- `app/components/VisualTimeline.test.tsx` — 9 unit tests: renders without crash, aria-hidden on root, correct node count, terminus class on origin/destination, segment count, proportional heights (including minimum enforcement), two-stop edge case, station name text content, time display logic (departure for origin, arrivals elsewhere).
+
+Files modified:
+- `app/results/page.tsx` — added `<VisualTimeline journey={journey} />` after `<JourneyTimeline>`, above the nav.
+- `app/globals.css` — added `.ts-visual-timeline` block: section layout, heading, track container, segment-group (flex column), stop (node+label row), node (12px filled circle), terminus node (16px hollow ring), label (flex row with station name and time), segment (4px vertical bar, proportional height set inline), 320px responsive rule (label column direction), and forced-colours overrides (ButtonText/ButtonFace for nodes and segment).
+
+**Verify:** Typecheck clean. Lint clean. 87 unit tests passed (10 files). 3 Playwright AAA a11y tests passed (0 violations on home, components-demo, results pages).
+
+Note: `npm run build` fails locally with a `<Html>` prerender error on `/500` and `/404` — confirmed pre-existing (exists on the main branch before this change). Root cause is a non-standard `NODE_ENV` set in the local shell environment, which does not affect the CI server. The `npm run verify` script uses `npm run dev` for Playwright (not `npm run build`) so local verify passes.
+
+**Learned:**
+- `aria-hidden="true"` on the `<section>` wrapper correctly hides all children from AT, including the `<h2>` heading inside it. The heading exists for visual document structure only — AT users navigate via the table.
+- The segment height calculation imports `elapsedMinutes` from `JourneyTimeline` rather than duplicating it. Cross-component imports are fine between components in the same `app/components/` directory; this avoids drift between the two representations.
+- The minimum segment height (48px) serves two purposes: it prevents invisible segments on very short legs, and it provides a reasonable visual proportion. 3px/minute was calibrated so a typical 30-minute leg is ~90px.
+- `--band-border` CSS variable is already defined in the design system tokens (light: `#5c5c5c`, dark: `#999999`) — the segment borders used it correctly without needing a new token.
+- The local build failure (`<Html>` import error on static error pages) is caused by the non-standard local `NODE_ENV` and does not affect CI. Worth noting in QUESTIONS.md if it becomes a blocker, but the `npm run dev` path works.
+
+**Next:** P1-06 done completes all dependencies for P1-07 (accessibility review of Phase 1, accessibility-specialist). P1-07 is now the highest-priority `todo` task. Also newly unblocked: nothing new — P2-00 (RDM yellow train evaluation) has no dependencies and is worth picking up in parallel.
