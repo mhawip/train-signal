@@ -105,7 +105,7 @@ The part that makes it a product rather than a worse Trainline.
 
 ### P2-01 — Thin vertical slice: one route, one operator
 - **owner:** data-engineer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P1-03, P2-00
 - **why:** **Highest-risk unknown in the project.** Prove the yellow-train data is dense
   enough to give useful per-segment verdicts before building a pipeline on the
