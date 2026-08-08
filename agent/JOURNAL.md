@@ -594,3 +594,43 @@ passed, 3 Playwright AAA a11y tests passed (0 violations).
 **Next:** P1-07 done. Phase 1 is complete. The next highest-priority unblocked tasks are
 P2-00 (evaluate RDM yellow-train product, data-engineer) and DW-03 (add landmarks,
 developer). P2-00 is more valuable because it determines the data strategy for Phase 2.
+
+---
+
+## 2026-08-08T13:00:00Z — P1-07 — orchestrator
+
+**Did:** Dispatched P1-07 (accessibility review of Phase 1) to accessibility-specialist.
+Phase 1 was complete — P1-04, P1-05, P1-06 all done and merged. Opened PR #13 with
+all CI required checks green (a11y, lighthouse, lint, secret-scan, typecheck, unit).
+Auto-merge enabled.
+
+Key outcomes:
+- **No AAA violations found** in the current codebase. Phase 1 ships clean.
+- **DW-01 resolved:** `tabIndex={0}` on `role="region"` confirmed correct. `.eslintrc.json`
+  migrated to `.eslintrc.cjs` to support documented comments on the rule exception.
+- **1.4.8 paragraph spacing bug fixed:** `p { margin-bottom }` was 1.5em (24px); corrected
+  to 2.25em (36px). WCAG requires paragraph spacing ≥ 1.5× line spacing, not 1.5× font-size.
+  This is a real criterion fix, not cosmetic.
+- **DW-03 filed:** `<header>`/`<footer>` landmarks missing from `app/layout.tsx`.
+  Not a current violation (no repeated content to bypass), but required before site chrome
+  is added.
+- **DW-04 filed:** Skip link on home page (depends on DW-03).
+
+**Verify:** Pass. All CI checks green on PR #13. `npm run verify` local: typecheck clean,
+lint clean, 87 unit tests, 3 Playwright AAA a11y tests (0 violations).
+
+**Learned:**
+- WCAG 1.4.8 paragraph spacing = 1.5× line-spacing, not 1.5× font-size. The calculation
+  is: `line-height × font-size × 1.5`. For 1.5/16px: `1.5 × 16 × 1.5 = 36px = 2.25em`.
+- `.eslintrc.json` cannot contain comments; `.eslintrc.cjs` can. ESLint resolves `.cjs`
+  automatically; no config change needed.
+- Vercel deployment fails on all PRs because P0-05 is blocked on Q4 (Vercel project setup
+  needs Matt's account). This is not a CI gate failure — the six required checks all pass.
+  Do not treat the Vercel check failure as blocking.
+
+**Next:** Phase 1 complete. Two unblocked paths:
+1. **P2-00** (data-engineer): Evaluate Rail Data Marketplace yellow-train product. No
+   dependencies. Determines the data strategy for all of Phase 2. Highest value.
+2. **DW-03** (developer): Add `<header>`/`<footer>` landmarks to `app/layout.tsx`. Quick
+   two-line fix with a follow-on skip link (DW-04).
+P2-00 should go first — it unlocks P2-01, P2-02, and ultimately the entire signal pipeline.
