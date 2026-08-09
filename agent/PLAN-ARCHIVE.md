@@ -354,3 +354,22 @@ particular way, or its full original acceptance criteria).
   JourneyTimeline said "No signal expected" — aligned to "No signal expected" everywhere;
   (D4) `aria-hidden="true"` added to BandIcon SVGs (parent section already has it;
   this is defence in depth). All other criteria passed. 146 unit + 3 axe-core AAA tests pass.
+
+### P2-05 — "Best window to book"
+- **owner:** developer
+- **status:** done
+- **depends:** P2-04
+- **why:** The actual product. The sentence people came for; the timeline is evidence.
+- **acceptance:**
+  - [x] Longest continuous good-signal stretch identified, with clock times
+  - [x] Stated as a plain sentence, large and unmissable, above the timeline
+  - [x] Distinguishes video-capable from voice-only windows
+  - [x] Handles "no good window on this journey" honestly and helpfully
+  - [x] Reading level checked against WCAG 3.1.5
+- **note:** PR #20. New files: `app/lib/best-window.ts` (pure `findBestWindow()`
+  algorithm), `app/components/BestWindow.tsx` (server component), 13 unit tests.
+  Modified `app/results/page.tsx` to render `<BestWindow>` above the timeline.
+  `.ts-best-window__times` and `.ts-muted` added to globals.css using existing tokens.
+  Self-certified AAA: 1.4.6 ✓ (existing tokens, 17.4:1/7:1), 1.4.1 ✓ (text only),
+  3.1.5 ✓ (grade 6–8 copy), 1.4.8 ✓ (80ch, 1.5 line-height), 1.3.1 ✓ (section/h2),
+  2.4.6 ✓ (descriptive headings). 159 unit + 3 axe-core AAA tests pass.

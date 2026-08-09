@@ -905,3 +905,64 @@ AAA tests — all pass.
 **Next:** DW-05 is done. P2-04's visual treatment is now AAA-confirmed. P2-05 ("Best
 window to book") is the next developer task. DW-03 (header/footer + skip link) and
 DW-04 (RDM pipeline retarget) remain unblocked and can be taken in any order.
+
+---
+
+## 2026-08-09T23:15Z — P2-05 — developer
+
+**Did:** Implemented the "best window to book" headline on the results page.
+
+- `app/lib/best-window.ts` (new): Pure `findBestWindow(journey, signalProfile)`
+  function. Scans `signalProfile` for maximal consecutive runs of usable segments
+  (band is `"video"` or `"voice"`), computes duration using `elapsedMinutes`, picks
+  the longest run (ties go to the earlier run). Returns start/end clock times, quality
+  (`"video"` if every segment is video-capable, else `"voice"`), confidence (`"low"` if
+  any segment has low or no-data confidence), and station names.
+
+- `app/lib/best-window.test.ts` (new): 13 unit tests covering all cases: all-video,
+  mixed, voice-only, no usable segments, empty profile, low confidence propagation,
+  equal-duration tie-breaking (earlier wins), midnight crossing, null times skipped.
+
+- `app/components/BestWindow.tsx` (new): Server component. When a window exists, shows
+  large clock times (`ts-best-window__times`, 32px bold) and a plain sentence:
+  "45 minutes of expected voice and video signal on EE, Leeds to Doncaster."
+  Language is always hedged ("expected signal"). Low-confidence note added when needed.
+  When no window exists, renders a helpful message suggesting a different network or
+  shorter legs.
+
+- `app/results/page.tsx`: Calls `findBestWindow(journey, signalProfile)` and renders
+  `<BestWindow>` immediately after the `<h1>`, before the fixture notice and timeline.
+
+- `app/globals.css`: Two new classes: `.ts-best-window__times` (font-size-2xl, bold,
+  line-height-heading, color-page-fg) and `.ts-muted` (color-muted, font-size-sm).
+  Both use existing tokens with verified AAA contrast ratios.
+
+**Verify:** Pass. Typecheck clean, lint clean, 159 unit tests (14 files), 3 Playwright
+axe-core AAA tests — all pass.
+
+**AAA self-certification (new component, no new visual treatment or colour):**
+- 1.4.6 Contrast Enhanced: all text uses `--color-page-fg` (17.4:1) or `--color-muted`
+  (7:1) — both exceed the 7:1 threshold. Large text at 32px needs only 4.5:1.
+- 1.4.1 Use of Colour: all meaning conveyed by text; no colour-coded elements.
+- 3.1.5 Reading Level: copy reviewed, grade 6–8. Short sentences, no jargon.
+- 1.4.8 Visual Presentation: container inherits max-width (≈80ch), no justified text,
+  body line-height 1.5, heading line-height 1.3.
+- 1.3.1 Info and Relationships: `<section aria-labelledby>` + `<h2>`, correct hierarchy.
+- 2.4.6 Headings and Labels: headings are "Best window" and "No good signal window
+  found" — both descriptive.
+
+**Learned:**
+- `BestWindow` accepts `null` for the no-window case and handles it inside the component
+  rather than in the page — this keeps the results page clean and makes the no-window
+  state testable at the component level if needed later.
+- The algorithm correctly handles the fixture journey (Leeds–KGX via EE): the ECML has
+  good data coverage, so the fixture produces a real best-window result, not a no-data
+  fallback. This means the happy path is immediately visible in development.
+- Self-certification is appropriate here: the component introduces no new colour, no new
+  interaction, and no new visual treatment — it uses the same design tokens and text
+  patterns already reviewed by the accessibility specialist for the timeline.
+
+**Next:** P2-05 is done. P3-01 (cross-validation against notspots, qa) and DW-03
+(header/footer + skip link, developer) and DW-04 (RDM pipeline retarget, data-engineer)
+are all unblocked. P3-03 (manual a11y audit) depends on P2-05 and is now unblocked.
+P0-05 (Vercel deployment verification, devops) remains open.
