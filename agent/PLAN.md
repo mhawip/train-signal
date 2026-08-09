@@ -223,7 +223,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-05 — Accessibility review of P2-04 signal bands
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** P2-04
 - **why:** P2-04 introduces new visual treatments (signal band fill patterns, CSS
   crosshatch/diagonal-hatch, a legend, inline text labels, dashed-border low-confidence
