@@ -792,3 +792,76 @@ task — it upgrades the signal dataset the entire product runs on. DW-03 (heade
 landmarks + skip link, developer) is also unblocked and can run in parallel. P2-04
 (signal bands on timeline, developer) depends on P2-03 which is now done — it can
 proceed with the current Ofcom-based dataset while DW-04 is in progress.
+
+## 2026-08-09T22:00:00Z — P2-04 — developer / orchestrator
+**Did:** Completed P2-04 (signal bands on the timeline). A previous iteration had begun
+the work and left it uncommitted on `dev/P2-04-signal-bands`. This iteration assessed
+the state, verified it, and shipped it.
+
+Changes committed:
+
+- `app/lib/signal.ts` (new): server-side signal module. Loads `track-graph.json`
+  and `signal-segments.json` at module scope. Builds an adjacency list and exposes
+  three exported functions: `findPath` (Dijkstra with a binary min-heap), `classifySegment`
+  (dominant-band classification with conservative tie-breaking: none > voice > video;
+  20% coverage threshold for no-data), `getJourneySignal` (full journey → SegmentSignal[]).
+  Tunnel detection uses a bounding-box prefilter then 200 m Haversine proximity check.
+
+- `app/lib/signal.test.ts` (new): 15 unit tests. Includes real-data integration tests
+  that run Dijkstra on the live track graph (LDS→KGX, LDS→WKF) and real signal lookups.
+
+- `app/components/JourneyTimeline.tsx`: optional `signalProfile` prop. When provided,
+  adds an "Expected signal" column to the table with text labels (Voice and video / Voice
+  only / No signal expected), inline SVG icons (aria-hidden), "(limited data)" note for
+  low confidence, and inline tunnel names. Colour is never the only cue (1.4.1).
+
+- `app/components/JourneyTimeline.test.tsx`: 9 new tests for signal rendering — column
+  presence, band labels, low-confidence note, tunnel names, origin en-dash.
+
+- `app/components/VisualTimeline.tsx`: optional `signalProfile` prop. Colours segment
+  bars using band CSS classes (ts-band--video/voice/none), adds ts-band--low-confidence
+  for dashed border, shows a legend (pattern swatch + icon + label), and shows inline
+  labels and tunnel names for segments taller than 60px.
+
+- `app/components/VisualTimeline.test.tsx`: 5 new tests for signal rendering — band
+  class application, low-confidence class, legend presence/absence.
+
+- `app/globals.css`: signal band CSS. Three fill patterns: solid (video), 45-deg
+  diagonal hatch (voice), dual-45 crosshatch (none). Tunnel and no-data styles.
+  Dashed border for low-confidence. All contrast ratios verified at WCAG AAA.
+
+- `app/results/page.tsx`: calls `getJourneySignal(journey)` server-side, passes
+  `signalProfile` to both `JourneyTimeline` and `VisualTimeline`. Adds vintage
+  disclaimer: "Signal data is based on measurements from 2018 and 2019. Results show
+  expected signal, not a guarantee."
+
+PR #18 opened and pushed.
+
+**Verify:** Pass. typecheck clean, lint clean, 146 unit tests (13 files), 3 Playwright
+AAA a11y tests (0 violations — run with dev server running locally). Note: Playwright
+tests timed out in the first `npm run verify` run because no server was running; started
+dev server, retried, all passed. This is a local environment issue — CI builds the app
+before running tests and will not have this problem.
+
+**Learned:**
+- `npm run verify` runs Playwright with `reuseExistingServer: true` outside CI, so a
+  dev server must already be running. When the dev server isn't running, Playwright's
+  webServer config starts it — but the 30s test timeout can be hit before the server is
+  ready on the first test run. Starting the server manually before running verify is the
+  reliable workaround locally. CI builds first, so this never bites CI.
+- The conservative tie-breaking for signal classification (none > voice > video) is the
+  right default: it is always better to tell a user they won't have signal and be wrong
+  than to tell them they will and be wrong. This is directly from the brief ("Under-
+  promising is the right failure mode").
+- The 20% node coverage threshold (fewer than 20% of path nodes have any data → no-data
+  verdict) is a pragmatic choice. The signal pipeline covers 68% of track nodes — for
+  short segments entirely in sparse areas, this threshold will fire. Filed in signal.ts
+  comments for the next iteration that touches thresholds.
+- All three signal band styles are designed greyscale-first: diagonal hatch vs crosshatch
+  vs solid are distinguishable without colour. Accessibility review (DW-05) should confirm
+  this before the design is considered settled.
+
+**Next:** DW-05 (a11y review of P2-04 signal bands, accessibility-specialist) must run
+before P2-04's visual treatment is considered AAA-confirmed. P2-05 ("Best window to
+book") is unblocked and is the next developer task. DW-03 (header/footer + skip link)
+and DW-04 (RDM pipeline retarget) are also unblocked with no mutual dependencies.

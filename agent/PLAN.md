@@ -43,6 +43,7 @@ and writes to it last.
 | P2-01 | Thin vertical slice: one route, one operator | data-engineer |
 | P2-02 | Track geometry and tunnels | data-engineer |
 | P2-03 | Full signal pipeline | data-engineer |
+| P2-04 | Signal bands on the timeline | developer |
 
 ---
 
@@ -111,20 +112,7 @@ P1-03 through P1-07 are done — see the index above.
 
 The part that makes it a product rather than a worse Trainline.
 
-P2-02 and P2-03 are done — see the index above.
-
-### P2-04 — Signal bands on the timeline
-- **owner:** developer
-- **status:** in-progress
-- **depends:** P2-03, P1-06
-- **why:** The answer the user came for.
-- **acceptance:**
-  - [ ] Three bands rendered on both table and visual timeline
-  - [ ] Low confidence visibly distinct — never presented as a confident verdict
-  - [ ] Tunnels named inline
-  - [ ] Greyscale-legible
-  - [ ] Language is "expected"/"likely", never "you will have signal"
-  - [ ] Data vintage stated in the UI
+P2-02, P2-03, and P2-04 are done — see the index above.
 
 ### P2-05 — "Best window to book"
 - **owner:** developer
@@ -232,6 +220,26 @@ Bugs and follow-ups get filed here by whoever finds them.
         the header
   - [ ] Both skip links meet 44px target size (2.5.5)
   - [ ] axe AAA tests still pass
+
+### DW-05 — Accessibility review of P2-04 signal bands
+- **owner:** accessibility-specialist
+- **status:** todo
+- **depends:** P2-04
+- **why:** P2-04 introduces new visual treatments (signal band fill patterns, CSS
+  crosshatch/diagonal-hatch, a legend, inline text labels, dashed-border low-confidence
+  indicator) and new use of colour throughout both the table and visual timeline.
+  Per CLAUDE.md rules, a new visual treatment requires an independent a11y review —
+  cannot be self-certified.
+- **acceptance:**
+  - [ ] All signal band CSS classes verified against WCAG 1.4.1 (Use of Colour):
+        bands are distinguishable by pattern + icon + label, not colour alone
+  - [ ] Contrast ratios for all band colours confirmed at AAA levels (1.4.6)
+  - [ ] Low-confidence dashed border distinguishable without colour
+  - [ ] Legend: each item has pattern swatch + icon + text label — check 1.4.1
+  - [ ] Inline tunnel names and "(limited data)" notes: reading level (3.1.5)
+  - [ ] Vintage disclaimer language reviewed against 3.1.5 and the brief's honesty rules
+  - [ ] axe AAA suite still passes after any changes
+  - [ ] Self-certification for the new copy is not appropriate — fresh-context review required
 
 ### DW-04 — Retarget signal pipeline at RDM product
 - **owner:** data-engineer
