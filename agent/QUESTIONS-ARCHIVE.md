@@ -141,3 +141,41 @@ variables have been added there too.
 
 5. **Fix:** Settings → General → Framework Preset → changed to **Next.js** → redeployed.
    Confirmed working 2026-08-09.
+
+---
+
+## Q5 — RDM yellow-train product: verify schema at sign-in
+
+**Status:** resolved 2026-08-09 — Matt verified the RDM product contains current (July
+2026) data with 5G measurements, RSRP/RSRQ/SINR, MCC/MNC, and operator fields. Data
+source recommendation in `specs/signal-model.md` updated to RDM product.
+**Filed:** 2026-08-08 (P2-00)
+**Blocks:** nothing immediately — P2-01 proceeded with Ofcom data and confirmed it
+viable; this only determined whether to retarget the upcoming P2-03 pipeline at RDM
+instead
+
+P2-00 evaluated the RDM "NWR Yellow Train Mobile Network Measurements" product from
+publicly available information. The conclusion was that the Ofcom download (5.6 GB CSVs)
+was the safer choice because the RDM product was suspected to be the same 2018--19
+underlying data, just re-hosted or lightly processed by Network Rail. The "5G" in the
+description was thought to predate UK 5G deployment and refer to schema capability, not
+actual measurements.
+
+Checklist in `specs/signal-model.md` ("What Matt needs to verify at sign-in"):
+
+1. What dates does the data cover? (If post-2019, it's a game-changer.)
+2. Does it actually contain 5G signal measurements?
+3. What format and approximate size?
+4. Are RSRP/RSRQ/SINR present? Is MCC/MNC or an operator field present?
+
+**Answer:** (Matt, 2026-08-09)
+I see no reason to believe the RDM Yellow Train dataset does not include up-to-date 5G
+measurements. The date of the file is the 29th July 2026. And when I open the 5G part of
+the dataset I can see entries dated for this year. On question 4, yes all of
+RSRP/RSRQ/SINR and MCC/MNC and operator fields are present. It's a CSV file and seems
+to be smaller than the Ofcom one. Please update 'specs/signal-model.md' to say that my
+recommendation is to use the RMD product.
+
+**Action taken:** Updated `specs/signal-model.md` data source recommendation to RDM
+product. A pipeline retargeting task will be filed to rebuild `data/signal-segments.json`
+from the RDM data.
