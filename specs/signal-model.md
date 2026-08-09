@@ -2,17 +2,30 @@
 
 ## Data source recommendation
 
-**Use the Ofcom yellow-train CSV download as the primary data source.** The RDM "NWR
-Yellow Train Mobile Network Measurements" product is worth investigating further (Matt
-should check what it actually contains when he logs in), but the evidence available
-publicly suggests it is likely a re-hosted or lightly processed version of the same
-2018--19 Ofcom dataset rather than a materially newer collection. The Ofcom download is
-the known quantity, is well-documented, and can be obtained today without any account
-approval delay.
+**Use the RDM product (NWR Yellow Train Mobile Network Measurements) as the primary
+data source.** Matt verified the product at sign-in (2026-08-09, see Q5 in
+QUESTIONS-ARCHIVE.md) and confirmed that:
 
-If the RDM product turns out to contain genuinely newer measurements (post-2019), it
-becomes the clear winner and the pipeline should target it instead. The verification
-checklist is in the final section of this document.
+- The dataset is dated 29 July 2026 -- it is current, not a re-host of the 2018--19
+  Ofcom data as originally suspected.
+- It contains **5G measurements dated 2026**, not just a forward-looking schema.
+- RSRP, RSRQ, SINR, MCC/MNC, and operator fields are all present -- exactly what the
+  signal classification pipeline requires.
+- It is a CSV file, smaller than the 5.6 GB Ofcom download.
+
+This makes the RDM product strictly superior to the Ofcom download: same measurement
+methodology (yellow-train antennas on the rail network), same signal metrics, but with
+current data including 5G coverage that did not exist in 2018--19.
+
+**Current state:** The committed `data/signal-segments.json` was built from the Ofcom
+2018--19 LTE data (P2-03). A pipeline retargeting task will be filed to rebuild it from
+the RDM product. Until that task completes, the existing file remains usable as a
+conservative baseline -- the 2018--19 data under-promises rather than over-promises,
+which is the correct failure mode.
+
+The original Ofcom-vs-RDM analysis below is retained for historical reference. It was
+correct given the information available publicly; Matt's sign-in revealed that the RDM
+product is genuinely newer data, not a re-host.
 
 ---
 
@@ -165,9 +178,9 @@ MCC for the UK is 234. The LTE file also carries an `Operator` text column.
 
 ---
 
-## Recommendation rationale
+## Recommendation rationale (historical -- superseded by RDM verification above)
 
-### Why Ofcom download, not RDM (for now)
+### Why Ofcom download, not RDM (original analysis, pre-verification)
 
 1. **The Ofcom data is the known quantity.** Its schema is documented, its limitations are
    understood, worked examples exist, and it can be downloaded today with no account.
@@ -242,39 +255,23 @@ would be documented in the pipeline.
 
 ---
 
-## What Matt needs to verify at sign-in
+## What Matt verified at sign-in (2026-08-09)
 
-When Matt logs into the Rail Data Marketplace and views the NWR Yellow Train Mobile
-Network Measurements product page, please check and record:
+Matt logged into the Rail Data Marketplace and inspected the NWR Yellow Train Mobile
+Network Measurements product. Key findings:
 
-1. **Measurement dates.** What period does the data cover? Is it the same June 2018 --
-   June 2019 as the Ofcom download, or does it include newer measurements?
+1. **Measurement dates:** The file is dated 29 July 2026. This is current data, not
+   the 2018--19 Ofcom dataset.
+2. **5G measurements:** Yes, the 5G portion contains entries dated 2026. These are real
+   5G measurements, not just a forward-looking schema.
+3. **File format and size:** CSV, smaller than the Ofcom 5.6 GB download.
+4. **Schema:** RSRP, RSRQ, SINR, MCC/MNC, and operator fields are all present.
+5. **Items 5--8 from the original checklist** (filtering details, licence terms,
+   geographic coverage, sample download) remain to be documented when the pipeline
+   retargeting task runs. They are not blocking -- the data has the fields we need.
 
-2. **Does it actually contain 5G measurements?** The description says "5G" but the
-   original programme predates UK 5G. Is 5G present in the data, or just in the schema?
-
-3. **File format and size.** Is it CSV? Parquet? Something else? How large are the files?
-   If significantly smaller than 5.6 GB, that suggests pre-processing or subsetting.
-
-4. **Schema / column list.** What columns are in the files? Specifically:
-   - Are RSRP, RSRQ, SNIR/SINR present? (essential for our signal classification)
-   - Is MCC/MNC or an operator field present? (essential for per-network results)
-   - What coordinate system -- lat/lon or OS eastings/northings?
-
-5. **What does "filtered" mean?** Is there documentation explaining what filtering was
-   applied? Noise removal? Geographic subsetting? Rationalisation to 10 m spacing?
-
-6. **Licence terms.** The catalogue says "OPEN" -- what are the exact licence terms?
-   Any attribution requirements?
-
-7. **Geographic coverage.** Does it cover the same England/Scotland/Wales extent as the
-   Ofcom download?
-
-8. **Can you download a sample file?** Even a small one would let P2-01 inspect the
-   schema without downloading everything.
-
-Record the answers in this file or in `specs/data-sources.md`. If the data is newer than
-2018--19 and contains the signal metrics we need, update the recommendation above.
+Based on these findings, the recommendation was updated to use the RDM product (see
+top of this document).
 
 ---
 
@@ -582,3 +579,153 @@ points, and the track lookup can be called for each consecutive station pair.
 
 - `pipeline/p2-02-extract-osm.js` -- downloads and processes OSM data
 - `pipeline/track-lookup.ts` -- station-pair path resolution with tunnel matching
+
+---
+
+## Signal classification thresholds (P2-03)
+
+### Purpose
+
+Every node/operator combination in the derived signal dataset is classified into one of
+three bands, telling the user whether they can expect to sustain a video call, a voice
+call, or neither. The classification uses the **10th percentile** of calibrated RSRP
+across all measurements at that node for that operator. The 10th percentile is chosen
+deliberately: a user cares about the worst signal they are likely to experience at a
+location, not the average. A call drops at the worst moment, not the typical one.
+
+### Primary metric: cal_rsrp (10th percentile)
+
+| Band | cal_rsrp p10 | User-facing meaning |
+|---|---|---|
+| Voice + Video (`"video"`) | >= -85 dBm | Strong enough for a Teams/Zoom video call |
+| Voice only (`"voice"`) | -95 to -85 dBm | A phone call will hold, but video will not |
+| No usable signal (`"none"`) | < -95 dBm | Do not schedule anything here |
+
+### Justification
+
+These thresholds are grounded in published LTE signal quality research and mobile
+operator guidance:
+
+1. **-85 dBm for video calling.** 3GPP defines "good" LTE coverage as RSRP >= -80 dBm,
+   and "normal" as >= -90 dBm. Video calling (VoLTE video, Teams, Zoom) requires
+   sustained throughput of 1-2 Mbps and low jitter. Published VoLTE requirements from
+   multiple sources (GSMA IR.92, operator deployment guides) indicate that reliable
+   video calling requires RSRP above approximately -85 dBm with reasonable RSRQ. We use
+   -85 dBm rather than -80 dBm because the measurements are from the train roof, which
+   receives 10-30 dB stronger signal than a phone inside the carriage. At -85 dBm roof
+   height, actual in-carriage signal is likely -95 to -115 dBm, which is marginal for
+   video. This partially offsets the data vintage (networks improved since 2018-19).
+
+2. **-95 dBm for voice calling.** VoLTE voice requires approximately 10-20 kbps AMR-WB
+   throughput, which LTE can sustain at much lower RSRP than video. Published guidance
+   from Ofcom and operators indicates voice calls remain reliable down to approximately
+   -100 to -105 dBm in good RSRQ conditions. We use -95 dBm (conservative) to account
+   for:
+   - The roof-to-carriage attenuation (10-30 dB depending on train type)
+   - The data vintage (2018-19 measurements, networks may have degraded or improved
+     in specific locations)
+   - The fact that p10 already captures worst-case behaviour; adding extra margin on
+     top of p10 would over-correct
+
+3. **Below -95 dBm: no usable signal.** At the 10th percentile below -95 dBm (roof
+   height), a user inside the carriage is very likely experiencing signal below -105 to
+   -125 dBm. At these levels, even VoLTE voice becomes unreliable, and the connection
+   may drop to 3G/2G or lose data connectivity entirely.
+
+### Supplementary metric: rsrq (10th percentile)
+
+RSRQ measures signal quality relative to interference. Even with strong RSRP, high
+interference (low RSRQ) degrades call quality because the radio channel is shared with
+many users or suffers inter-cell interference.
+
+| RSRQ p10 | Effect |
+|---|---|
+| >= -15 dB | No degradation (normal quality) |
+| -20 to -15 dB | Degrades `"video"` to `"voice"` (interference too high for video) |
+| < -20 dB | Degrades to `"none"` regardless of RSRP (connection unreliable) |
+
+**Justification:** 3GPP TS 36.133 defines RSRQ reporting range from -19.5 dB to -3 dB.
+Values below -15 dB indicate significant interference or congestion. At RSRQ below
+-20 dB, the UE may struggle to maintain a stable connection even for voice. These
+thresholds are conservative: in practice, modern UEs can sometimes maintain calls at
+lower RSRQ, but the product should not promise what it cannot guarantee.
+
+### Confidence classification
+
+The number of measurements at a node determines confidence:
+
+| Measurement count | Confidence | Rationale |
+|---|---|---|
+| >= 10 | `"high"` | Sufficient samples for a reliable p10 estimate |
+| 3 to 9 | `"low"` | p10 is computed but may not be representative |
+| < 3 | `"no-data"` | Too few measurements to classify; band is `"no-data"` |
+
+With the Ofcom methodology of one sample per 10 m, 10 measurements represents
+approximately 100 m of track. This is a minimal but defensible sample for a node that
+represents a ~1.6 km segment.
+
+Low-confidence nodes should be presented differently in the UI (e.g. hatched or dimmed)
+and must not contribute to "best window" recommendations without explicit caveat.
+
+### Conservative bias
+
+The thresholds are deliberately conservative:
+
+- **Data vintage.** The measurements are from June 2018 to June 2019. Networks have
+  generally improved since then (more masts, better backhaul, VoLTE rollout). Using
+  7-year-old measurements with conservative thresholds means the product is more likely
+  to under-promise than over-promise.
+
+- **Roof vs carriage.** The measurements are from antennas on the train roof, which
+  receive stronger signal than a phone inside the carriage. This partially offsets the
+  data-vintage conservatism, but the magnitude is uncertain (10-30 dB attenuation
+  depending on train type and window glazing).
+
+- **Asymmetric cost.** Under-promising costs a user a meeting they could have taken
+  (inconvenience). Over-promising costs them a dropped client call (embarrassment,
+  lost business). The thresholds should err on the side of the less costly failure mode.
+
+### SINR (informational)
+
+SINR (Signal to Interference plus Noise Ratio) is recorded but not used in the primary
+classification. It is stored in the output as `sinr_p10` for future reference. SINR is
+NULL for approximately 0.4% of rows in the Ofcom data. Nodes with fewer than 3 SINR
+measurements store `sinr_p10: null`.
+
+### Pipeline output
+
+The classification is implemented in `pipeline/p2-03-build-signal.ts` and output to
+`data/signal-segments.json`. The thresholds are encoded as constants (`THRESHOLDS`) in
+the pipeline script and recorded in the output metadata for traceability.
+
+**Committed file format:** The committed `data/signal-segments.json` is compact JSON
+(no whitespace), 9.2 MB. The `rsrp_p50` field (median RSRP) was removed from the
+committed file to fit under the 10 MB pre-commit limit; it is not used in signal
+classification (which uses `rsrp_p10`) and is supplementary only. This file will be
+replaced when the pipeline is retargeted to the RDM product.
+
+### P2-03 pipeline results (full dataset)
+
+Processing the complete Ofcom LTE CSV (2.2 GB, 19.3 million rows):
+
+| Stage | Count |
+|---|---|
+| Total data rows | 19,285,594 |
+| Filtered: stationary (speed < 5 km/h) | 10,698,116 |
+| Filtered: not near track (> 500 m) | 4,618,947 |
+| Snapped to graph nodes | 3,968,531 |
+| Nodes with data | 14,753 |
+
+Per-operator measurement counts (after filtering and snapping):
+
+| Operator | Measurements |
+|---|---|
+| EE | 1,034,422 |
+| O2 | 904,514 |
+| Three | 1,031,171 |
+| Vodafone | 998,424 |
+
+This represents 68% of the 21,626 graph nodes having at least one operator measurement.
+The remaining 32% are on lines the yellow trains did not traverse during the measurement
+period. Those nodes correctly receive no entry in the output (the product shows "no data"
+rather than guessing).
