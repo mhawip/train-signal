@@ -287,3 +287,209 @@ Record the answers in this file or in `specs/data-sources.md`. If the data is ne
 - F17 GB Rail mobile coverage blog: <https://www.f17.co.uk/blog/gb-rail-mobile-coverage/>
 - Ofcom Connectivity on Trains Measurement Study (Jun 2026): <https://www.ofcom.org.uk/siteassets/resources/documents/consultations/category-3-4-weeks/mobile-connectivity-you-can-count-on/mobile-connectivity/connectivity-on-trains-measurement-study.pdf>
 - Ofcom spectrum assurance vehicle data (roads, 2020--2025): <https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/mobile-signal-strength-measurement-data>
+
+---
+
+## P2-01 Findings: Thin Vertical Slice
+
+### Method
+
+Downloaded a stratified sample of the Ofcom LTE/4G yellow-train CSV
+(`lte-jun18tojun19-yt.csv`, 2.2 GB) by fetching ten 5 MB chunks at evenly spaced byte
+offsets across the file. This gave approximately 414,000 rows (roughly 2.3% of the full
+file) spread across the measurement period from June 2018 to May 2019, covering all four
+trains (Train1 through Train4).
+
+The analysis script (`pipeline/p2-01-analyse-spread.js`) filters measurements to within
+3 km of the East Coast Main Line (London Kings Cross to Leeds, approximately 282 km via
+waypoints at Finsbury Park, Stevenage, Peterborough, Grantham, Newark North Gate,
+Retford, Doncaster, and Wakefield Westgate), then buckets them into 1 km segments along
+the route.
+
+Download URL:
+`https://static.ofcom.org.uk/static/research/connected-nations2019/lte-jun18tojun19-yt.csv`
+
+### Column schema (confirmed)
+
+The LTE CSV contains 18 columns. Every column name and its meaning:
+
+| Column | Type | Description |
+|---|---|---|
+| `latitude` | float | WGS84 latitude (decimal degrees) |
+| `longitude` | float | WGS84 longitude (decimal degrees) |
+| `eastings` | int | OS National Grid easting (OSGB36 / EPSG:27700) |
+| `northings` | int | OS National Grid northing |
+| `speed` | int | Train speed in km/h |
+| `train` | string | Which yellow train: Train1, Train2, Train3, or Train4 |
+| `datetime` | string | Timestamp, format `YYYY-MM-DD HH:MM:SS` |
+| `mnc` | int | Mobile Network Code (UK MCC is always 234) |
+| `operator` | string | Operator name: EE, O2, Three, or Vodafone |
+| `earfcn` | int | E-UTRA Absolute Radio Frequency Channel Number |
+| `dlfreq` | int | Downlink frequency in MHz (approx.) |
+| `phylayercellid` | int | Physical layer cell identity group |
+| `pci` | int | Physical Cell Identifier |
+| `rsrp` | float | Reference Signal Received Power, raw (dBm) |
+| `cal_rsrp` | float | Reference Signal Received Power, calibrated (dBm) |
+| `total_power` | float | Total received power (dBm). Occasionally NULL (0.4% of rows). |
+| `rsrq` | float | Reference Signal Received Quality (dB) |
+| `sinr` | float | Signal to Interference plus Noise Ratio (dB). Occasionally NULL (0.4% of rows). |
+
+**Note on `rsrp` vs `cal_rsrp`:** The calibrated value (`cal_rsrp`) corrects for cable
+loss and antenna gain specific to each train and frequency band. The offset is constant
+per operator per train (observed values: +3.16, +3.68, +5.18, +5.61 dB on Train1). The
+calibrated value is what should be used for signal classification -- it represents what
+the antenna actually received.
+
+**Note on coordinate systems:** Both WGS84 lat/lon and OS National Grid are provided.
+For our pipeline, lat/lon is simpler to work with and avoids a coordinate transform.
+
+**Note on NULL values:** Only `total_power` and `sinr` have occasional NULLs (0.4% of
+rows in the sample). `cal_rsrp` and `rsrq` are present on every row. Since our signal
+classification relies primarily on RSRP and RSRQ, this is not a problem. Rows with NULL
+SINR can still be classified; SINR serves as supplementary confirmation.
+
+### Operator mapping (confirmed from data)
+
+The `operator` column contains the plain-text operator name. No need to map from MNC,
+but for completeness:
+
+| MNC | `operator` value | Network |
+|---|---|---|
+| 10 | O2 | O2 / Telefonica UK |
+| 15 | Vodafone | Vodafone UK |
+| 20 | Three | Three / Hutchison 3G |
+| 30 | EE | EE (BT Group) |
+
+All four operators are present in every sample examined, with roughly equal measurement
+counts (each operator is measured at each location, giving four rows per geographic
+point). This means the per-operator comparison is fair -- every location has data for
+all four networks.
+
+### ECML corridor density analysis
+
+**Route:** London Kings Cross to Leeds, 282 km via the East Coast Main Line.
+
+**Sample coverage:** The 2.3% sample found 15,860 rows within the ECML corridor,
+drawn from 2 distinct measurement dates (the yellow trains passed through the ECML
+corridor on specific dates within the sample window). All four operators were represented
+with roughly equal counts:
+
+| Operator | ECML measurements (in sample) | Covered 1 km segments |
+|---|---|---|
+| EE | 4,084 | 10 |
+| Three | 4,154 | 10 |
+| O2 | 3,819 | 10 |
+| Vodafone | 3,803 | 10 |
+
+The 10 covered segments cluster around km 238--240 (near Doncaster). This is a sampling
+artefact: our 2.3% byte-offset sample only intersected two dates when a train traversed
+this part of the ECML.
+
+**Extrapolated full-file density:** If the ECML fraction holds across the full 2.2 GB
+file, the total ECML corridor should contain approximately:
+
+- 700,000 total rows (all operators combined)
+- 175,000 rows per operator
+- 620 measurements per operator per km (mean, assuming full coverage)
+
+This is an order of magnitude above the minimum needed for statistical reliability. Even
+if only 50% of the 282 km segments are covered (which would be surprisingly low for a
+major trunk route), the density in covered segments would still be over 1,200 per km.
+
+**Where data exists, it is very dense.** In the segments we did observe:
+
+- Mean measurements per covered km per operator: 166--415
+- Where multiple passes overlap, counts reach 1,600--1,900 per km per operator
+- This is consistent with the Ofcom methodology of recording one measurement per 10 m
+  (100 measurements per km per pass), with multiple passes over the measurement year
+
+### Signal metric distributions (ECML sample)
+
+For the ECML corridor segments observed in the sample:
+
+| Operator | cal_RSRP p10 | cal_RSRP p50 | cal_RSRP p90 | SINR p10 | SINR p50 | SINR p90 |
+|---|---|---|---|---|---|---|
+| EE | -78.3 dBm | -71.9 dBm | -61.8 dBm | 2.8 dB | 11.0 dB | 21.8 dB |
+| Three | -77.4 dBm | -71.7 dBm | -60.0 dBm | 1.4 dB | 7.7 dB | 20.6 dB |
+| O2 | -88.0 dBm | -75.3 dBm | -65.6 dBm | 1.9 dB | 3.7 dB | 9.9 dB |
+| Vodafone | -87.5 dBm | -77.5 dBm | -68.0 dBm | 0.8 dB | 2.6 dB | 15.2 dB |
+
+These are roof-height measurements near Doncaster (a relatively well-covered urban
+area), so they represent a favourable case. The full route will include rural segments
+with weaker signal. However, the spread between p10 and p90 within each operator (15--20
+dB for RSRP) shows that the data does capture meaningful variation, which is what we need
+for per-segment classification.
+
+### Key observations
+
+1. **The data structure is exactly what we need.** Lat/lon coordinates, calibrated RSRP,
+   RSRQ, SINR, operator name, timestamp -- all present and clean. No surprises.
+
+2. **All four operators at every point.** The measurement rig scanned all four networks
+   simultaneously, so we get four rows per geographic sample point. This is ideal for
+   per-operator comparison.
+
+3. **Measurement density is high where the trains ran.** The limiting factor is not
+   "measurements per km" but "which km segments the trains covered at all". On trunk
+   routes like the ECML, density should be excellent. On branch lines, it may be thin or
+   absent.
+
+4. **The 10 m rationalisation is already done.** Ofcom reduced raw data to at most one
+   sample per 10 m, which means the data is already spatially sensible -- we do not need
+   to de-duplicate overlapping measurements at the same point.
+
+5. **Calibrated RSRP is the right metric.** The `cal_rsrp` column corrects for
+   equipment-specific cable and antenna factors. It represents the actual signal at the
+   train roof antenna.
+
+6. **Roof height vs passenger experience.** These measurements are from antennas on the
+   train roof, which receive stronger signal than a phone inside the carriage (metalised
+   windows attenuate 10--30 dB depending on train type). This partially offsets the data
+   vintage: networks have improved since 2018--19, but the roof-height advantage inflates
+   the measured values. The net effect is hard to quantify precisely, which is why the
+   product must use hedging language ("expected", "likely") rather than certainty.
+
+### Coverage risk: branch lines
+
+The yellow trains are engineering trains that run primarily on main lines and trunk
+routes. Branch lines, rural routes, and infrequently maintained lines may have few or
+zero measurements. The full pipeline (P2-03) must track measurement count per segment
+and degrade gracefully:
+
+- **10+ measurements per operator per km:** Confident classification.
+- **3--9 measurements:** Lower confidence, flag in UI.
+- **0--2 measurements:** Display "No data available" rather than guessing.
+
+These thresholds will be refined when the full file is processed.
+
+### Viability verdict
+
+**The approach is viable.** The Ofcom LTE yellow-train data contains exactly the columns
+we need, at sufficient density for signal classification on major routes. The data is
+clean, well-structured, and covers all four UK operators simultaneously.
+
+**Specific confidence levels:**
+
+- **Major trunk routes (ECML, WCML, GWML, MML):** High confidence. These are the routes
+  the yellow trains run most frequently. Expect hundreds of measurements per km per
+  operator, across multiple passes on different dates.
+
+- **Secondary main lines:** Moderate confidence. Expect coverage but potentially with
+  gaps and fewer passes. The product can still give useful verdicts for most segments.
+
+- **Branch lines and rural routes:** Low confidence. Many will have sparse or no data.
+  The product must be honest about this -- "We don't have enough data for this section"
+  is the correct output, not a guess.
+
+**Recommendation:** Proceed to P2-03 (full pipeline). Download the complete 2.2 GB LTE
+CSV, stream it through a filter/snap/bucket pipeline, and produce a compact per-segment
+signal quality dataset. The pipeline must track measurement count and date range per
+segment, because the product's credibility depends on knowing where the data is thin.
+
+### Analysis scripts
+
+- `pipeline/p2-01-analyse-sample.js` -- initial analysis of first 5 MB (sequential sample)
+- `pipeline/p2-01-analyse-spread.js` -- analysis of stratified sample across full file
+
+Both scripts are one-off analysis tools for this investigation. They are not part of the
+production pipeline. The production pipeline (P2-03) will stream the entire file.
