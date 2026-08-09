@@ -69,16 +69,34 @@ include attribution regardless.
 
 ---
 
-## OpenStreetMap / OpenRailwayMap (future)
+## OpenStreetMap — track geometry and tunnels
 
 | Field | Value |
 |---|---|
-| URL | https://www.openstreetmap.org / https://www.openrailwaymap.org |
-| Data | Track geometry, tunnel boundaries |
+| URL | https://www.openstreetmap.org |
+| API | Overpass API (https://overpass-api.de/api/interpreter) |
+| Data | GB railway ways (`railway=rail`, `railway=light_rail`, excluding sidings/yards) and tunnels (`tunnel=yes`) |
 | Licence | Open Data Commons Open Database License v1.0 (ODbL-1.0) |
 | Attribution | "(c) OpenStreetMap contributors" -- must appear in the app |
 | Share-alike | Yes. Derived databases must be ODbL-licensed. |
-| Notes | Not yet integrated. ODbL share-alike applies to derived databases, not to "produced works" (the app itself). |
+| Download date | 2026-08-09 |
+| Status | **Integrated (P2-02).** |
+| GB bounding box | 49.8,-8.2,60.9,2.2 |
+| Record counts | 3,537 tunnels (3,045 named), 21,626 graph nodes, 28,467 graph edges, 2,608 stations snapped |
+| Pipeline script | `pipeline/p2-02-extract-osm.js` |
+
+**Derived outputs (committed):**
+- `data/tunnels.json` (610 KB) -- tunnel objects with OSM way ID, name, coordinates, length
+- `data/track-graph.json` (1.5 MB) -- simplified railway graph (nodes + edges with distances)
+- `data/station-nodes.json` (101 KB) -- maps station CRS codes to nearest graph node
+
+**ODbL obligations:** The derived datasets (`tunnels.json`, `track-graph.json`,
+`station-nodes.json`) are derived from OpenStreetMap data and are therefore subject
+to ODbL share-alike. If distributed as standalone databases, they must carry an
+ODbL-compatible licence. Within the application as internal lookup data (a "produced
+work" under ODbL Section 4.3), share-alike does not apply to the application itself,
+but attribution is still required. Attribution text "(c) OpenStreetMap contributors"
+must appear in the app footer (planned for DW-03 when header/footer landmarks land).
 
 ---
 
@@ -114,4 +132,4 @@ The following attribution text must appear in the application (e.g. in a footer 
 
 1. "Station data derived from uk-railway-stations by David Wheatley (ODbL 1.0) and NaPTAN (OGL v3.0, Department for Transport)"
 2. When signal data is integrated: "Signal measurements from Ofcom open data"
-3. When map data is integrated: "(c) OpenStreetMap contributors"
+3. "(c) OpenStreetMap contributors" (integrated P2-02; attribution must appear when DW-03 adds footer)
