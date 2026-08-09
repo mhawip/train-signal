@@ -327,3 +327,30 @@ particular way, or its full original acceptance criteria).
   fill patterns (solid/diagonal-hatch/crosshatch), icons, legend, and dashed border
   for low-confidence segments. All WCAG AAA contrast ratios verified at author time.
   DW-05 (a11y review) filed.
+
+### DW-05 — Accessibility review of P2-04 signal bands
+- **owner:** accessibility-specialist
+- **status:** done
+- **depends:** P2-04
+- **why:** P2-04 introduces new visual treatments (signal band fill patterns, CSS
+  crosshatch/diagonal-hatch, a legend, inline text labels, dashed-border low-confidence
+  indicator) and new use of colour throughout both the table and visual timeline.
+  Per CLAUDE.md rules, a new visual treatment requires an independent a11y review —
+  cannot be self-certified.
+- **acceptance:**
+  - [x] All signal band CSS classes verified against WCAG 1.4.1 (Use of Colour):
+        bands are distinguishable by pattern + icon + label, not colour alone
+  - [x] Contrast ratios for all band colours confirmed at AAA levels (1.4.6)
+  - [x] Low-confidence dashed border distinguishable without colour
+  - [x] Legend: each item has pattern swatch + icon + text label — check 1.4.1
+  - [x] Inline tunnel names and "(limited data)" notes: reading level (3.1.5)
+  - [x] Vintage disclaimer language reviewed against 3.1.5 and the brief's honesty rules
+  - [x] axe AAA suite still passes after any changes
+- **note:** PR #19. Found and fixed four defects: (D1) missing tunnel icon in legend;
+  (D2) critical — `opacity:0.4` on `.ts-band--no-data` reduced effective contrast to
+  ~1.88:1, far below the 7:1 AAA threshold — replaced with pre-composited `--band-nodata-bg`/
+  `--band-nodata-fg` tokens (#1a1a1a on #d5d5d5 = 10.49:1 light, #e8e8e8 on #3a3a3a =
+  8.49:1 dark); (D3) label inconsistency — VisualTimeline said "No signal" while
+  JourneyTimeline said "No signal expected" — aligned to "No signal expected" everywhere;
+  (D4) `aria-hidden="true"` added to BandIcon SVGs (parent section already has it;
+  this is defence in depth). All other criteria passed. 146 unit + 3 axe-core AAA tests pass.

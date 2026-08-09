@@ -865,3 +865,43 @@ before running tests and will not have this problem.
 before P2-04's visual treatment is considered AAA-confirmed. P2-05 ("Best window to
 book") is unblocked and is the next developer task. DW-03 (header/footer + skip link)
 and DW-04 (RDM pipeline retarget) are also unblocked with no mutual dependencies.
+
+---
+
+## 2026-08-09T22:05Z — DW-05 — accessibility-specialist
+
+**Did:** Independent accessibility review of the signal band visual treatment from P2-04.
+Found and fixed four defects before any further work could build on these patterns.
+
+- `app/globals.css`: Replaced `opacity: 0.4` on `.ts-band--no-data` with dedicated
+  `--band-nodata-bg`/`--band-nodata-fg` colour tokens. Added both light and dark mode
+  values with computed contrast ratios. The opacity approach was a critical 1.4.6 failure
+  (~1.88:1 effective contrast; need 7:1).
+
+- `app/components/VisualTimeline.tsx`: (1) Added tunnel entrance SVG icon to legend
+  (was swatch + label only; spec requires swatch + icon + label for all bands). (2)
+  Aligned "No signal" label to "No signal expected" to match JourneyTimeline and the
+  brief's non-negotiable on hedged language. (3) Added `aria-hidden="true"` to all
+  three BandIcon SVG elements (defence in depth; parent section already has it).
+
+PR #19 opened.
+
+**Verify:** Pass. Typecheck clean, lint clean, 146 unit tests, 3 Playwright axe-core
+AAA tests — all pass.
+
+**Learned:**
+- CSS `opacity` is a contrast killer: applying it to a band element reduces the opacity
+  of BOTH the background and the foreground text together. The resulting effective colour
+  against the page background is far lighter than the design tokens suggest. Pre-composited
+  colour tokens are the only safe approach when you want a muted appearance.
+- The tunnel band was the only one without an icon in the legend; the other three had
+  all three redundant cues. Missing a single icon from a legend entry is easy to overlook
+  during implementation — the a11y review caught it.
+- "No signal" vs "No signal expected": the brief explicitly says the language must be
+  hedged. A two-word string that looks fine in isolation ("No signal") fails the
+  non-negotiable when read as a factual claim. Label consistency checks across components
+  should be standard in the implementation task, not left to a11y review.
+
+**Next:** DW-05 is done. P2-04's visual treatment is now AAA-confirmed. P2-05 ("Best
+window to book") is the next developer task. DW-03 (header/footer + skip link) and
+DW-04 (RDM pipeline retarget) remain unblocked and can be taken in any order.
