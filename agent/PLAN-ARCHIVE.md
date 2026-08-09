@@ -287,3 +287,43 @@ particular way, or its full original acceptance criteria).
   - [x] Station-pair to track segment resolution
   - [x] ODbL attribution recorded and surfaced in the app
   - [x] Committed compact; raw extracts gitignored
+
+### P2-03 — Full signal pipeline
+- **owner:** data-engineer
+- **status:** done
+- **depends:** P2-01, P2-02
+- **why:** The derived dataset the product runs on.
+- **acceptance:**
+  - [x] Streams the full Ofcom data without loading it into memory
+  - [x] Filters to points near track, snaps to segments
+  - [x] Aggregates per segment per operator to a **distribution**, not a mean —
+        10th percentile matters more than average
+  - [x] Measurement count and date range preserved per segment
+  - [x] Thresholds documented and justified in `specs/signal-model.md`
+  - [x] Output a few MB, committed; raw gitignored (9.2 MB compact JSON)
+  - [x] Re-runnable to byte-identical output
+  - [x] Row counts logged at each stage
+- **note:** Processed the Ofcom LTE CSV (2.2 GB, 19.3M rows). 14,753 nodes committed
+  covering 68% of the 21,626 graph nodes. Q5 also resolved in this iteration: Matt
+  verified the RDM product is July 2026 data with 5G. Signal-model.md updated to
+  recommend RDM. DW-04 filed to retarget the pipeline at RDM.
+
+### P2-04 — Signal bands on the timeline
+- **owner:** developer
+- **status:** done
+- **depends:** P2-03, P1-06
+- **why:** The answer the user came for.
+- **acceptance:**
+  - [x] Three bands rendered on both table and visual timeline
+  - [x] Low confidence visibly distinct — never presented as a confident verdict
+  - [x] Tunnels named inline
+  - [x] Greyscale-legible
+  - [x] Language is "expected"/"likely", never "you will have signal"
+  - [x] Data vintage stated in the UI
+- **note:** PR #18. New `app/lib/signal.ts` — Dijkstra pathfinding between station
+  nodes, dominant-band classification (conservative tie-breaking: none > voice > video),
+  20% coverage threshold for no-data verdict, 200 m proximity tunnel detection.
+  JourneyTimeline updated with optional signal column; VisualTimeline updated with
+  fill patterns (solid/diagonal-hatch/crosshatch), icons, legend, and dashed border
+  for low-confidence segments. All WCAG AAA contrast ratios verified at author time.
+  DW-05 (a11y review) filed.

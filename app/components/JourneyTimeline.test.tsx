@@ -185,6 +185,192 @@ describe("JourneyTimeline", () => {
     expect(caption).toBeInTheDocument();
   });
 
+  it("renders the signal column when signalProfile is provided", () => {
+    const signalProfile = [
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 50,
+        totalNodes: 60,
+        tunnels: [],
+      },
+      {
+        band: "voice" as const,
+        confidence: "low" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: ["Stoke Tunnel"],
+      },
+      {
+        band: "none" as const,
+        confidence: "high" as const,
+        coveredNodes: 20,
+        totalNodes: 25,
+        tunnels: [],
+      },
+    ];
+
+    render(
+      <JourneyTimeline
+        journey={fixtureJourney}
+        signalProfile={signalProfile}
+      />
+    );
+
+    // Check the header now has "Expected signal"
+    const table = screen.getByRole("table");
+    const headers = within(table).getAllByRole("columnheader");
+    const headerTexts = headers.map((h) => h.textContent);
+    expect(headerTexts).toContain("Expected signal");
+  });
+
+  it("shows en dash for the origin signal cell", () => {
+    const signalProfile = [
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 50,
+        totalNodes: 60,
+        tunnels: [],
+      },
+      {
+        band: "voice" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+      {
+        band: "none" as const,
+        confidence: "high" as const,
+        coveredNodes: 20,
+        totalNodes: 25,
+        tunnels: [],
+      },
+    ];
+
+    render(
+      <JourneyTimeline
+        journey={fixtureJourney}
+        signalProfile={signalProfile}
+      />
+    );
+
+    // Origin row (Leeds) should show en dash for signal
+    const originRow = screen.getByRole("row", { name: /Leeds/i });
+    const cells = within(originRow).getAllByRole("cell");
+    // Cells: Arrives, Departs, Expected signal, Journey time
+    // Signal cell (index 2) should be en dash
+    expect(cells[2]).toHaveTextContent("\u2013");
+  });
+
+  it("shows band labels: Voice and video, Voice only, No signal expected", () => {
+    const signalProfile = [
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 50,
+        totalNodes: 60,
+        tunnels: [],
+      },
+      {
+        band: "voice" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+      {
+        band: "none" as const,
+        confidence: "high" as const,
+        coveredNodes: 20,
+        totalNodes: 25,
+        tunnels: [],
+      },
+    ];
+
+    render(
+      <JourneyTimeline
+        journey={fixtureJourney}
+        signalProfile={signalProfile}
+      />
+    );
+
+    expect(screen.getByText("Voice and video")).toBeInTheDocument();
+    expect(screen.getByText("Voice only")).toBeInTheDocument();
+    expect(screen.getByText("No signal expected")).toBeInTheDocument();
+  });
+
+  it("shows limited data note for low confidence segments", () => {
+    const signalProfile = [
+      {
+        band: "voice" as const,
+        confidence: "low" as const,
+        coveredNodes: 10,
+        totalNodes: 40,
+        tunnels: [],
+      },
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+    ];
+
+    render(
+      <JourneyTimeline
+        journey={fixtureJourney}
+        signalProfile={signalProfile}
+      />
+    );
+
+    expect(screen.getByText("(limited data)")).toBeInTheDocument();
+  });
+
+  it("shows tunnel names in signal cells", () => {
+    const signalProfile = [
+      {
+        band: "voice" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: ["Stoke Tunnel"],
+      },
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+    ];
+
+    render(
+      <JourneyTimeline
+        journey={fixtureJourney}
+        signalProfile={signalProfile}
+      />
+    );
+
+    expect(screen.getByText(/Stoke Tunnel/)).toBeInTheDocument();
+  });
+
   it("handles midnight crossing in journey times", () => {
     const midnightJourney: Journey = {
       origin: {

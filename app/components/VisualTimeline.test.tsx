@@ -168,4 +168,116 @@ describe("VisualTimeline", () => {
     // Origin shows departure (14:12), others show arrival
     expect(timeTexts).toEqual(["14:12", "14:25", "14:44", "16:27"]);
   });
+
+  it("applies signal band CSS class when signalProfile is provided", () => {
+    const signalProfile = [
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 50,
+        totalNodes: 60,
+        tunnels: [],
+      },
+      {
+        band: "voice" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+      {
+        band: "none" as const,
+        confidence: "high" as const,
+        coveredNodes: 20,
+        totalNodes: 25,
+        tunnels: [],
+      },
+    ];
+
+    const { container } = render(
+      <VisualTimeline journey={fixtureJourney} signalProfile={signalProfile} />
+    );
+
+    const segments = container.querySelectorAll(
+      ".ts-visual-timeline__segment"
+    );
+    expect(segments[0].classList.contains("ts-band--video")).toBe(true);
+    expect(segments[1].classList.contains("ts-band--voice")).toBe(true);
+    expect(segments[2].classList.contains("ts-band--none")).toBe(true);
+  });
+
+  it("applies low confidence class when confidence is low", () => {
+    const signalProfile = [
+      {
+        band: "voice" as const,
+        confidence: "low" as const,
+        coveredNodes: 10,
+        totalNodes: 40,
+        tunnels: [],
+      },
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+    ];
+
+    const { container } = render(
+      <VisualTimeline journey={fixtureJourney} signalProfile={signalProfile} />
+    );
+
+    const segments = container.querySelectorAll(
+      ".ts-visual-timeline__segment"
+    );
+    expect(segments[0].classList.contains("ts-band--low-confidence")).toBe(true);
+    expect(segments[1].classList.contains("ts-band--low-confidence")).toBe(false);
+  });
+
+  it("renders the legend when signalProfile is provided", () => {
+    const signalProfile = [
+      {
+        band: "video" as const,
+        confidence: "high" as const,
+        coveredNodes: 50,
+        totalNodes: 60,
+        tunnels: [],
+      },
+      {
+        band: "voice" as const,
+        confidence: "high" as const,
+        coveredNodes: 30,
+        totalNodes: 40,
+        tunnels: [],
+      },
+      {
+        band: "none" as const,
+        confidence: "high" as const,
+        coveredNodes: 20,
+        totalNodes: 25,
+        tunnels: [],
+      },
+    ];
+
+    const { container } = render(
+      <VisualTimeline journey={fixtureJourney} signalProfile={signalProfile} />
+    );
+
+    const legend = container.querySelector(".ts-legend");
+    expect(legend).toBeTruthy();
+  });
+
+  it("does not render the legend when signalProfile is absent", () => {
+    const { container } = render(<VisualTimeline journey={fixtureJourney} />);
+    const legend = container.querySelector(".ts-legend");
+    expect(legend).toBeFalsy();
+  });
 });
