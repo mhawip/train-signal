@@ -2,24 +2,28 @@
  * JourneyTimeline: text-equivalent table for a rail journey.
  *
  * This is a server component. It renders a semantic HTML table showing
- * each calling point with arrival/departure times and elapsed journey
- * time. This table is the primary accessible representation of the
- * journey (specs/accessibility.md section 7) -- the visual timeline
- * (P1-06) is a progressive enhancement over it.
+ * each calling point with arrival/departure times, elapsed journey
+ * time, and expected signal quality. This table is the primary
+ * accessible representation of the journey (specs/accessibility.md
+ * section 7) -- the visual timeline is a progressive enhancement.
  *
  * Accessibility:
  * - Uses <table>, <caption>, <thead>, <tbody>, <tfoot>
  * - Column headers use <th scope="col">
  * - Station name cells use <th scope="row">
  * - All times are plain text, no abbreviations
+ * - Signal column uses text labels, not colour alone (1.4.1)
+ * - Icons are aria-hidden; text labels carry the accessible meaning
  * - Wrapper has role="region" with aria-label and tabindex="0"
  *   so it is keyboard-scrollable at narrow viewports (specs/accessibility.md 7.4)
  */
 
 import type { Journey } from "@/app/lib/journey-types";
+import type { SegmentSignal } from "@/app/lib/signal";
 
 export interface JourneyTimelineProps {
   journey: Journey;
+  signalProfile?: SegmentSignal[];
 }
 
 /**
@@ -93,16 +97,136 @@ function formatDate(isoDate: string): string {
   return `${day} ${months[monthIndex]} ${year}`;
 }
 
-export function JourneyTimeline({ journey }: JourneyTimelineProps) {
+// ---------------------------------------------------------------------------
+// Signal band display helpers
+//
+// Each band has a text label (the accessible name), an inline SVG icon
+// (aria-hidden, purely decorative), and a CSS class for the visual
+// timeline. Labels are plain English (WCAG 3.1.5).
+// ---------------------------------------------------------------------------
+
+/**
+ * Inline SVG icon for the "voice and video" band.
+ * A checkmark indicating good signal. aria-hidden because the text
+ * label carries the meaning.
+ */
+function CheckIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="ts-band-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+    >
+      <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+    </svg>
+  );
+}
+
+/**
+ * Inline SVG icon for the "voice only" band.
+ * A phone handset. aria-hidden.
+ */
+function PhoneIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="ts-band-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+    >
+      <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328Z" />
+    </svg>
+  );
+}
+
+/**
+ * Inline SVG icon for the "no signal" band.
+ * An X mark indicating no usable signal. aria-hidden.
+ */
+function XIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="ts-band-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+    >
+      <path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z" />
+    </svg>
+  );
+}
+
+/**
+ * Render the signal cell content for a segment.
+ * Returns icon + text label + optional tunnel and confidence notes.
+ */
+function SignalCell({ signal }: { signal: SegmentSignal }) {
+  const { band, confidence, tunnels } = signal;
+
+  let icon: React.ReactNode = null;
+  let label = "";
+
+  switch (band) {
+    case "video":
+      icon = <CheckIcon />;
+      label = "Voice and video";
+      break;
+    case "voice":
+      icon = <PhoneIcon />;
+      label = "Voice only";
+      break;
+    case "none":
+      icon = <XIcon />;
+      label = "No signal expected";
+      break;
+    case "no-data":
+      label = "No data";
+      break;
+    case "unknown":
+      return <>{"\u2013"}</>;
+  }
+
+  return (
+    <span className="ts-signal-cell">
+      {icon}
+      <span className="ts-signal-cell__label">{label}</span>
+      {confidence === "low" && (
+        <span className="ts-signal-cell__note">(limited data)</span>
+      )}
+      {tunnels.length > 0 && (
+        <span className="ts-signal-cell__note">
+          (includes {tunnels.join(", ")})
+        </span>
+      )}
+    </span>
+  );
+}
+
+export function JourneyTimeline({
+  journey,
+  signalProfile,
+}: JourneyTimelineProps) {
   const { callingPoints, origin, destination, date } = journey;
   const originDeparture = origin.scheduledDeparture;
   const caption = `${origin.name} to ${destination.name}, ${formatDate(date)}`;
+  const hasSignal = signalProfile && signalProfile.length > 0;
 
   // Calculate total journey duration
   const totalMinutes =
     originDeparture && destination.scheduledArrival
       ? elapsedMinutes(originDeparture, destination.scheduledArrival)
       : 0;
+
+  // The number of non-signal columns, used for colSpan in the footer
+  const baseColCount = 4;
+  const totalColCount = hasSignal ? baseColCount + 1 : baseColCount;
 
   return (
     <section id="journey-table" aria-labelledby="journey-table-heading">
@@ -120,14 +244,25 @@ export function JourneyTimeline({ journey }: JourneyTimelineProps) {
               <th scope="col">Station</th>
               <th scope="col">Arrives</th>
               <th scope="col">Departs</th>
+              {hasSignal && <th scope="col">Expected signal</th>}
               <th scope="col">Journey time</th>
             </tr>
           </thead>
           <tbody>
-            {callingPoints.map((point) => {
+            {callingPoints.map((point, index) => {
               const elapsed =
                 originDeparture && point.scheduledArrival
                   ? elapsedMinutes(originDeparture, point.scheduledArrival)
+                  : null;
+
+              // Signal is shown per leg INTO a station. The origin
+              // (index 0) has no incoming leg, so it shows an en dash.
+              // Each subsequent station at index i gets the signal for
+              // segment i-1 (the leg from callingPoints[i-1] to
+              // callingPoints[i]).
+              const segmentSignal =
+                hasSignal && index > 0
+                  ? signalProfile[index - 1]
                   : null;
 
               return (
@@ -135,6 +270,15 @@ export function JourneyTimeline({ journey }: JourneyTimelineProps) {
                   <th scope="row">{point.name}</th>
                   <td>{point.scheduledArrival ?? "\u2013"}</td>
                   <td>{point.scheduledDeparture ?? "\u2013"}</td>
+                  {hasSignal && (
+                    <td>
+                      {segmentSignal ? (
+                        <SignalCell signal={segmentSignal} />
+                      ) : (
+                        "\u2013"
+                      )}
+                    </td>
+                  )}
                   <td>
                     {elapsed !== null ? formatDuration(elapsed) : "\u2013"}
                   </td>
@@ -144,7 +288,7 @@ export function JourneyTimeline({ journey }: JourneyTimelineProps) {
           </tbody>
           <tfoot>
             <tr>
-              <th scope="row" colSpan={3}>
+              <th scope="row" colSpan={totalColCount - 1}>
                 Total
               </th>
               <td>{formatDuration(totalMinutes)}</td>

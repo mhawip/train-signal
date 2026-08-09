@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { JourneyTimeline } from "@/app/components/JourneyTimeline";
 import { VisualTimeline } from "@/app/components/VisualTimeline";
+import { getJourneySignal } from "@/app/lib/signal";
 import type { Journey } from "@/app/lib/journey-types";
 
 /**
@@ -117,9 +118,13 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   // Always show the fixture journey for now; real data comes in a future task
   const journey = FIXTURE_JOURNEY;
 
-  // If the user provided URL params, acknowledge them in the heading
-  const hasParams = Boolean(params.from && params.to);
   const heading = `${journey.origin.name} to ${journey.destination.name}`;
+
+  // Compute signal profile server-side
+  const signalProfile = getJourneySignal(journey);
+
+  // Network name to show -- prefer URL param, fall back to fixture
+  const networkName = params.network || journey.network;
 
   return (
     <main>
@@ -134,15 +139,18 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
         integration is complete.
       </p>
 
-      {hasParams && params.network && (
-        <p>
-          Showing expected signal for {params.network} on this route.
-        </p>
-      )}
+      <p>
+        Showing expected signal for {networkName} on this route.
+      </p>
 
-      <JourneyTimeline journey={journey} />
+      <p className="ts-notice ts-notice--vintage">
+        Signal data is based on measurements from 2018 and 2019. Results show
+        expected signal, not a guarantee. Coverage may have changed since then.
+      </p>
 
-      <VisualTimeline journey={journey} />
+      <JourneyTimeline journey={journey} signalProfile={signalProfile} />
+
+      <VisualTimeline journey={journey} signalProfile={signalProfile} />
 
       <nav aria-label="Page navigation" className="ts-results-nav">
         <Link href="/" className="ts-back-link">

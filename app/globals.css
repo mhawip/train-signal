@@ -160,9 +160,62 @@
  * ================================================================ */
 
 /* Voice + video: solid fill, no pattern (clean = good) */
+.ts-band--video {
+  background-color: var(--band-good-bg);
+  color: var(--band-good-fg);
+}
+
 /* Voice only: 45-degree diagonal hatching, 2px lines, 8px spacing */
+.ts-band--voice {
+  background-color: var(--band-ok-bg);
+  color: var(--band-ok-fg);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    var(--band-ok-stripe) 6px,
+    var(--band-ok-stripe) 8px
+  );
+}
+
 /* No signal: dense crosshatch, 2px lines, 6px spacing */
+.ts-band--none {
+  background-color: var(--band-none-bg);
+  color: var(--band-none-fg);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    var(--band-none-stripe) 4px,
+    var(--band-none-stripe) 6px
+  ), repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    var(--band-none-stripe) 4px,
+    var(--band-none-stripe) 6px
+  );
+}
+
 /* Tunnel: solid dark fill, no pattern needed (value alone distinguishes) */
+.ts-band--tunnel {
+  background-color: var(--band-tunnel-bg);
+  color: var(--band-tunnel-fg);
+}
+
+/* No data: muted, reduced opacity to signal absence of information */
+.ts-band--no-data {
+  background-color: var(--color-field-border);
+  color: var(--color-page-bg);
+  opacity: 0.4;
+}
+
+/* Low confidence: dashed border replaces solid, visually distinct
+ * from confident readings (specs/design-system.md section 7).
+ * Works in greyscale because the dashed pattern is structural. */
+.ts-band--low-confidence {
+  border-style: dashed;
+}
 
 /* ================================================================
  * RESET AND BASE STYLES
@@ -742,6 +795,137 @@ legend.ts-field__label + * {
   border-right: 1px solid var(--band-border);
 }
 
+/* Inline label within a signal band segment.
+ * Shows icon + text label for bands taller than ~60px
+ * (specs/accessibility.md 6.2). */
+.ts-visual-timeline__band-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  white-space: nowrap;
+  /* Position the label at the top of the segment bar */
+  margin-left: var(--space-2);
+  padding-top: var(--space-1);
+}
+
+.ts-visual-timeline__tunnel-note {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  display: block;
+  margin-top: var(--space-1);
+}
+
+/* When signal bands are present, widen the segment bar to fit labels */
+.ts-visual-timeline__segment.ts-band--video,
+.ts-visual-timeline__segment.ts-band--voice,
+.ts-visual-timeline__segment.ts-band--none,
+.ts-visual-timeline__segment.ts-band--no-data {
+  width: auto;
+  min-width: 4px;
+  max-width: 10rem;
+  margin-left: calc(0.375rem - 2px);
+  border: 2px solid var(--band-border);
+  border-radius: var(--radius-sm);
+}
+
+.ts-visual-timeline__segment.ts-band--tunnel {
+  border-color: var(--band-tunnel-border);
+}
+
+/* ================================================================
+ * SIGNAL BAND ICONS
+ *
+ * Icons within signal bands: 16x16px minimum, 3:1 contrast against
+ * band background (1.4.11). Icons are aria-hidden in both the table
+ * and the visual timeline.
+ * ================================================================ */
+
+.ts-band-icon {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* ================================================================
+ * SIGNAL CELL (in the text-equivalent table)
+ *
+ * Shows icon + text label + optional notes for tunnels and confidence.
+ * ================================================================ */
+
+.ts-signal-cell {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.ts-signal-cell__label {
+  font-weight: var(--font-weight-normal);
+}
+
+.ts-signal-cell__note {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  width: 100%;
+}
+
+/* ================================================================
+ * LEGEND
+ *
+ * Always visible on the results page (not behind a toggle).
+ * Shows all band types with pattern swatch + icon + text label.
+ * Required by specs/accessibility.md 2.8 (1.4.1).
+ * ================================================================ */
+
+.ts-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-field-border);
+  border-radius: var(--radius-sm);
+}
+
+.ts-legend__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* Pattern swatch: a small rectangle showing the band pattern */
+.ts-legend__swatch {
+  display: inline-block;
+  width: 1.5rem;
+  height: 1rem;
+  border: 1px solid var(--band-border);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.ts-legend__label {
+  font-size: var(--font-size-sm);
+  color: var(--color-page-fg);
+}
+
+/* ================================================================
+ * DATA VINTAGE NOTICE
+ *
+ * Visually distinct from the general notice, but uses the same
+ * pattern. Ensures the 2018-2019 data vintage is clearly stated.
+ * ================================================================ */
+
+.ts-notice--vintage {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
 /* At 320px viewport, the timeline must still fit without
  * horizontal scroll (1.4.10). Station names wrap naturally
  * because the label uses flex-wrap. */
@@ -836,5 +1020,23 @@ legend.ts-field__label + * {
   .ts-visual-timeline__segment {
     border-color: ButtonText;
     background-color: ButtonText;
+  }
+
+  /* Signal band segments: borders remain visible, text labels
+   * carry the information when background patterns are suppressed. */
+  .ts-band--video,
+  .ts-band--voice,
+  .ts-band--none,
+  .ts-band--no-data,
+  .ts-band--tunnel {
+    border-color: ButtonText;
+  }
+
+  .ts-legend {
+    border-color: ButtonText;
+  }
+
+  .ts-legend__swatch {
+    border-color: ButtonText;
   }
 }
