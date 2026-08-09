@@ -271,3 +271,19 @@ particular way, or its full original acceptance criteria).
   - [x] Findings written to `specs/signal-model.md`, including a clear verdict on
         whether the approach is viable
   - [x] Approach confirmed viable; no need to escalate
+
+---
+
+### P2-02 — Track geometry and tunnels
+- **owner:** data-engineer
+- **status:** done
+- **depends:** P1-03
+- **why:** Maps a journey to a line on the ground, and gives named tunnels as certain
+  dead zones. "Standedge Tunnel, 3 minutes, no signal" is far more trustworthy than an
+  unexplained gap.
+- **acceptance:**
+  - [x] GB railway geometry extracted from OSM
+  - [x] Tunnels extracted with names, coordinates and lengths
+  - [x] Station-pair to track segment resolution
+  - [x] ODbL attribution recorded and surfaced in the app
+  - [x] Committed compact; raw extracts gitignored

@@ -41,6 +41,7 @@ and writes to it last.
 | DW-01 | ESLint rule relaxation for tabIndex on role="region" | accessibility-specialist |
 | P2-00 | Evaluate RDM yellow-train product | data-engineer |
 | P2-01 | Thin vertical slice: one route, one operator | data-engineer |
+| P2-02 | Track geometry and tunnels | data-engineer |
 
 ---
 
@@ -109,19 +110,7 @@ P1-03 through P1-07 are done — see the index above.
 
 The part that makes it a product rather than a worse Trainline.
 
-### P2-02 — Track geometry and tunnels
-- **owner:** data-engineer
-- **status:** in-progress
-- **depends:** P1-03
-- **why:** Maps a journey to a line on the ground, and gives named tunnels as certain
-  dead zones. "Standedge Tunnel, 3 minutes, no signal" is far more trustworthy than an
-  unexplained gap.
-- **acceptance:**
-  - [ ] GB railway geometry extracted from OSM
-  - [ ] Tunnels extracted with names, coordinates and lengths
-  - [ ] Station-pair → track segment resolution
-  - [ ] ODbL attribution recorded and surfaced in the app
-  - [ ] Committed compact; raw extracts gitignored
+P2-02 is done — see the index above.
 
 ### P2-03 — Full signal pipeline
 - **owner:** data-engineer
