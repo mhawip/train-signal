@@ -938,6 +938,32 @@ legend.ts-field__label + * {
   color: var(--color-muted);
 }
 
+/* ================================================================
+ * BEST WINDOW HEADLINE
+ *
+ * The product's primary output: a plain sentence naming the best
+ * time to take a call. Large type for the clock times, normal type
+ * for the explanatory sentence.
+ *
+ * Uses existing tokens only -- no new colours.
+ * #1a1a1a on #ffffff = 17.40:1 (1.4.6 body text: need 7:1).
+ * font-size-2xl (32px) qualifies as large text (>= 24px).
+ * ================================================================ */
+
+.ts-best-window__times {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  color: var(--color-page-fg);
+}
+
+/* Muted helper text (reusable). Uses --color-muted which is
+ * verified at 7:1 on page background in both light and dark. */
+.ts-muted {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+}
+
 /* At 320px viewport, the timeline must still fit without
  * horizontal scroll (1.4.10). Station names wrap naturally
  * because the label uses flex-wrap. */
