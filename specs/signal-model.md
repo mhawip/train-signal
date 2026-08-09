@@ -493,3 +493,92 @@ segment, because the product's credibility depends on knowing where the data is 
 
 Both scripts are one-off analysis tools for this investigation. They are not part of the
 production pipeline. The production pipeline (P2-03) will stream the entire file.
+
+---
+
+## Track geometry (P2-02)
+
+### Approach
+
+Track geometry is extracted from OpenStreetMap via the Overpass API. The GB railway
+network is queried using `railway=rail` and `railway=light_rail` tags (excluding sidings
+and yards), along with tunnel ways (`tunnel=yes`). The bounding box covers
+49.8,-8.2,60.9,2.2 (all of GB including offshore approaches).
+
+### Graph simplification
+
+The raw OSM data contains ~563,000 nodes and ~81,000 ways. This produces a 32 MB JSON
+file -- too large to commit.
+
+**Decision:** Simplify the graph by merging degree-2 nodes (nodes that connect exactly
+two edges with no branching). This preserves the network topology while collapsing long
+chains of intermediate points into single weighted edges. Station-nearest nodes are
+protected from merging so that station-to-station path-finding works correctly.
+
+Result: 21,626 nodes, 28,467 edges, 1.5 MB. Well under the 5 MB target.
+
+The trade-off: the simplified graph loses intermediate geometry along edges. Each edge
+stores only its endpoint coordinates and total distance, not the detailed coordinate
+sequence between them. For P2-03 (signal pipeline), this means Ofcom measurements will
+be snapped to the nearest graph node rather than to a precise point along the track.
+At ~1.6 km average spacing between graph nodes on the ECML, this introduces position
+uncertainty of up to ~800 m. This is acceptable for the 1 km bucketing planned in P2-03,
+and the full raw node data can be used for finer resolution if needed.
+
+### Station snapping
+
+Every station in `data/stations.json` (2,608 stations) is snapped to its nearest OSM
+graph node within a 2 km radius. All 2,608 stations snap successfully, confirming that
+the OSM railway network covers the entire GB passenger network.
+
+The snap distances range from ~10 m (stations centred on track) to ~1,500 m (stations
+where the OSM node and station reference point differ -- often because the station
+building is offset from the platform centreline, or the nearest track node is at a
+junction rather than the station itself).
+
+### Tunnels
+
+3,537 tunnel ways extracted, of which 3,045 have names. Tunnel naming in OSM typically
+uses the railway line name (e.g. "East Coast Main Line", "South Wales Main Line") rather
+than the specific tunnel name. Some tunnels include the tunnel name in parentheses
+(e.g. "Harrogate Line (Bramhope Tunnel)"). The app may need to present these as
+"Tunnel on [line name]" rather than expecting a standalone tunnel name.
+
+Notable tunnels confirmed in the data:
+- Severn Tunnel: 6,993 m / 6,995 m (two tracks, named "South Wales Main Line")
+- Bramhope Tunnel: 3,442 m / 3,444 m (two tracks, named "Harrogate Line (Bramhope Tunnel)")
+- Channel Tunnel: 27,623 m (named, but outside the GB rail network proper)
+
+### Tunnel matching on routes
+
+When resolving a station-pair track segment, tunnels are matched to the path by
+proximity: if a tunnel's midpoint is within 200 m of any path coordinate, it is
+considered to be on the route. Start and end indices are computed by finding the
+nearest path coordinate to the tunnel's start and end points.
+
+This is approximate -- the simplified graph's ~1.6 km point spacing means tunnel
+positions along the path are resolved to the nearest graph node, not to a precise
+metre. For the purpose of identifying which tunnels a journey passes through (and in
+what sequence), this is sufficient. Precise tunnel timing will depend on the timetable
+speed model, not on sub-km position accuracy.
+
+### Path-finding
+
+Station-to-station routes use Dijkstra's algorithm on the simplified graph, with edge
+weights equal to the physical distance in metres. The algorithm finds the shortest path,
+which on a railway network typically corresponds to the actual route (unlike a road
+network, where shortest distance and fastest route often differ).
+
+**Limitation:** The railway graph is undirected and does not encode route knowledge
+(e.g. which lines serve which stations). This means the shortest-path result may not
+match the actual timetabled route if multiple paths exist between two stations. For
+example, a journey from London to Manchester could follow the WCML or the MML; the
+graph will return whichever is shorter by distance. For P2-03, this is acceptable
+because signal measurements along both routes are captured in the Ofcom data. The
+correct route will be determined when timetable data (P1-01/P1-02) provides calling
+points, and the track lookup can be called for each consecutive station pair.
+
+### Scripts
+
+- `pipeline/p2-02-extract-osm.js` -- downloads and processes OSM data
+- `pipeline/track-lookup.ts` -- station-pair path resolution with tunnel matching

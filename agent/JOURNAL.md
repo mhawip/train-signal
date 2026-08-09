@@ -680,3 +680,55 @@ specs only.)
 tunnels) is also unblocked (depends only on P1-03). DW-03 (header/footer landmarks +
 skip link) has no dependencies and is also available. Priority order: P2-02 and P2-03
 are Phase 2 critical path; DW-03 is housekeeping that can run between data-engineer tasks.
+
+## 2026-08-09T09:30:00Z — P2-02 — data-engineer
+**Did:** Extracted GB railway track geometry and tunnels from OpenStreetMap via the
+Overpass API and built a station-pair track segment lookup.
+
+Files created:
+- `pipeline/p2-02-extract-osm.js` -- downloads and processes OSM data via Overpass API
+  (chunked by region: south/mid/north England + Scotland + Wales), with retry logic
+  for 429/504 responses. Simplifies the graph by merging degree-2 nodes while preserving
+  station-nearest nodes.
+- `pipeline/track-lookup.ts` -- Dijkstra path-finding between any two stations via CRS
+  code, with tunnel proximity matching along the resolved path.
+- `pipeline/track-lookup.test.ts` -- 6 tests: KGX-LDS forward/reverse, non-existent
+  station, short route (PAD-RDG), tunnel field validation, tunnel sort order.
+- `data/tunnels.json` (610 KB) -- 3,537 tunnels (3,045 named), with OSM way ID,
+  coordinates, and computed Haversine length.
+- `data/track-graph.json` (1.5 MB) -- simplified railway graph: 21,626 nodes, 28,467
+  edges (from 563k raw nodes). Well under the 5 MB commit target.
+- `data/station-nodes.json` (101 KB) -- all 2,608 stations snapped to nearest graph node.
+
+Files modified:
+- `specs/data-sources.md` -- OSM entry updated from "(future)" to integrated, with
+  download date, record counts, pipeline script reference, and ODbL obligations.
+- `specs/signal-model.md` -- new "Track geometry" section documenting graph simplification
+  rationale, station snapping, tunnel naming patterns, and path-finding limitations.
+
+**Verify:** Pass. `npm run verify` green: typecheck clean, lint clean, 93 unit tests
+(11 files), 3 Playwright AAA a11y tests (0 violations).
+
+**Learned:**
+- Overpass API requires a User-Agent header; without it, returns 406 Not Acceptable.
+- Spreading large arrays (`allElements.push(...data.elements)` with 327k elements)
+  causes a stack overflow. Use a for-of loop instead.
+- OSM tunnel names typically use the railway line name (e.g. "East Coast Main Line"),
+  not the tunnel's own name. Some include the tunnel name in parentheses (e.g.
+  "Harrogate Line (Bramhope Tunnel)"). The Severn Tunnel (6,993 m) is named
+  "South Wales Main Line". The app will need to handle this naming pattern.
+- Graph simplification from 563k to 21.6k nodes (by merging degree-2 nodes) reduced
+  the file from 32 MB to 1.5 MB while preserving network topology. The key insight is
+  protecting station-nearest nodes from merging, which ensures all 2,608 stations remain
+  reachable in the simplified graph.
+- KGX to LDS resolves at 298.7 km with 28 tunnels. The distance is slightly longer than
+  the 282 km cited in P2-01 because the graph's shortest path may not perfectly match the
+  ECML route where alternatives exist.
+- Overpass rate limiting (429) and gateway timeouts (504) are common for large GB-wide
+  queries. Chunking by latitude band (south/mid/north) and adding 5s pauses between
+  requests helps, but retry logic with exponential backoff is essential.
+
+**Next:** P2-02 done completes all dependencies for P2-03 (full signal pipeline).
+P2-03 is now the highest-priority data-engineer task: stream the full Ofcom LTE CSV,
+filter to points near track, snap to segments, aggregate distributions, and emit the
+compact signal dataset the product runs on.
