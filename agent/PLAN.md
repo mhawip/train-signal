@@ -117,7 +117,7 @@ P2-02, P2-03, and P2-04 are done — see the index above.
 
 ### P2-05 — "Best window to book"
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P2-04
 - **why:** The actual product. The sentence people came for; the timeline is evidence.
 - **acceptance:**
