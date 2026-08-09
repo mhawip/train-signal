@@ -77,7 +77,7 @@ function bandLabel(band: SignalBand): string {
     case "voice":
       return "Voice only";
     case "none":
-      return "No signal";
+      return "No signal expected";
     case "no-data":
       return "No data";
     case "unknown":
@@ -94,6 +94,7 @@ function BandIcon({ band }: { band: SignalBand }) {
     case "video":
       return (
         <svg
+          aria-hidden="true"
           className="ts-band-icon"
           width="16"
           height="16"
@@ -106,6 +107,7 @@ function BandIcon({ band }: { band: SignalBand }) {
     case "voice":
       return (
         <svg
+          aria-hidden="true"
           className="ts-band-icon"
           width="16"
           height="16"
@@ -118,6 +120,7 @@ function BandIcon({ band }: { band: SignalBand }) {
     case "none":
       return (
         <svg
+          aria-hidden="true"
           className="ts-band-icon"
           width="16"
           height="16"
@@ -195,10 +198,20 @@ export function VisualTimeline({
           <div className="ts-legend__item">
             <span className="ts-legend__swatch ts-band--none" />
             <BandIcon band="none" />
-            <span className="ts-legend__label">No signal</span>
+            <span className="ts-legend__label">No signal expected</span>
           </div>
           <div className="ts-legend__item">
             <span className="ts-legend__swatch ts-band--tunnel" />
+            <svg
+              aria-hidden="true"
+              className="ts-band-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+            >
+              <path d="M8 1C4.5 1 2 4 2 7v8h2V7c0-2.2 1.8-4 4-4s4 1.8 4 4v8h2V7c0-3-2.5-6-6-6Z" />
+            </svg>
             <span className="ts-legend__label">Tunnel</span>
           </div>
         </div>
