@@ -44,6 +44,7 @@ and writes to it last.
 | P2-02 | Track geometry and tunnels | data-engineer |
 | P2-03 | Full signal pipeline | data-engineer |
 | P2-04 | Signal bands on the timeline | developer |
+| DW-05 | Accessibility review of P2-04 signal bands | accessibility-specialist |
 
 ---
 
@@ -220,26 +221,6 @@ Bugs and follow-ups get filed here by whoever finds them.
         the header
   - [ ] Both skip links meet 44px target size (2.5.5)
   - [ ] axe AAA tests still pass
-
-### DW-05 — Accessibility review of P2-04 signal bands
-- **owner:** accessibility-specialist
-- **status:** in-progress
-- **depends:** P2-04
-- **why:** P2-04 introduces new visual treatments (signal band fill patterns, CSS
-  crosshatch/diagonal-hatch, a legend, inline text labels, dashed-border low-confidence
-  indicator) and new use of colour throughout both the table and visual timeline.
-  Per CLAUDE.md rules, a new visual treatment requires an independent a11y review —
-  cannot be self-certified.
-- **acceptance:**
-  - [ ] All signal band CSS classes verified against WCAG 1.4.1 (Use of Colour):
-        bands are distinguishable by pattern + icon + label, not colour alone
-  - [ ] Contrast ratios for all band colours confirmed at AAA levels (1.4.6)
-  - [ ] Low-confidence dashed border distinguishable without colour
-  - [ ] Legend: each item has pattern swatch + icon + text label — check 1.4.1
-  - [ ] Inline tunnel names and "(limited data)" notes: reading level (3.1.5)
-  - [ ] Vintage disclaimer language reviewed against 3.1.5 and the brief's honesty rules
-  - [ ] axe AAA suite still passes after any changes
-  - [ ] Self-certification for the new copy is not appropriate — fresh-context review required
 
 ### DW-04 — Retarget signal pipeline at RDM product
 - **owner:** data-engineer
