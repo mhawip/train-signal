@@ -111,7 +111,7 @@ The part that makes it a product rather than a worse Trainline.
 
 ### P2-02 — Track geometry and tunnels
 - **owner:** data-engineer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P1-03
 - **why:** Maps a journey to a line on the ground, and gives named tunnels as certain
   dead zones. "Standedge Tunnel, 3 minutes, no signal" is far more trustworthy than an
