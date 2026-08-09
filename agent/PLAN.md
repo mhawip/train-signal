@@ -42,6 +42,7 @@ and writes to it last.
 | P2-00 | Evaluate RDM yellow-train product | data-engineer |
 | P2-01 | Thin vertical slice: one route, one operator | data-engineer |
 | P2-02 | Track geometry and tunnels | data-engineer |
+| P2-03 | Full signal pipeline | data-engineer |
 
 ---
 
@@ -110,27 +111,11 @@ P1-03 through P1-07 are done — see the index above.
 
 The part that makes it a product rather than a worse Trainline.
 
-P2-02 is done — see the index above.
-
-### P2-03 — Full signal pipeline
-- **owner:** data-engineer
-- **status:** in-progress
-- **depends:** P2-01, P2-02
-- **why:** The derived dataset the product runs on.
-- **acceptance:**
-  - [ ] Streams the full Ofcom data without loading it into memory
-  - [ ] Filters to points near track, snaps to segments
-  - [ ] Aggregates per segment per operator to a **distribution**, not a mean —
-        10th percentile matters more than average
-  - [ ] Measurement count and date range preserved per segment
-  - [ ] Thresholds documented and justified in `specs/signal-model.md`
-  - [ ] Output a few MB, committed; raw gitignored
-  - [ ] Re-runnable to byte-identical output
-  - [ ] Row counts logged at each stage
+P2-02 and P2-03 are done — see the index above.
 
 ### P2-04 — Signal bands on the timeline
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P2-03, P1-06
 - **why:** The answer the user came for.
 - **acceptance:**
@@ -247,3 +232,23 @@ Bugs and follow-ups get filed here by whoever finds them.
         the header
   - [ ] Both skip links meet 44px target size (2.5.5)
   - [ ] axe AAA tests still pass
+
+### DW-04 — Retarget signal pipeline at RDM product
+- **owner:** data-engineer
+- **status:** todo
+- **depends:** —
+- **why:** Matt verified the RDM "NWR Yellow Train Mobile Network Measurements" product
+  (Rail Data Marketplace) on 2026-08-09. It is dated July 2026, contains 5G measurements
+  from this year, has all required fields (RSRP/RSRQ/SINR, MCC/MNC, operator), and is
+  smaller than the Ofcom CSVs. Matt explicitly recommends using the RDM product. The
+  current `data/signal-segments.json` was built from the 2018–19 Ofcom data. The RDM
+  data is materially newer and includes 5G — it is the better source.
+- **acceptance:**
+  - [ ] `pipeline/p2-03-build-signal.ts` updated to accept the RDM CSV format; any
+        column-name or schema differences from the Ofcom format handled
+  - [ ] RDM data downloaded to `data/raw/` (gitignored) and pipeline re-run
+  - [ ] `data/signal-segments.json` regenerated from RDM data and committed (under 10 MB)
+  - [ ] `specs/signal-model.md` updated with RDM schema, column names, and row counts
+  - [ ] Row counts logged at each stage (same as P2-03)
+  - [ ] Re-runnable to byte-identical output
+  - [ ] `npm run verify` green

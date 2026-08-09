@@ -287,3 +287,23 @@ particular way, or its full original acceptance criteria).
   - [x] Station-pair to track segment resolution
   - [x] ODbL attribution recorded and surfaced in the app
   - [x] Committed compact; raw extracts gitignored
+
+### P2-03 — Full signal pipeline
+- **owner:** data-engineer
+- **status:** done
+- **depends:** P2-01, P2-02
+- **why:** The derived dataset the product runs on.
+- **acceptance:**
+  - [x] Streams the full Ofcom data without loading it into memory
+  - [x] Filters to points near track, snaps to segments
+  - [x] Aggregates per segment per operator to a **distribution**, not a mean —
+        10th percentile matters more than average
+  - [x] Measurement count and date range preserved per segment
+  - [x] Thresholds documented and justified in `specs/signal-model.md`
+  - [x] Output a few MB, committed; raw gitignored (9.2 MB compact JSON)
+  - [x] Re-runnable to byte-identical output
+  - [x] Row counts logged at each stage
+- **note:** Processed the Ofcom LTE CSV (2.2 GB, 19.3M rows). 14,753 nodes committed
+  covering 68% of the 21,626 graph nodes. Q5 also resolved in this iteration: Matt
+  verified the RDM product is July 2026 data with 5G. Signal-model.md updated to
+  recommend RDM. DW-04 filed to retarget the pipeline at RDM.

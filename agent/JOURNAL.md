@@ -732,3 +732,63 @@ Files modified:
 P2-03 is now the highest-priority data-engineer task: stream the full Ofcom LTE CSV,
 filter to points near track, snap to segments, aggregate distributions, and emit the
 compact signal dataset the product runs on.
+
+## 2026-08-09T14:00:00Z — P2-03 — data-engineer / orchestrator
+**Did:** Shipped the full signal pipeline (P2-03). A previous iteration had already run
+the pipeline successfully against the Ofcom LTE CSV and left all outputs uncommitted on
+the branch. This iteration completed the work:
+
+- Recovered the uncommitted state: `pipeline/p2-03-build-signal.ts` (661 lines),
+  `pipeline/p2-03-build-signal.test.ts` (29 tests), `data/signal-segments.json`
+  (18.5 MB pretty-printed), `specs/signal-model.md` (pipeline results section added),
+  `agent/QUESTIONS.md` (Matt's Q5 answer present).
+
+- **Fixed size problem:** `data/signal-segments.json` was 18.5 MB pretty-printed, over
+  the 10 MB pre-commit hook limit. Reformatted as compact JSON and removed the `rsrp_p50`
+  field (supplementary, not used in classification). Final size: 9.2 MB.
+
+- **Processed Q5 (Matt's answer):** Matt verified the RDM "NWR Yellow Train Mobile
+  Network Measurements" product. Key findings: dated July 2026, contains current-year 5G
+  measurements, has all required fields (RSRP/RSRQ/SINR, MCC/MNC, operator), smaller
+  than the Ofcom CSVs. Matt explicitly recommended switching to RDM. Updated
+  `specs/signal-model.md` to reflect this recommendation. Archived Q5.
+
+- **Pipeline results** (from the previous iteration's full run):
+  - Input: Ofcom LTE CSV, 2.2 GB, 19,285,594 data rows
+  - Filtered stationary (speed < 5 km/h): 10,698,116
+  - Filtered off-track (> 500 m from graph node): 4,618,947
+  - Snapped to nodes: 3,968,531
+  - Nodes with data: 14,753 (68% of 21,626 graph nodes)
+  - Per operator: EE 1,034,422 · O2 904,514 · Three 1,031,171 · Vodafone 998,424
+
+- Filed DW-04 to retarget the pipeline at the RDM product.
+- PR #17 opened, auto-merge enabled.
+
+**Verify:** Pass. `npm run verify` green: typecheck clean, lint clean, 122 unit tests
+(12 files, including 29 new P2-03 tests), 3 Playwright AAA tests (0 violations).
+
+**Learned:**
+- Pretty-printed JSON at 18.5 MB vs compact at 9.2 MB: the 2× savings from removing
+  indentation and newlines is significant for large derived datasets. Always use compact
+  JSON for committed data files. The pipeline script should write compact JSON from the
+  start; a post-hoc reformatter step is unnecessary overhead.
+- The pre-commit hook checks the staged blob size, not the working-tree size. This is
+  correct behaviour (it prevents bloat before it enters git history) but means the test
+  only fires at commit time. Always check `ls -la` on large output files before staging.
+- When a previous iteration dies mid-task with uncommitted work, read all modified files
+  carefully before deciding what to do. The Q5 answer appeared in QUESTIONS.md as an
+  unstaged modification — easy to miss if you only look at untracked files.
+- Matt's RDM verification is a significant data upgrade: 7-year-old Ofcom measurements
+  vs. current-year 5G data. The existing `data/signal-segments.json` is still valid as
+  a Phase 2 foundation, but DW-04 is high priority — don't build P2-04 UI on 2018-19
+  Ofcom data when RDM 2026 data is available.
+- The "Mark done; archive; journal" commit must be staged and pushed BEFORE the PR is
+  merged. Post-merge housekeeping commits cannot be added to a squash-merged PR — they
+  end up stranded on the feature branch. Next iteration confirmed this by having to
+  re-apply these changes manually to main.
+
+**Next:** DW-04 (retarget pipeline at RDM, data-engineer) is the highest-value next
+task — it upgrades the signal dataset the entire product runs on. DW-03 (header/footer
+landmarks + skip link, developer) is also unblocked and can run in parallel. P2-04
+(signal bands on timeline, developer) depends on P2-03 which is now done — it can
+proceed with the current Ofcom-based dataset while DW-04 is in progress.
