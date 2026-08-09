@@ -114,7 +114,7 @@ P2-02 is done — see the index above.
 
 ### P2-03 — Full signal pipeline
 - **owner:** data-engineer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P2-01, P2-02
 - **why:** The derived dataset the product runs on.
 - **acceptance:**
