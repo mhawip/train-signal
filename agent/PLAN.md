@@ -47,6 +47,7 @@ and writes to it last.
 | DW-05 | Accessibility review of P2-04 signal bands | accessibility-specialist |
 | P2-05 | "Best window to book" | developer |
 | P0-05 | Vercel deployment | devops |
+| DW-03 | Header/footer landmarks and skip link | developer |
 
 ---
 
@@ -171,29 +172,6 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Fixture notice removed
   - [ ] Error and loading states handled
 
-### DW-03 — Header/footer landmarks and skip link
-- **owner:** developer
-- **status:** in-progress
-- **depends:** —
-- **why:** `specs/accessibility.md` section 2.2 (1.3.1) specifies that landmarks must
-  include `<header>` and `<footer>`; section 3.13 (2.4.1) requires a skip link as the
-  first focusable element on every page. The current `app/layout.tsx` wraps children in
-  `<body>` with no header or footer, so the home page also has no skip link (there is no
-  repeated block to skip). Not a strict AAA violation on its own (no single criterion
-  mandates specific landmark types), but our own spec requires them, and a `<footer>` is
-  needed for attribution and the future accessibility statement link (P3-03).
-
-  Filed as one task rather than two: the landmarks and the skip link are the same piece
-  of work on the same file, and splitting them across separate dispatch/verify/PR cycles
-  would only duplicate overhead for no benefit — see the bundling rule above.
-- **acceptance:**
-  - [ ] `app/layout.tsx` includes a `<header>` with site name/identity and a `<footer>`
-        with attribution placeholder; both appear on every page
-  - [ ] Home page has a skip link as the first focusable element, bypassing the header
-  - [ ] Results page skip link ("Skip to journey details") still works and also bypasses
-        the header
-  - [ ] Both skip links meet 44px target size (2.5.5)
-  - [ ] axe AAA tests still pass
 
 ### DW-04 — Retarget signal pipeline at RDM product
 - **owner:** data-engineer
