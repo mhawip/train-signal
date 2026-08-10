@@ -398,3 +398,36 @@ particular way, or its full original acceptance criteria).
   Self-certified AAA: 1.4.6 ✓ (existing tokens, 17.4:1/7:1), 1.4.1 ✓ (text only),
   3.1.5 ✓ (grade 6–8 copy), 1.4.8 ✓ (80ch, 1.5 line-height), 1.3.1 ✓ (section/h2),
   2.4.6 ✓ (descriptive headings). 159 unit + 3 axe-core AAA tests pass.
+
+### DW-03 — Header/footer landmarks and skip link
+- **owner:** developer
+- **status:** done
+- **depends:** —
+- **why:** `specs/accessibility.md` section 2.2 (1.3.1) specifies that landmarks must
+  include `<header>` and `<footer>`; section 3.13 (2.4.1) requires a skip link as the
+  first focusable element on every page. The current `app/layout.tsx` wraps children in
+  `<body>` with no header or footer, so the home page also has no skip link (there is no
+  repeated block to skip). Not a strict AAA violation on its own (no single criterion
+  mandates specific landmark types), but our own spec requires them, and a `<footer>` is
+  needed for attribution and the future accessibility statement link (P3-03).
+
+  Filed as one task rather than two: the landmarks and the skip link are the same piece
+  of work on the same file, and splitting them across separate dispatch/verify/PR cycles
+  would only duplicate overhead for no benefit.
+- **acceptance:**
+  - [x] `app/layout.tsx` includes a `<header>` with site name/identity and a `<footer>`
+        with attribution placeholder; both appear on every page
+  - [x] Home page has a skip link as the first focusable element, bypassing the header
+  - [x] Results page skip link ("Skip to journey details") still works and also bypasses
+        the header
+  - [x] Both skip links meet 44px target size (2.5.5)
+  - [x] axe AAA tests still pass
+- **note:** PR #22. Modified `app/layout.tsx` to add `<header>` (skip link + site name
+  link) and `<footer>` (attribution text). Added `id="main-content"` to `<main>` in
+  `app/page.tsx`, `app/results/page.tsx`, `app/components-demo/page.tsx`. New CSS:
+  `.ts-header`, `.ts-header__link`, `.ts-footer` using existing design tokens only.
+  Self-certified AAA: 1.3.1 ✓ (native landmark elements, `banner`/`contentinfo`),
+  2.4.1 ✓ (skip link first focusable; results also retains `#journey-table` skip),
+  2.5.5 ✓ (`min-height: var(--target-min)` on both skip link and header link),
+  2.4.9 ✓ (descriptive link text in isolation), 1.4.6 ✓ (existing tokens, 17.4:1/7:1).
+  159 unit + 3 axe-core AAA tests pass (0 violations).

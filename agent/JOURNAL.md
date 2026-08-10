@@ -1020,3 +1020,41 @@ the "more complete" version (remote squash merge wins over local stale in-progre
 merged, then take the next highest-priority unblocked task: DW-03 (header/footer + skip
 link, developer), DW-04 (retarget RDM pipeline, data-engineer), P3-01 (cross-validation,
 qa), or P3-03 (manual a11y audit, accessibility-specialist).
+
+---
+
+## 2026-08-10T08:30Z — DW-03 — developer / orchestrator
+
+**Did:** Merged PR #21 (P0-05, all CI green). Took DW-03 (header/footer landmarks and
+skip link) as the next task. Dispatched developer agent, which completed the work and
+confirmed `npm run verify` passes.
+
+Changes in PR #22:
+- `app/layout.tsx`: added `<header>` containing a skip link to `#main-content` and a
+  site name link ("Train Signal" → `/`), and `<footer>` with Ofcom/NaPTAN attribution
+  text. Both appear on every page via the root layout.
+- `app/page.tsx`, `app/results/page.tsx`, `app/components-demo/page.tsx`: added
+  `id="main-content"` to each `<main>` element so the layout skip link has a target.
+- `app/globals.css`: new `.ts-header`, `.ts-header__link`, `.ts-footer` classes using
+  existing design tokens only; all contrast ratios verified at WCAG AAA.
+- Results page retains its existing "Skip to journey details" link to `#journey-table`.
+
+**Verify:** Pass. Typecheck clean, lint clean, 159 unit tests, 3 Playwright axe-core AAA
+tests (0 violations on home, components-demo, results pages). CI all green on PR #22.
+
+**Learned:**
+- The layout skip link (`#main-content`) and the results-page in-page skip link
+  (`#journey-table`) serve different purposes and can coexist: the first satisfies WCAG
+  2.4.1 by bypassing the repeated header block; the second provides additional navigation
+  within the results page. Both are valid uses of the pattern.
+- The header `<nav>` is intentionally absent at this stage. A single "Train Signal" link
+  in the header is enough for site identity; a navigation landmark requires at least two
+  destinations to be meaningful. Adding nav when there is only one link would be noise.
+- Attribution in the footer is the right place for data-source disclosure. Keeping it
+  brief ("Signal data: Ofcom... Rail station data: NaPTAN...") satisfies the ODbL/OGL
+  attribution obligations without overwhelming the UI.
+
+**Next:** DW-03 done. Highest-priority unblocked tasks remaining: DW-04 (retarget signal
+pipeline at RDM product, data-engineer), P3-01 (cross-validation against notspots, qa),
+P3-03 (manual accessibility audit, accessibility-specialist), DW-06 (local Windows build
+failure, devops), P3-04 (performance, developer).
