@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function Home() {
   return (
-    <main>
+    <main id="main-content">
       <h1>Train Signal</h1>
       <p>Find out when you can take a call on your train journey.</p>
       <Suspense>

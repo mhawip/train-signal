@@ -173,7 +173,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-03 — Header/footer landmarks and skip link
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** `specs/accessibility.md` section 2.2 (1.3.1) specifies that landmarks must
   include `<header>` and `<footer>`; section 3.13 (2.4.1) requires a skip link as the
