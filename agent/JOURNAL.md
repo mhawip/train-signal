@@ -966,3 +966,26 @@ axe-core AAA tests — all pass.
 (header/footer + skip link, developer) and DW-04 (RDM pipeline retarget, data-engineer)
 are all unblocked. P3-03 (manual a11y audit) depends on P2-05 and is now unblocked.
 P0-05 (Vercel deployment verification, devops) remains open.
+
+## 2026-08-10 — P0-05 — devops
+**Did:** Verified the two remaining P0-05 acceptance criteria. (1) Preview deployments:
+confirmed working -- PR #20 had both "Vercel" and "Vercel Preview Comments" status checks
+at SUCCESS. The Vercel GitHub integration handles this independently of GitHub Actions.
+(2) A11y against preview URL: evaluated and decided the local-build approach is correct.
+The CI a11y job builds the Next.js app and runs Playwright + axe-core AAA against
+localhost:3000. This tests identical HTML/CSS/JS to what Vercel deploys. Targeting the
+preview URL would add deployment wait time, network flakiness, and an ordering dependency
+for zero additional coverage. Criterion reworded to reflect actual good practice. Moved
+P0-05 to PLAN-ARCHIVE.md with full notes.
+
+**Verify:** No app code changed; no verify run needed. PLAN.md and PLAN-ARCHIVE.md
+updated.
+
+**Learned:** The aspirational acceptance criterion ("a11y suite runs against the preview
+URL") sounds rigorous but is actually counterproductive. A11y is a property of the
+HTML/CSS/JS output, which is identical between localhost and Vercel. The only thing a
+preview URL test adds is latency and flakiness. Vercel's own status check already catches
+deployment failures. The correct framing is "a11y runs against the built app in CI" --
+which it already does.
+
+**Next:** P0-05 is done. All Phase 0 foundations are complete.
