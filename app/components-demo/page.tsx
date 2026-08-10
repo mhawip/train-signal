@@ -40,7 +40,7 @@ export default function ComponentsDemo() {
   const [networkError, setNetworkError] = useState("vodafone");
 
   return (
-    <main>
+    <main id="main-content">
       <h1>Component primitives</h1>
       <p>
         This page shows every component primitive in its key states, for

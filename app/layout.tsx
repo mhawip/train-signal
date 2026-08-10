@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +15,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-GB">
-      <body>{children}</body>
+      <body>
+        <header className="ts-header">
+          <a href="#main-content" className="ts-skip-link">
+            Skip to main content
+          </a>
+
+          <Link href="/" className="ts-header__link">
+            Train Signal
+          </Link>
+        </header>
+
+        {children}
+
+        <footer className="ts-footer">
+          <p>
+            Signal data: Ofcom connected-nations measurements, 2018–19.
+            Rail station data: NaPTAN, Open Government Licence v3.
+          </p>
+        </footer>
+      </body>
     </html>
   );
 }

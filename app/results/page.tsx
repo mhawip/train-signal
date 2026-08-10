@@ -132,7 +132,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   const bestWindow = findBestWindow(journey, signalProfile);
 
   return (
-    <main>
+    <main id="main-content">
       <a href="#journey-table" className="ts-skip-link">
         Skip to journey details
       </a>
