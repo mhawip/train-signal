@@ -45,6 +45,7 @@ and writes to it last.
 | P2-03 | Full signal pipeline | data-engineer |
 | P2-04 | Signal bands on the timeline | developer |
 | DW-05 | Accessibility review of P2-04 signal bands | accessibility-specialist |
+| P2-05 | "Best window to book" | developer |
 
 ---
 
@@ -113,19 +114,7 @@ P1-03 through P1-07 are done — see the index above.
 
 The part that makes it a product rather than a worse Trainline.
 
-P2-02, P2-03, and P2-04 are done — see the index above.
-
-### P2-05 — "Best window to book"
-- **owner:** developer
-- **status:** todo
-- **depends:** P2-04
-- **why:** The actual product. The sentence people came for; the timeline is evidence.
-- **acceptance:**
-  - [ ] Longest continuous good-signal stretch identified, with clock times
-  - [ ] Stated as a plain sentence, large and unmissable, above the timeline
-  - [ ] Distinguishes video-capable from voice-only windows
-  - [ ] Handles "no good window on this journey" honestly and helpfully
-  - [ ] Reading level checked against WCAG 3.1.5
+P2-02, P2-03, P2-04, and P2-05 are done — see the index above.
 
 ---
 

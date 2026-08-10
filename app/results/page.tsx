@@ -2,7 +2,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { JourneyTimeline } from "@/app/components/JourneyTimeline";
 import { VisualTimeline } from "@/app/components/VisualTimeline";
+import { BestWindow } from "@/app/components/BestWindow";
 import { getJourneySignal } from "@/app/lib/signal";
+import { findBestWindow } from "@/app/lib/best-window";
 import type { Journey } from "@/app/lib/journey-types";
 
 /**
@@ -126,6 +128,9 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   // Network name to show -- prefer URL param, fall back to fixture
   const networkName = params.network || journey.network;
 
+  // Find the best window for a call on this journey
+  const bestWindow = findBestWindow(journey, signalProfile);
+
   return (
     <main>
       <a href="#journey-table" className="ts-skip-link">
@@ -133,6 +138,8 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
       </a>
 
       <h1>{heading}</h1>
+
+      <BestWindow window={bestWindow} networkName={networkName} />
 
       <p className="ts-notice">
         This is example data. Live journey data will be shown once the timetable
