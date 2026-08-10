@@ -107,7 +107,7 @@ P2-02, P2-03, P2-04, and P2-05 are done — see the index above.
 
 ### P3-01 — Cross-validation against known notspots
 - **owner:** qa
-- **status:** todo
+- **status:** in-progress
 - **depends:** P2-04
 - **why:** Our credibility rests on being right. External disagreement is the cheapest
   signal that we aren't.
