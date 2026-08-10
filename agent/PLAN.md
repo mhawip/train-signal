@@ -57,7 +57,7 @@ P0-00, P0-01, P0-02, P0-03, P0-04 and P0-06 are done — see the index above.
 
 ### P0-05 — Vercel deployment
 - **owner:** devops
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-02, P0-03
 - **why:** Deploy early so deployment is never the risky unknown.
 - **note (2026-08-09):** QUESTIONS.md Q4 resolved — production is live at
