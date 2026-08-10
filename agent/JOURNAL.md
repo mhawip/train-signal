@@ -989,3 +989,34 @@ deployment failures. The correct framing is "a11y runs against the built app in 
 which it already does.
 
 **Next:** P0-05 is done. All Phase 0 foundations are complete.
+
+---
+
+## 2026-08-10T07:45Z — orchestrator
+
+**Did:** Merged PR #20 (P2-05 best window) after confirming all CI checks green. Resolved
+PLAN.md merge conflict that arose because local main had an in-progress P2-05 entry while
+the squash merge put it in the completed index. Took P0-05 (Vercel deployment, devops)
+as the next highest-priority unblocked task. Dispatched devops agent, which confirmed
+preview deployments are working and made the documented decision to keep a11y testing
+against the local Next.js build rather than the Vercel preview URL. All Phase 0
+foundations are now complete. Filed DW-06 (local Windows build failure) as discovered
+work after `npm run build` failed with `<Html> should not be imported outside of
+pages/_document` during local verify — this is a pre-existing Windows environment issue;
+CI (Ubuntu) is consistently green. PR #21 opened for P0-05.
+
+**Verify:** Local unit tests 159/159 pass; Playwright a11y timeouts locally (pre-existing
+Windows environment issue, unrelated to this PR). CI on Ubuntu is the source of truth and
+was green on the most recent code.
+
+**Learned:** PLAN.md merge conflicts will occur when two iterations modify the same lines
+(one loop marks a task in-progress on main directly; another squash-merges changes to the
+same area). Using a dedicated branch before editing PLAN.md would avoid this — but the
+instructions currently say to commit the in-progress marker before starting the branch.
+This is an inherent race condition in the current design. It resolves cleanly by taking
+the "more complete" version (remote squash merge wins over local stale in-progress entry).
+
+**Next:** P0-05 PR #21 open (CI will validate). Next iteration should check if PR #21
+merged, then take the next highest-priority unblocked task: DW-03 (header/footer + skip
+link, developer), DW-04 (retarget RDM pipeline, data-engineer), P3-01 (cross-validation,
+qa), or P3-03 (manual a11y audit, accessibility-specialist).

@@ -214,3 +214,17 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Row counts logged at each stage (same as P2-03)
   - [ ] Re-runnable to byte-identical output
   - [ ] `npm run verify` green
+
+### DW-06 — Investigate local Windows build failure
+- **owner:** devops
+- **status:** todo
+- **depends:** —
+- **why:** `npm run build` fails locally on Windows with `<Html> should not be imported
+  outside of pages/_document` during prerendering of `/500`. CI (Ubuntu, clean install)
+  is consistently green. Likely a Windows path/env interaction or non-standard NODE_ENV
+  (`development` is set in environment before build runs, triggering Next.js warning).
+  This prevents running `npm run verify` locally, which slows down the dev loop.
+- **acceptance:**
+  - [ ] Root cause identified and documented
+  - [ ] `npm run build` succeeds locally on Windows
+  - [ ] `npm run verify` succeeds locally on Windows
