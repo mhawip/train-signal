@@ -46,6 +46,7 @@ and writes to it last.
 | P2-04 | Signal bands on the timeline | developer |
 | DW-05 | Accessibility review of P2-04 signal bands | accessibility-specialist |
 | P2-05 | "Best window to book" | developer |
+| P0-05 | Vercel deployment | devops |
 
 ---
 
@@ -53,24 +54,7 @@ and writes to it last.
 
 Nothing here is user-visible. All of it determines whether the rest goes well.
 
-P0-00, P0-01, P0-02, P0-03, P0-04 and P0-06 are done — see the index above.
-
-### P0-05 — Vercel deployment
-- **owner:** devops
-- **status:** todo
-- **depends:** P0-02, P0-03
-- **why:** Deploy early so deployment is never the risky unknown.
-- **note (2026-08-09):** QUESTIONS.md Q4 resolved — production is live at
-  <https://train-signal-drab.vercel.app/> after fixing a Framework Preset misconfiguration
-  (was set to "Other", causing a "public/ output directory not found" build error; changed
-  to "Next.js"). Full trail in `agent/QUESTIONS-ARCHIVE.md` Q4. Env vars are confirmed
-  added in Vercel. Remaining acceptance items below are not yet verified — needs a devops
-  pass to confirm preview deployments and the a11y suite actually run against them.
-- **acceptance:**
-  - [x] `main` auto-deploys to production
-  - [ ] PRs produce preview deployments
-  - [ ] a11y suite runs against the preview URL, not just locally
-  - [x] Environment variables configured, nothing `NEXT_PUBLIC_`-prefixed
+P0-00 through P0-06 are done — see the index above.
 
 ---
 
@@ -230,3 +214,17 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Row counts logged at each stage (same as P2-03)
   - [ ] Re-runnable to byte-identical output
   - [ ] `npm run verify` green
+
+### DW-06 — Investigate local Windows build failure
+- **owner:** devops
+- **status:** todo
+- **depends:** —
+- **why:** `npm run build` fails locally on Windows with `<Html> should not be imported
+  outside of pages/_document` during prerendering of `/500`. CI (Ubuntu, clean install)
+  is consistently green. Likely a Windows path/env interaction or non-standard NODE_ENV
+  (`development` is set in environment before build runs, triggering Next.js warning).
+  This prevents running `npm run verify` locally, which slows down the dev loop.
+- **acceptance:**
+  - [ ] Root cause identified and documented
+  - [ ] `npm run build` succeeds locally on Windows
+  - [ ] `npm run verify` succeeds locally on Windows

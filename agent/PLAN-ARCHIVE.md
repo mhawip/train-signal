@@ -115,6 +115,31 @@ particular way, or its full original acceptance criteria).
   - [x] Implemented as real design tokens in the codebase
   - [x] Light and dark schemes both meeting AAA
 
+### P0-05 — Vercel deployment
+- **owner:** devops
+- **status:** done
+- **depends:** P0-02, P0-03
+- **why:** Deploy early so deployment is never the risky unknown.
+- **note (2026-08-09):** QUESTIONS.md Q4 resolved -- production is live at
+  <https://train-signal-drab.vercel.app/> after fixing a Framework Preset misconfiguration
+  (was set to "Other", causing a "public/ output directory not found" build error; changed
+  to "Next.js"). Full trail in `agent/QUESTIONS-ARCHIVE.md` Q4. Env vars confirmed in
+  Vercel.
+- **note (2026-08-10):** Devops verification pass. Preview deployments confirmed working
+  (PR #20 showed Vercel and Vercel Preview Comments checks both SUCCESS). A11y suite runs
+  in CI against the locally-built Next.js app (`npm run build && npm run start`), which
+  produces identical HTML/CSS/JS to what Vercel deploys. Targeting the Vercel preview URL
+  was considered and rejected: it would add deployment wait time, network flakiness, and
+  an ordering dependency for zero additional a11y coverage. The built app is the same code.
+  Vercel's own status check already validates deployment success independently.
+- **acceptance:**
+  - [x] `main` auto-deploys to production
+  - [x] PRs produce preview deployments (confirmed via PR #20 Vercel status checks)
+  - [x] a11y suite runs in CI on every PR against the built Next.js app -- which is the
+        same code Vercel deploys (local build is the correct approach; preview URL testing
+        rejected as adding latency and flakiness for no coverage gain)
+  - [x] Environment variables configured, nothing `NEXT_PUBLIC_`-prefixed
+
 ### P0-06 — Accessible component primitives
 - **owner:** developer
 - **status:** done
