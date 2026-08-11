@@ -1087,3 +1087,88 @@ Key findings documented in `specs/signal-model.md`:
 - `npm run verify` passes entirely in Playwright dev-server mode (not build mode) locally. On CI it runs in build mode. Both pass — the test content is not build-dependent.
 
 **Next:** P3-01 done unblocks P3-02 (confidence and honesty pass, product-manager). DW-04 (retarget pipeline at RDM) and DW-06 (Windows build failure) and DW-07 (validation script fix) are all available. P3-03 (manual a11y audit) and P3-04 (performance) are also unblocked.
+
+---
+
+## 2026-08-11T10:00Z — P3-03 — accessibility-specialist
+
+**Did:** Full manual accessibility audit of the complete product against WCAG 2.2 Level
+AAA. Audited every applicable criterion from specs/accessibility.md section 8.2, plus
+all criteria that axe-core cannot check.
+
+**Three issues found and fixed in this PR:**
+
+1. **Accessibility statement page created (spec section 9).** New page at `/accessibility`
+   with conformance target, known issues, audit date, reporting instructions, and data
+   vintage. Linked from the footer on every page. Playwright axe-core test added.
+
+2. **Dark-mode link text contrast fixed (1.4.6).** The `--color-focus` token (`#6699ff`)
+   was used for link text colour in dark mode. At 14px body text size, this computes to
+   6.75:1 against `#121212` -- below the 7:1 AAA threshold for body text. Created a
+   separate `--color-link` token: `#77aaff` in dark mode (8.01:1), `#0044cc` in light
+   mode (7.78:1). Applied to `.ts-back-link`, `.ts-footer__link`, `.ts-inline-link`.
+   Added forced-colors override for all link styles.
+
+3. **Footer link added.** The accessibility statement link in the footer meets 44px
+   target size via `min-height: var(--target-min)`.
+
+**One known gap documented:**
+
+- **Tunnel segments (1.4.1):** The visual timeline legend shows a tunnel band style, but
+  the data model produces tunnel information as metadata within signal segments, not as
+  separate visual bands. Tunnel information is fully available in the text-equivalent
+  table (the primary accessible representation). Documented in the accessibility statement.
+
+**Full audit results (pass/fail/partial by criterion):**
+
+| Criterion | Result | Notes |
+|---|---|---|
+| 1.1.1 Non-text Content | PASS | Visual timeline `aria-hidden="true"`, icons `aria-hidden` |
+| 1.3.1 Info and Relationships | PASS | Semantic table, fieldset/legend, heading hierarchy, landmarks |
+| 1.3.5 Identify Input Purpose | PASS | No personal data fields; autocomplete="off" on station search justified |
+| 1.4.1 Use of Colour | PASS (with known gap) | Three redundant cues on all bands. Legend visible. Tunnel segments documented |
+| 1.4.6 Contrast Enhanced | PASS (after fix) | All text/bg pairs verified. Dark-mode link colour fixed |
+| 1.4.8 Visual Presentation | PASS | max-width 40rem, line-height 1.5, paragraph spacing 2.25em, no justify, forced-colors handled |
+| 1.4.12 Text Spacing | PASS | No fixed heights on text containers |
+| 2.1.1/2.1.3 Keyboard | PASS | Combobox: ArrowDown/Up, Enter, Escape, Tab. No traps |
+| 2.4.7/2.4.13 Focus Appearance | PASS | 2px solid outline, 2px offset, 7.78:1/6.75:1 contrast (both >3:1) |
+| 2.4.8 Location | PASS | Descriptive page titles, clear h1 on each page |
+| 2.4.9 Link Purpose | PASS | "Back to search", "Accessibility statement", "Train Signal" all descriptive |
+| 2.5.5 Target Size | PASS | All interactive elements use min-height: 44px via --target-min |
+| 3.1.3/3.1.5 Reading Level | PASS | All copy plain English, FK Grade 6-8, no jargon |
+| 3.2.5 Change on Request | PASS | No auto-refresh, no auto-submit, no timeouts |
+| 3.3.6 Error Prevention | PASS | Form preserves inputs, URL encodes params, inherently reversible |
+| 4.1.2 Name, Role, Value | PASS | ARIA combobox pattern correct, native form elements used throughout |
+| 4.1.3 Status Messages | PASS | Live region announces search results, errors use aria-live |
+| Accessibility statement (spec section 9) | PASS (after fix) | Page created, linked from footer |
+
+**Screen reader structure verified (from source):**
+- `lang="en-GB"` on `<html>` -- correct
+- Landmarks: `<header>`, `<main>`, `<footer>`, `<nav>` on results page -- all present
+- Heading hierarchy: h1 per page, h2 for sections, no skipped levels
+- Table: `<caption>`, `<thead>`, `<th scope="col">`, `<th scope="row">`, `<tfoot>`
+- `aria-live` regions: error summary (`role="alert"`), field errors (`aria-live="polite"`),
+  combobox status announcements (`role="status"`, `aria-live="polite"`)
+- `aria-hidden="true"` on visual timeline prevents duplicate reading
+
+**Verify:** Pass. `npm run verify` green: typecheck clean, lint clean, 159 unit tests,
+4 Playwright axe-core AAA tests (0 violations on home, accessibility, components-demo,
+results pages).
+
+**Learned:**
+- The `--color-focus` token was dual-purpose: focus rings (need 3:1) and link text (need
+  7:1 for body text). In dark mode, the 6.75:1 ratio passed for focus indicators but
+  failed for body-text links. Separate `--color-link` and `--color-focus` tokens are the
+  correct approach.
+- Tunnel bands are an architectural gap, not an implementation bug. The signal model
+  classifies whole segments; tunnels are detected as metadata within segments. Breaking
+  tunnels out as separate visual segments would require changes to the data model and the
+  rendering pipeline. Documenting this honestly in the accessibility statement is the
+  right approach.
+- axe-core at the AAA ruleset caught zero additional violations on the accessibility
+  statement page, confirming that the existing design tokens and patterns are well-
+  calibrated for new pages.
+
+**Next:** P3-03 complete. Remaining unblocked tasks: P3-02 (confidence and honesty pass,
+product-manager), DW-04 (RDM pipeline retarget, data-engineer), DW-06 (local Windows
+build, devops), DW-07 (validation script CRS fix, qa), P3-04 (performance, developer).
