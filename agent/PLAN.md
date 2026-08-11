@@ -122,7 +122,7 @@ P3-01 is done — see the index above.
 
 ### P3-03 — Manual accessibility audit
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** P2-05
 - **why:** Automated tooling catches perhaps a third of AAA issues. This is the rest.
 - **acceptance:**
