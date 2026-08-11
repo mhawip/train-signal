@@ -431,3 +431,26 @@ particular way, or its full original acceptance criteria).
   2.5.5 ✓ (`min-height: var(--target-min)` on both skip link and header link),
   2.4.9 ✓ (descriptive link text in isolation), 1.4.6 ✓ (existing tokens, 17.4:1/7:1).
   159 unit + 3 axe-core AAA tests pass (0 violations).
+
+---
+
+# Phase 3 — Truth and polish
+
+### P3-01 — Cross-validation against known notspots
+- **owner:** qa
+- **status:** done
+- **depends:** P2-04
+- **why:** Our credibility rests on being right. External disagreement is the cheapest
+  signal that we aren't.
+- **acceptance:**
+  - [x] Output compared against mastdatabase rail notspots on major routes
+  - [x] Disagreements investigated and documented
+  - [x] Direction of error established — must skew conservative, not optimistic
+  - [x] Findings in `specs/signal-model.md`
+- **done-notes:** Validation script (`pipeline/p3-01-validate-notspots.ts`) ran Dijkstra
+  on 5 major routes (ECML, Transpennine, GWR, CrossCountry, Edinburgh-Glasgow) against
+  12 known notspots from public sources. 9 confirmed, 1 partially confirmed, 2 untestable
+  due to issues documented in findings. Direction of error is conservative: 2018-19 data
+  under-promises rather than over-promises. Full findings in `specs/signal-model.md`
+  under "P3-01 Cross-validation findings". DW-07 filed for validation script bug (NEW
+  = Newcastle, not Newark).

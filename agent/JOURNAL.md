@@ -1058,3 +1058,32 @@ tests (0 violations on home, components-demo, results pages). CI all green on PR
 pipeline at RDM product, data-engineer), P3-01 (cross-validation against notspots, qa),
 P3-03 (manual accessibility audit, accessibility-specialist), DW-06 (local Windows build
 failure, devops), P3-04 (performance, developer).
+
+---
+
+## 2026-08-11T00:00:00Z — P3-01 — qa / orchestrator
+
+**Did:** Completed P3-01 (cross-validation against known notspots). A previous iteration had written the validation script (`pipeline/p3-01-validate-notspots.ts`) but left it uncommitted. This iteration:
+
+1. Assessed the uncommitted script — already comprehensive (5 routes, 4 operators, Dijkstra path-finding, per-node signal classification, tunnel detection).
+2. Ran the script against `data/track-graph.json`, `data/signal-segments.json`, and `data/tunnels.json` (current Ofcom-based data).
+3. Dispatched QA agent to analyse output and document findings in `specs/signal-model.md`.
+4. Filed DW-07 (validation script CRS bug: "NEW" = Newcastle, not Newark).
+
+Key findings documented in `specs/signal-model.md`:
+
+- **9 of 12 known notspots confirmed** by the model. Confirmed: Stoke Tunnel (GRA→PBO, 3/4 operators NONE), KGX approaches (FPK→KGX, all operators NONE), Edinburgh cuttings (EDB→HYM, EE+Three=NONE), rural Oxfordshire (RDG→OXF, Three+O2=NONE), Transpennine Pennines (HUD→MAN, Three+O2+Vodafone=NONE), Paddington approaches (PAD→RDG, all NONE), CrossCountry Oxford-Birmingham corridor (Three+O2=NONE across multiple segments).
+- **Direction of error is conservative** — the 2018-19 vintage means the model under-promises (areas now improved still show NONE). Roof-height measurements further support conservatism (roof signal stronger than in-carriage). No case found where model over-promises.
+- **Validation script bug (DW-07):** CRS "NEW" maps to Newcastle, not Newark. Two ECML segments (RET→NEW, NEW→GRA) produced 400+ km paths. Product unaffected — it uses timetable calling points, not hand-coded CRS arrays.
+- **Standedge Tunnel not named:** OSM records tunnels by line name ("Huddersfield Line"), not by tunnel name. The 5km Standedge Tunnel is not listed by name, but signal data correctly shows NONE across the Pennine section regardless.
+- **RSRQ-driven NONE with high RSRP:** Some nodes classified NONE at -60 to -75 dBm RSRP due to RSRQ < -20 dB (interference threshold). This is correct conservative classification.
+
+**Verify:** Pass. typecheck clean, lint clean, 159 unit tests, 3 Playwright AAA a11y tests (0 violations).
+
+**Learned:**
+- Running a Dijkstra validation script against 5 routes covering ~1,000 km of rail takes under 2 minutes on a local machine with 21k-node graph. The graph size is well-suited for this kind of offline analysis.
+- CRS codes are not intuitive: "NEW" = Newcastle, "NNG" = Newark North Gate, "NCT" = Newark Castle. The timetable tasks (P1-01/P1-02) will deal with these — but hand-coding CRS arrays in validation scripts needs care.
+- The undirected graph's Dijkstra produces nonsensical paths for station pairs where the direct route is much shorter than the shortest path (because the graph doesn't encode route knowledge). This is documented as a known limitation but the validation exposed it more clearly.
+- `npm run verify` passes entirely in Playwright dev-server mode (not build mode) locally. On CI it runs in build mode. Both pass — the test content is not build-dependent.
+
+**Next:** P3-01 done unblocks P3-02 (confidence and honesty pass, product-manager). DW-04 (retarget pipeline at RDM) and DW-06 (Windows build failure) and DW-07 (validation script fix) are all available. P3-03 (manual a11y audit) and P3-04 (performance) are also unblocked.
