@@ -33,6 +33,11 @@ export default function RootLayout({
             Signal data: Ofcom connected-nations measurements, 2018–19.
             Rail station data: NaPTAN, Open Government Licence v3.
           </p>
+          <p>
+            <Link href="/accessibility" className="ts-footer__link">
+              Accessibility statement
+            </Link>
+          </p>
         </footer>
       </body>
     </html>

@@ -42,6 +42,11 @@
   /* #0044cc on #ffffff = 7.78:1 (need 3:1 for focus) */
   --color-focus: #0044cc;
 
+  /* Link text colour: same as focus in light mode (7.78:1 passes 7:1).
+   * Separate token because dark mode needs a different value to meet
+   * the 7:1 body text threshold (1.4.6). */
+  --color-link: #0044cc;
+
   /* --- Signal band backgrounds --- */
   /* Voice + video: solid fill, no pattern. #1a1a1a on #d4e8d7 = 13.53:1 */
   --band-good-bg: #d4e8d7;
@@ -128,8 +133,12 @@
     /* #999999 on #121212 = 6.58:1 (non-text, need 3:1) */
     --color-field-border: #999999;
 
-    /* #6699ff on #121212 = 6.75:1 */
+    /* #6699ff on #121212 = 6.75:1 (focus ring: need 3:1, passes) */
     --color-focus: #6699ff;
+
+    /* Link text needs 7:1 for body text (1.4.6). #6699ff is only 6.75:1.
+     * #77aaff on #121212 = 8.01:1 -- passes 7:1. */
+    --color-link: #77aaff;
 
     /* #e8e8e8 on #1e3a22 = 10.18:1 */
     --band-good-bg: #1e3a22;
@@ -359,7 +368,31 @@ p {
 
 /* Footer paragraphs should not carry the large body paragraph margin */
 .ts-footer p {
+  margin-bottom: var(--space-2);
+}
+
+.ts-footer p:last-child {
   margin-bottom: 0;
+}
+
+/* Footer link: meets 44px target size (2.5.5) via min-height + padding.
+ * Uses --color-focus for link colour (7.78:1 on white in light,
+ * 6.75:1 on #121212 in dark -- both pass 4.5:1 for body text links). */
+.ts-footer__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--target-min);
+  padding: var(--space-1) 0;
+  color: var(--color-link);
+  font-size: var(--font-size-sm);
+  text-decoration: underline;
+}
+
+/* Inline text links (within body paragraphs). Inherits font size
+ * from context. Uses --color-link for colour, underlined. */
+.ts-inline-link {
+  color: var(--color-link);
+  text-decoration: underline;
 }
 
 /* ================================================================
@@ -681,7 +714,7 @@ legend.ts-field__label + * {
   min-height: var(--target-min);
   padding: var(--space-2) var(--space-3);
   font-size: var(--font-size-base);
-  color: var(--color-focus);
+  color: var(--color-link);
   text-decoration: underline;
 }
 
@@ -1085,6 +1118,12 @@ legend.ts-field__label + * {
   .ts-skip-link {
     background-color: Highlight;
     color: HighlightText;
+  }
+
+  .ts-footer__link,
+  .ts-inline-link,
+  .ts-back-link {
+    color: LinkText;
   }
 
   /* Visual timeline: ensure borders remain visible when

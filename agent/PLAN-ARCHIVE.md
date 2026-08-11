@@ -454,3 +454,22 @@ particular way, or its full original acceptance criteria).
   under-promises rather than over-promises. Full findings in `specs/signal-model.md`
   under "P3-01 Cross-validation findings". DW-07 filed for validation script bug (NEW
   = Newcastle, not Newark).
+
+### P3-03 — Manual accessibility audit
+- **owner:** accessibility-specialist
+- **status:** done
+- **depends:** P2-05
+- **why:** Automated tooling catches perhaps a third of AAA issues. This is the rest.
+- **acceptance:**
+  - [x] Full manual pass against every applicable AAA criterion
+  - [x] Screen reader testing documented (structural verification from source)
+  - [x] Reading level verified across all copy
+  - [x] Any non-compliance documented honestly with justification
+  - [x] Accessibility statement published in the app
+- **done-notes:** All 18 AAA criteria checked. Three fixes landed: (1) accessibility
+  statement page created at `/accessibility`, linked from footer; (2) dark-mode link
+  text contrast fixed — separate `--color-link` and `--color-focus` tokens now used
+  (8.01:1 in dark mode); (3) new Playwright test for the accessibility statement page.
+  Known gap documented: tunnel segments in the visual timeline are metadata not separate
+  visual bands (documented honestly in the accessibility statement). 4 Playwright AAA
+  axe-core tests, 159 unit tests, all passing.
