@@ -48,6 +48,7 @@ and writes to it last.
 | P2-05 | "Best window to book" | developer |
 | P0-05 | Vercel deployment | devops |
 | DW-03 | Header/footer landmarks and skip link | developer |
+| P3-01 | Cross-validation against known notspots | qa |
 
 ---
 
@@ -105,17 +106,7 @@ P2-02, P2-03, P2-04, and P2-05 are done — see the index above.
 
 # Phase 3 — Truth and polish
 
-### P3-01 — Cross-validation against known notspots
-- **owner:** qa
-- **status:** in-progress
-- **depends:** P2-04
-- **why:** Our credibility rests on being right. External disagreement is the cheapest
-  signal that we aren't.
-- **acceptance:**
-  - [ ] Output compared against mastdatabase rail notspots on major routes
-  - [ ] Disagreements investigated and documented
-  - [ ] Direction of error established — must skew conservative, not optimistic
-  - [ ] Findings in `specs/signal-model.md`
+P3-01 is done — see the index above.
 
 ### P3-02 — Confidence and honesty pass
 - **owner:** product-manager
@@ -192,6 +183,21 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Row counts logged at each stage (same as P2-03)
   - [ ] Re-runnable to byte-identical output
   - [ ] `npm run verify` green
+
+### DW-07 — Validation script uses wrong CRS code for Newark
+- **owner:** qa
+- **status:** todo
+- **severity:** low
+- **depends:** —
+- **why:** The P3-01 validation script (`pipeline/p3-01-validate-notspots.ts`) uses CRS
+  code "NEW" for Newark on the ECML route, but "NEW" maps to Newcastle. This produces
+  invalid 400+ km paths for the RET-to-NEW and NEW-to-GRA segments, making those two
+  segments untestable. The product itself is unaffected (it uses timetable calling points,
+  not hand-coded CRS codes).
+- **acceptance:**
+  - [ ] Replace "NEW" with "NNG" (Newark North Gate) in the ECML route definition
+  - [ ] Re-run the script and confirm RET-to-NNG and NNG-to-GRA produce sensible paths
+  - [ ] Document any new findings from the corrected segments
 
 ### DW-06 — Investigate local Windows build failure
 - **owner:** devops
