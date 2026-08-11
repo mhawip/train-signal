@@ -110,7 +110,7 @@ P3-01 is done — see the index above.
 
 ### P3-02 — Confidence and honesty pass
 - **owner:** product-manager
-- **status:** todo
+- **status:** in-progress
 - **depends:** P2-04, P3-01
 - **why:** The failure that hurts is a confident wrong answer. This is the deliberate
   check that we haven't drifted into one for the sake of a cleaner interface.
