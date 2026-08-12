@@ -6,6 +6,8 @@ import { BestWindow } from "@/app/components/BestWindow";
 import { getJourneySignal } from "@/app/lib/signal";
 import { findBestWindow } from "@/app/lib/best-window";
 import type { Journey } from "@/app/lib/journey-types";
+import { fetchDepartures } from "@/app/lib/darwin";
+import { getTodayISO } from "@/app/lib/journey-params";
 
 /**
  * Fixture journey for display while the timetable API integration
@@ -117,15 +119,33 @@ export async function generateMetadata({
 export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   const params = await searchParams;
 
-  // Always show the fixture journey for now; real data comes in a future task
-  const journey = FIXTURE_JOURNEY;
+  // Try live Darwin data for today's journeys
+  let journey: Journey = FIXTURE_JOURNEY;
+  let isLiveData = false;
+
+  const today = getTodayISO();
+  const hasRouteParams = params.from && params.to;
+
+  if (hasRouteParams && params.date === today) {
+    const liveJourney = await fetchDepartures(
+      params.from!,
+      params.to!,
+      params.date!,
+      params.time || "00:00",
+      params.network || "EE",
+    );
+    if (liveJourney) {
+      journey = liveJourney;
+      isLiveData = true;
+    }
+  }
 
   const heading = `${journey.origin.name} to ${journey.destination.name}`;
 
   // Compute signal profile server-side
   const signalProfile = getJourneySignal(journey);
 
-  // Network name to show -- prefer URL param, fall back to fixture
+  // Network name to show -- prefer URL param, fall back to journey data
   const networkName = params.network || journey.network;
 
   // Find the best window for a call on this journey
@@ -141,10 +161,16 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
 
       <BestWindow window={bestWindow} networkName={networkName} />
 
-      <p className="ts-notice">
-        This is example data. Live journey data will be shown once the timetable
-        integration is complete.
-      </p>
+      {isLiveData ? (
+        <p className="ts-notice">
+          Showing live journey data for today.
+        </p>
+      ) : (
+        <p className="ts-notice">
+          This is example data. Live journey data is only available for
+          today&#39;s services.
+        </p>
+      )}
 
       <p>
         Showing expected signal for {networkName} on this route.
