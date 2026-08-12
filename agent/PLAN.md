@@ -113,7 +113,7 @@ P3-03 is done — see the index above.
 
 ### P3-04 — Performance
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P2-05
 - **why:** People load this on a train, on a bad connection — exactly when signal is
   poor. A slow app about bad signal is an embarrassment.
