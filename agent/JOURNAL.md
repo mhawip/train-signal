@@ -1087,3 +1087,47 @@ Key findings documented in `specs/signal-model.md`:
 - `npm run verify` passes entirely in Playwright dev-server mode (not build mode) locally. On CI it runs in build mode. Both pass — the test content is not build-dependent.
 
 **Next:** P3-01 done unblocks P3-02 (confidence and honesty pass, product-manager). DW-04 (retarget pipeline at RDM) and DW-06 (Windows build failure) and DW-07 (validation script fix) are all available. P3-03 (manual a11y audit) and P3-04 (performance) are also unblocked.
+
+---
+
+## 2026-08-12T07:35:00Z — P3-02 — product-manager / orchestrator
+
+**Did:** Completed P3-02 (confidence and honesty pass). A previous iteration had created
+the branch and made two copy changes. This iteration verified those changes are sufficient
+to meet all four acceptance criteria, ran the full verify suite, and shipped the PR.
+
+Changes in this PR:
+- `app/layout.tsx`: footer attribution now names all three data sources specifically:
+  "Ofcom yellow-train mobile signal measurements, 2018–19" (was "Ofcom connected-nations
+  measurements, 2018–19"), adds "Track geometry: OpenStreetMap contributors (ODbL)"
+  (was absent), renames "Rail station data" to "Station data".
+- `app/results/page.tsx`: vintage notice updated to "Ofcom rail measurements from 2018
+  and 2019" and "Coverage may have improved since then" (was "may have changed", which
+  is weaker and bidirectional).
+- `agent/PLAN.md`: P1-01 and P1-02 status changed from `blocked` to `todo` — Q1 (RDM
+  API key) and Q2 (NR SCHEDULE credentials) were both resolved 2026-08-08.
+
+Full honesty audit of all UI claims:
+- Column header "Expected signal" correctly scopes all band labels as expectations.
+- BestWindow: "expected {quality} signal on {network}" — hedged.
+- SignalCell: "Voice and video", "Voice only", "No signal expected" — the column header
+  provides the expected-signal frame. "No signal expected" is consistent with being
+  explicit about uncertainty on the negative case.
+- signal.ts `classifySegment`: 20% node-coverage threshold already ensures sparse-data
+  routes return `no-data` → displayed as "No data" — never invents a verdict.
+- Low confidence propagates as "(limited data)" / "Based on limited data for this route."
+
+**Verify:** Pass. Typecheck clean, lint clean, 159/159 unit tests, 3/3 Playwright AAA
+a11y tests (0 violations, home, components-demo, results pages).
+
+**Learned:** P3-02 was largely a review task — the code already had the right honesty
+mechanisms (20% threshold, no-data band, hedged language). The value was in: (a) making
+the attribution more specific, (b) tightening the vintage notice wording, and (c) doing
+the explicit audit that confirms no confident wrong answers exist. The iteration was
+lightweight precisely because the earlier implementation got it right.
+
+**Next:** P3-02 done. Unblocked tasks: P1-01 (Darwin LDBWS, data-engineer), P1-02
+(Network Rail SCHEDULE, data-engineer), P3-03 (manual a11y audit, accessibility-
+specialist), P3-04 (performance, developer), DW-02 (wire up real journey data, depends
+P1-01/P1-02), DW-04 (retarget signal pipeline at RDM, data-engineer), DW-06 (Windows
+build failure, devops), DW-07 (validation script CRS fix, qa).

@@ -30,8 +30,9 @@ export default function RootLayout({
 
         <footer className="ts-footer">
           <p>
-            Signal data: Ofcom connected-nations measurements, 2018–19.
-            Rail station data: NaPTAN, Open Government Licence v3.
+            Signal data: Ofcom yellow-train mobile signal measurements,
+            2018–19. Track geometry: OpenStreetMap contributors (ODbL).
+            Station data: NaPTAN, Open Government Licence v3.
           </p>
         </footer>
       </body>
