@@ -49,6 +49,7 @@ and writes to it last.
 | P0-05 | Vercel deployment | devops |
 | DW-03 | Header/footer landmarks and skip link | developer |
 | P3-01 | Cross-validation against known notspots | qa |
+| P3-02 | Confidence and honesty pass | product-manager |
 | P3-03 | Manual accessibility audit | accessibility-specialist |
 
 ---
@@ -70,8 +71,7 @@ P1-03 through P1-07 are done — see the index above.
 
 ### P1-01 — Darwin LDBWS integration
 - **owner:** data-engineer
-- **status:** blocked
-- **blocked-on:** QUESTIONS.md Q1 (Darwin API key)
+- **status:** todo
 - **depends:** P0-03
 - **why:** Live calling points for today's journeys.
 - **acceptance:**
@@ -83,8 +83,7 @@ P1-03 through P1-07 are done — see the index above.
 
 ### P1-02 — Network Rail SCHEDULE timetable
 - **owner:** data-engineer
-- **status:** blocked
-- **blocked-on:** QUESTIONS.md Q2 (Network Rail credentials)
+- **status:** todo
 - **depends:** P0-03
 - **why:** The 8-week horizon. The core use case is booking a meeting for a future date,
   which live boards can't serve.
@@ -109,17 +108,6 @@ P2-02, P2-03, P2-04, and P2-05 are done — see the index above.
 
 P3-01 is done — see the index above.
 
-### P3-02 — Confidence and honesty pass
-- **owner:** product-manager
-- **status:** todo
-- **depends:** P2-04, P3-01
-- **why:** The failure that hurts is a confident wrong answer. This is the deliberate
-  check that we haven't drifted into one for the sake of a cleaner interface.
-- **acceptance:**
-  - [ ] Every claim in the UI traced to what the data actually supports
-  - [ ] Sparse-data routes degrade to "we don't know", not a guess
-  - [ ] Vintage and limitations discoverable without being oppressive
-  - [ ] Attribution present for all sources
 
 P3-03 is done — see the index above.
 

@@ -151,8 +151,9 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
       </p>
 
       <p className="ts-notice ts-notice--vintage">
-        Signal data is based on measurements from 2018 and 2019. Results show
-        expected signal, not a guarantee. Coverage may have changed since then.
+        Signal data is based on Ofcom rail measurements from 2018 and 2019.
+        Results show expected signal, not a guarantee. Coverage may have
+        improved since then.
       </p>
 
       <JourneyTimeline journey={journey} signalProfile={signalProfile} />

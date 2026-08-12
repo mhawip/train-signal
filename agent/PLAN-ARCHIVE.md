@@ -455,6 +455,29 @@ particular way, or its full original acceptance criteria).
   under "P3-01 Cross-validation findings". DW-07 filed for validation script bug (NEW
   = Newcastle, not Newark).
 
+### P3-02 — Confidence and honesty pass
+- **owner:** product-manager
+- **status:** done
+- **depends:** P2-04, P3-01
+- **why:** The failure that hurts is a confident wrong answer. This is the deliberate
+  check that we haven't drifted into one for the sake of a cleaner interface.
+- **acceptance:**
+  - [x] Every claim in the UI traced to what the data actually supports
+  - [x] Sparse-data routes degrade to "we don't know", not a guess
+  - [x] Vintage and limitations discoverable without being oppressive
+  - [x] Attribution present for all sources
+- **done-notes:** Full UI review confirmed all claims are hedged ("expected signal",
+  never "you will have signal"). Sparse-data handling already implemented in signal.ts
+  with a 20% node-coverage threshold → `no-data` band → "No data" in UI. Footer
+  attribution updated to name all three data sources specifically: Ofcom yellow-train
+  mobile signal measurements 2018-19 (with vintage), OpenStreetMap contributors (ODbL),
+  NaPTAN (OGL v3). Vintage notice on results page updated to say "Ofcom rail
+  measurements" and "may have improved" (positive directional hedge, not neutral). P1-01
+  and P1-02 unblocked in PLAN.md — Q1 and Q2 were resolved 2026-08-08. No new
+  follow-up tasks required: no new UI components or visual treatments, self-certified
+  against accessibility criteria (only copy changes to existing elements, 0 axe-core
+  AAA violations confirmed).
+
 ### P3-03 — Manual accessibility audit
 - **owner:** accessibility-specialist
 - **status:** done
