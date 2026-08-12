@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { searchStations, getStationByCRS, type Station } from "@/app/lib/stations";
+import type { Station } from "@/app/lib/stations";
 
 interface StationComboboxProps {
   id: string;
@@ -16,9 +16,10 @@ interface StationComboboxProps {
 /**
  * Accessible station search combobox implementing the ARIA combobox pattern.
  *
- * Replaces the <datalist>-based Combobox for station search, because with
- * 2,600+ stations a <datalist> produces an unusable suggestion list in most
- * browsers.
+ * Fetches station suggestions from /api/stations?q= as the user types,
+ * keeping the 332 KB station dataset out of the client bundle. Requests
+ * are debounced at 300ms to avoid excessive network calls on slow
+ * train connections.
  *
  * ARIA pattern:
  * - role="combobox" on the input, with aria-expanded, aria-controls,
@@ -52,6 +53,9 @@ export function StationCombobox({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const listboxRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Track the latest fetch to ignore stale responses
+  const fetchIdRef = useRef(0);
 
   const listboxId = `${id}-listbox`;
   const hintId = hint ? `${id}-hint` : undefined;
@@ -69,10 +73,11 @@ export function StationCombobox({
   // Sync display value from the CRS prop (for URL pre-fill)
   useEffect(() => {
     if (value && !inputValue) {
-      const station = getStationByCRS(value);
-      if (station) {
-        setInputValue(`${station.name} (${station.crs})`);
-      }
+      fetchStationByCRS(value).then((station) => {
+        if (station) {
+          setInputValue(`${station.name} (${station.crs})`);
+        }
+      });
     }
   // Only run when value changes from outside, not on every inputValue change
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -87,21 +92,48 @@ export function StationCombobox({
       return;
     }
 
-    const results = searchStations(query, 10);
-    setSuggestions(results);
-    setIsOpen(results.length > 0);
-    setActiveIndex(-1);
-
-    // Announce result count for screen readers
-    if (results.length === 0) {
-      setStatusMessage("No stations found.");
-    } else if (results.length === 1) {
-      setStatusMessage(`1 station found: ${results[0].name}.`);
-    } else {
-      setStatusMessage(
-        `${results.length} stations found. Use arrow keys to choose.`
-      );
+    // Debounce API calls to avoid hammering the server on every keystroke
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
     }
+
+    setStatusMessage("Searching\u2026");
+
+    debounceRef.current = setTimeout(() => {
+      const currentFetchId = ++fetchIdRef.current;
+
+      fetch(`/api/stations?q=${encodeURIComponent(query)}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Station search failed");
+          return res.json() as Promise<Station[]>;
+        })
+        .then((results) => {
+          // Ignore stale responses from earlier queries
+          if (currentFetchId !== fetchIdRef.current) return;
+
+          setSuggestions(results);
+          setIsOpen(results.length > 0);
+          setActiveIndex(-1);
+
+          // Announce result count for screen readers
+          if (results.length === 0) {
+            setStatusMessage("No stations found.");
+          } else if (results.length === 1) {
+            setStatusMessage(`1 station found: ${results[0].name}.`);
+          } else {
+            setStatusMessage(
+              `${results.length} stations found. Use arrow keys to choose.`
+            );
+          }
+        })
+        .catch(() => {
+          // On fetch failure, show no suggestions -- user can try again
+          if (currentFetchId !== fetchIdRef.current) return;
+          setSuggestions([]);
+          setIsOpen(false);
+          setStatusMessage("");
+        });
+    }, 300);
   }, []);
 
   const selectStation = useCallback(
@@ -187,23 +219,39 @@ export function StationCombobox({
       // Already selected? Nothing to resolve.
       if (value) return;
 
-      // Try exact CRS match
-      const crsStation = getStationByCRS(trimmed);
-      if (crsStation) {
-        selectStation(crsStation);
-        return;
-      }
+      // Try CRS lookup via API
+      fetchStationByCRS(trimmed).then((crsStation) => {
+        if (crsStation) {
+          selectStation(crsStation);
+          return;
+        }
 
-      // Try exact name match (case-insensitive)
-      const results = searchStations(trimmed, 2);
-      if (
-        results.length === 1 &&
-        results[0].name.toLowerCase() === trimmed.toLowerCase()
-      ) {
-        selectStation(results[0]);
-      }
+        // Try name match via search API
+        fetch(`/api/stations?q=${encodeURIComponent(trimmed)}`)
+          .then((res) => res.ok ? res.json() as Promise<Station[]> : [])
+          .then((results) => {
+            if (
+              results.length === 1 &&
+              results[0].name.toLowerCase() === trimmed.toLowerCase()
+            ) {
+              selectStation(results[0]);
+            }
+          })
+          .catch(() => {
+            // Silently fail -- user can re-try
+          });
+      });
     }, 200);
   };
+
+  // Clean up debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   const activeOptionId =
     activeIndex >= 0 ? `${id}-option-${activeIndex}` : undefined;
@@ -288,4 +336,18 @@ export function StationCombobox({
       </p>
     </div>
   );
+}
+
+/**
+ * Fetch a single station by CRS code from the API.
+ * Returns null if the station is not found or the request fails.
+ */
+async function fetchStationByCRS(crs: string): Promise<Station | null> {
+  try {
+    const res = await fetch(`/api/stations/${encodeURIComponent(crs)}`);
+    if (!res.ok) return null;
+    return (await res.json()) as Station;
+  } catch {
+    return null;
+  }
 }

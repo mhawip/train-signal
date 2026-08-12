@@ -1214,3 +1214,42 @@ results pages).
 **Next:** P3-03 complete. Remaining unblocked tasks: P3-02 (confidence and honesty pass,
 product-manager), DW-04 (RDM pipeline retarget, data-engineer), DW-06 (local Windows
 build, devops), DW-07 (validation script CRS fix, qa), P3-04 (performance, developer).
+
+---
+
+## 2026-08-12 — P3-04 — developer
+
+**Did:** Moved station search from a static client-side import to server-side API routes.
+Created `app/api/stations/route.ts` (search by query) and
+`app/api/stations/[crs]/route.ts` (lookup by CRS code). Updated `StationCombobox` to
+fetch from these endpoints instead of importing `data/stations.json` (332 KB) into the
+client bundle. Added 300ms debounce on search requests to reduce network load on slow
+connections. Added stale-response guards (fetch ID tracking) so out-of-order responses
+don't overwrite newer results. Added "Searching..." status message for screen readers
+while fetch is in-flight. API responses include `Cache-Control: public, max-age=86400`
+since station data does not change at runtime.
+
+The `Station` type import in StationCombobox uses `import type`, which TypeScript strips
+at compile time, so `stations.ts` and `stations.json` are not included in the client
+bundle.
+
+Self-certification: this change does not introduce any new component, visual treatment,
+or interaction pattern. The combobox remains the same ARIA combobox pattern already
+reviewed in P1-07 and DW-05. The `role="status"` live region still announces search
+results. Keyboard navigation (ArrowUp/Down, Enter, Escape, Tab) is unchanged. Focus
+indicators are unchanged. The only behavioural difference is the data source (API fetch
+vs static import) and the "Searching..." interim status message, which is a more
+informative state than the instant results that appeared before. Criteria touched:
+4.1.3 (status messages) -- the existing `aria-live="polite"` region still fires with
+result counts; 2.2.2 (pause/stop/hide) -- no animation added.
+
+**Verify:** `npm run verify` passed. Typecheck, lint, 159 Vitest tests, 4 Playwright
+axe-core AAA tests all green.
+
+**Learned:** Using `import type` is critical -- a regular `import { Station }` from a
+module that has a side-effecting top-level `import stationsData from ...` would still
+pull the JSON into the client bundle even if only the type is used. TypeScript's
+`import type` guarantees erasure.
+
+**Next:** P3-04 done after PR merge. Remaining: P1-01, P1-02 (data-engineer), DW-02
+(developer, blocked on P1-01/P1-02), DW-04, DW-06, DW-07.
