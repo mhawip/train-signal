@@ -496,3 +496,25 @@ particular way, or its full original acceptance criteria).
   Known gap documented: tunnel segments in the visual timeline are metadata not separate
   visual bands (documented honestly in the accessibility statement). 4 Playwright AAA
   axe-core tests, 159 unit tests, all passing.
+
+### P3-04 — Performance
+- **owner:** developer
+- **status:** done
+- **depends:** P2-05
+- **why:** People load this on a train, on a bad connection — exactly when signal is
+  poor. A slow app about bad signal is an embarrassment.
+- **acceptance:**
+  - [x] Lighthouse performance budget met on throttled mobile
+  - [x] Client JS minimised; server components used wherever possible
+  - [x] Station data loads without blocking first paint
+  - [x] Works on a slow 3G connection
+- **done-notes:** Removed 332 KB station JSON from the client bundle. `stations.ts`
+  imported `data/stations.json` statically, and `StationCombobox` (a "use client"
+  component) imported `searchStations/getStationByCRS` from it — causing the entire
+  dataset to be bundled into client JS. Solution: two new server-side Route Handlers
+  (`app/api/stations/route.ts` for ?q= search, `app/api/stations/[crs]/route.ts` for
+  single-station CRS lookup). `StationCombobox` now fetches from these APIs with 300ms
+  debounce and stale-response guards. Station API responses cached 24 h. `import type`
+  used for the `Station` type to guarantee TypeScript strips it at compile time. All
+  existing accessibility behaviour (ARIA combobox pattern, live region, keyboard nav)
+  preserved. Lighthouse checks pass in CI. 159 unit tests + 4 Playwright AAA tests pass.

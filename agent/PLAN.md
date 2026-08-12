@@ -51,6 +51,7 @@ and writes to it last.
 | P3-01 | Cross-validation against known notspots | qa |
 | P3-02 | Confidence and honesty pass | product-manager |
 | P3-03 | Manual accessibility audit | accessibility-specialist |
+| P3-04 | Performance | developer |
 
 ---
 
@@ -111,17 +112,7 @@ P3-01 is done — see the index above.
 
 P3-03 is done — see the index above.
 
-### P3-04 — Performance
-- **owner:** developer
-- **status:** in-progress
-- **depends:** P2-05
-- **why:** People load this on a train, on a bad connection — exactly when signal is
-  poor. A slow app about bad signal is an embarrassment.
-- **acceptance:**
-  - [ ] Lighthouse performance budget met on throttled mobile
-  - [ ] Client JS minimised; server components used wherever possible
-  - [ ] Station data loads without blocking first paint
-  - [ ] Works on a slow 3G connection
+P3-04 is done — see the index above.
 
 ---
 
