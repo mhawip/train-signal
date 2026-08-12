@@ -73,7 +73,7 @@ P1-01, P1-03 through P1-07 are done — see the index above.
 
 ### P1-02 — Network Rail SCHEDULE timetable
 - **owner:** data-engineer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P0-03
 - **why:** The 8-week horizon. The core use case is booking a meeting for a future date,
   which live boards can't serve.
