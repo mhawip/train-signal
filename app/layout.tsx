@@ -34,6 +34,11 @@ export default function RootLayout({
             2018–19. Track geometry: OpenStreetMap contributors (ODbL).
             Station data: NaPTAN, Open Government Licence v3.
           </p>
+          <p>
+            <Link href="/accessibility" className="ts-footer__link">
+              Accessibility statement
+            </Link>
+          </p>
         </footer>
       </body>
     </html>

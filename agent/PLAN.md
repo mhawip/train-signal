@@ -50,6 +50,7 @@ and writes to it last.
 | DW-03 | Header/footer landmarks and skip link | developer |
 | P3-01 | Cross-validation against known notspots | qa |
 | P3-02 | Confidence and honesty pass | product-manager |
+| P3-03 | Manual accessibility audit | accessibility-specialist |
 
 ---
 
@@ -108,17 +109,7 @@ P2-02, P2-03, P2-04, and P2-05 are done — see the index above.
 P3-01 is done — see the index above.
 
 
-### P3-03 — Manual accessibility audit
-- **owner:** accessibility-specialist
-- **status:** todo
-- **depends:** P2-05
-- **why:** Automated tooling catches perhaps a third of AAA issues. This is the rest.
-- **acceptance:**
-  - [ ] Full manual pass against every applicable AAA criterion
-  - [ ] Screen reader testing documented
-  - [ ] Reading level verified across all copy
-  - [ ] Any non-compliance documented honestly with justification
-  - [ ] Accessibility statement published in the app
+P3-03 is done — see the index above.
 
 ### P3-04 — Performance
 - **owner:** developer
