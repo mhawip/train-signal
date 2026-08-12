@@ -52,6 +52,7 @@ and writes to it last.
 | P3-02 | Confidence and honesty pass | product-manager |
 | P3-03 | Manual accessibility audit | accessibility-specialist |
 | P3-04 | Performance | developer |
+| P1-01 | Darwin LDBWS integration | data-engineer |
 
 ---
 
@@ -68,19 +69,7 @@ P0-00 through P0-06 are done — see the index above.
 Get a real journey on screen. No signal data yet — prove the timetable and timeline work
 first.
 
-P1-03 through P1-07 are done — see the index above.
-
-### P1-01 — Darwin LDBWS integration
-- **owner:** data-engineer
-- **status:** todo
-- **depends:** P0-03
-- **why:** Live calling points for today's journeys.
-- **acceptance:**
-  - [ ] Server-side only; key never reaches the client
-  - [ ] Origin + destination → services with full calling points and times
-  - [ ] Typed responses, errors handled without inventing data
-  - [ ] Rate limiting and caching respected
-  - [ ] Tests against recorded fixtures, not the live API
+P1-01, P1-03 through P1-07 are done — see the index above.
 
 ### P1-02 — Network Rail SCHEDULE timetable
 - **owner:** data-engineer
@@ -120,18 +109,18 @@ P3-04 is done — see the index above.
 
 Bugs and follow-ups get filed here by whoever finds them.
 
-### DW-02 — Results page: wire up real journey data when P1-01/P1-02 land
+### DW-02 — Results page: wire up NR SCHEDULE journey data when P1-02 lands
 - **owner:** developer
 - **status:** todo
-- **depends:** P1-01, P1-02
-- **why:** The results page currently renders fixture data only. Once LDBWS (P1-01)
-  and/or SCHEDULE (P1-02) are integrated, the results page needs to fetch real calling
-  points and pass them to `JourneyTimeline`.
+- **depends:** P1-02
+- **why:** The results page now calls Darwin for today's journeys (P1-01 done). Future-date
+  journeys still show the fixture. Once SCHEDULE (P1-02) is integrated, wire up future-date
+  journeys and remove the fixture notice entirely.
 - **acceptance:**
-  - [ ] Results page reads journey params from URL and fetches real timetable data
-  - [ ] `JourneyTimeline` receives real `Journey` data
-  - [ ] Fixture notice removed
-  - [ ] Error and loading states handled
+  - [ ] Results page fetches NR SCHEDULE data for future-date journeys
+  - [ ] `JourneyTimeline` receives real `Journey` data for all dates within 8-week horizon
+  - [ ] Fixture notice removed (both today and future dates now show real data)
+  - [ ] Error state handled (no service found / out of horizon)
 
 
 ### DW-04 — Retarget signal pipeline at RDM product

@@ -158,6 +158,32 @@ particular way, or its full original acceptance criteria).
 
 # Phase 1 — Journey spine
 
+### P1-01 — Darwin LDBWS integration
+- **owner:** data-engineer
+- **status:** done
+- **depends:** P0-03
+- **why:** Live calling points for today's journeys.
+- **acceptance:**
+  - [x] Server-side only; key never reaches the client
+  - [x] Origin + destination → services with full calling points and times
+  - [x] Typed responses, errors handled without inventing data
+  - [x] Rate limiting and caching respected (60-second Next.js revalidate cache)
+  - [x] Tests against recorded fixtures, not the live API (13 tests)
+- **delivered:** PR #28. Created `app/lib/darwin.ts` (server-side Darwin client),
+  `app/api/journey/route.ts` (REST endpoint), `app/lib/__fixtures__/darwin-lds-kgx.json`
+  (recorded fixture), `app/lib/darwin.test.ts` (13 tests). Updated `app/results/page.tsx`
+  to call Darwin directly from the server component for today's journeys; falls back to
+  FIXTURE_JOURNEY for future dates (until P1-02). DARWIN_API_KEY read from process.env,
+  never in client bundle.
+- **learned:** Darwin's departure board only provides a single scheduled time (`st`) for
+  intermediate calling points — no separate arrival/departure. Both `scheduledArrival` and
+  `scheduledDeparture` are set to the same value for intermediate stops. Darwin is
+  today-only; the `filterCrs` parameter filters displayed results but the board is still
+  a live departure board. For split services, only the first callingPointList is used
+  (main route). The RDM API URL pattern for the Live Departure Board product is:
+  `https://api.raildata.org.uk/1010-live-departure-board-dep/LDBWS/api/20220120/GetDepBoardWithDetails`
+  with `accessToken` in the query string.
+
 ### P1-03 — Station reference data
 - **owner:** data-engineer
 - **status:** done

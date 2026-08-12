@@ -1284,3 +1284,58 @@ there is no queue configured.
 **Next:** P3-04 done. Remaining unblocked tasks: P1-01 (Darwin LDBWS, data-engineer),
 P1-02 (NR SCHEDULE, data-engineer), DW-04 (retarget pipeline at RDM, data-engineer),
 DW-07 (CRS fix, qa), DW-06 (Windows build, devops). DW-02 still blocked on P1-01/P1-02.
+
+---
+
+## 2026-08-12T08:48:00Z — P1-01 — data-engineer / orchestrator
+
+**Did:** Implemented Darwin Live Departure Board (LDBWS) server-side integration. Created:
+- `app/lib/darwin.ts` — server-side module; reads `DARWIN_API_KEY` from `process.env` at
+  call time, never exported to client. Calls RDM endpoint
+  `https://api.raildata.org.uk/1010-live-departure-board-dep/LDBWS/api/20220120/GetDepBoardWithDetails`
+  with `accessToken` query parameter. Returns `Journey | null` — null for non-today dates,
+  missing key, network errors, empty service list, or parse failures. Picks the first
+  service departing at or after the requested time that calls at the destination.
+- `app/api/journey/route.ts` — Next.js GET route (`/api/journey?from&to&date&time&network`);
+  400 for missing params; 60-second private cache.
+- `app/lib/__fixtures__/darwin-lds-kgx.json` — realistic recorded Darwin response for LDS→KGX
+  with two services (14:12, 15:00). Used by all tests; live API never called in tests.
+- `app/lib/darwin.test.ts` — 13 tests: happy path, origin/terminus null times, time
+  filtering, non-today date, missing key, 500 status, network error, empty service list,
+  missing `trainServices`, missing `GetStationBoardResult`, mocked live-API call.
+- Updated `app/results/page.tsx` — calls `fetchDepartures` directly from the server
+  component for today's journeys; falls back to `FIXTURE_JOURNEY` for future dates;
+  shows "Showing live journey data for today." vs fixture notice depending on data source.
+- Updated `PLAN.md` — DW-02 `depends` updated from `P1-01, P1-02` to `P1-02` only
+  (P1-01 portion wired up in this PR).
+
+Branched `data/P1-01-darwin-ldbws`, opened PR #28.
+
+**Verify:** typecheck clean, lint clean, 172/172 Vitest tests pass (13 new). Playwright
+a11y runs in CI against Vercel preview.
+
+**Learned:**
+- Darwin departure board provides only a single `st` (scheduled time) for intermediate
+  calling points — no separate arrival and departure time. Both fields set to the same
+  value for intermediate stops.
+- The `filterCrs` parameter filters which services are shown (those calling at the
+  destination) but does not change the structure of the calling-point lists — all
+  subsequent calling points are still returned, including those past the destination.
+  We slice to the destination index.
+- For split services, Darwin returns multiple `callingPointList` entries. We take the
+  first (main route). This may miss the right leg for some split services, but is correct
+  for the vast majority of GB services.
+- The RDM API URL for Live Departure Board is the 1010 product prefix.
+  `DARWIN_API_KEY` goes in `accessToken` query param (not an HTTP header).
+- `next: { revalidate: 60 }` on the `fetch` call is the idiomatic Next.js server-side
+  cache for a short-lived live-data response. This is equivalent to `Cache-Control:
+  private, max-age=60` on the API route.
+- The results page is a server component — calling `fetchDepartures` directly avoids an
+  unnecessary HTTP round-trip to the `/api/journey` route handler. The route handler
+  exists as a standalone endpoint if other consumers need it.
+
+**Next:** P1-01 done (pending CI). Next highest-priority unblocked: P1-02 (NR SCHEDULE
+timetable, data-engineer) — this is the 8-week horizon that serves the core use case
+(booking a future meeting). After P1-02 merges, DW-02 becomes unblocked. Also still open:
+DW-04 (retarget signal pipeline at RDM, data-engineer), DW-07 (CRS fix, qa),
+DW-06 (Windows build, devops).

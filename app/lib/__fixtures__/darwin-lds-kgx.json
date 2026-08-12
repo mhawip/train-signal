@@ -1,0 +1,137 @@
+{
+  "GetStationBoardResult": {
+    "generatedAt": "2026-08-12T13:45:00.0000000+01:00",
+    "locationName": "Leeds",
+    "crs": "LDS",
+    "filterLocationName": "London Kings Cross",
+    "filtercrs": "KGX",
+    "filterType": "to",
+    "platformAvailable": true,
+    "trainServices": {
+      "service": [
+        {
+          "std": "14:12",
+          "etd": "On time",
+          "platform": "11",
+          "operator": "London North Eastern Railway",
+          "operatorCode": "GR",
+          "isCancelled": false,
+          "serviceID": "abc123def456",
+          "origin": {
+            "location": [
+              {
+                "locationName": "Leeds",
+                "crs": "LDS"
+              }
+            ]
+          },
+          "destination": {
+            "location": [
+              {
+                "locationName": "London Kings Cross",
+                "crs": "KGX"
+              }
+            ]
+          },
+          "subsequentCallingPoints": {
+            "callingPointList": [
+              {
+                "callingPoint": [
+                  {
+                    "locationName": "Wakefield Westgate",
+                    "crs": "WKF",
+                    "st": "14:25",
+                    "et": "On time",
+                    "at": "On time"
+                  },
+                  {
+                    "locationName": "Doncaster",
+                    "crs": "DON",
+                    "st": "14:44",
+                    "et": "On time",
+                    "at": "On time"
+                  },
+                  {
+                    "locationName": "Grantham",
+                    "crs": "GRA",
+                    "st": "15:14",
+                    "et": "On time",
+                    "at": "On time"
+                  },
+                  {
+                    "locationName": "Peterborough",
+                    "crs": "PBR",
+                    "st": "15:39",
+                    "et": "On time",
+                    "at": "On time"
+                  },
+                  {
+                    "locationName": "London Kings Cross",
+                    "crs": "KGX",
+                    "st": "16:27",
+                    "et": "On time",
+                    "at": "On time"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "std": "15:00",
+          "etd": "On time",
+          "platform": "5",
+          "operator": "London North Eastern Railway",
+          "operatorCode": "GR",
+          "isCancelled": false,
+          "serviceID": "xyz789ghi012",
+          "origin": {
+            "location": [
+              {
+                "locationName": "Leeds",
+                "crs": "LDS"
+              }
+            ]
+          },
+          "destination": {
+            "location": [
+              {
+                "locationName": "London Kings Cross",
+                "crs": "KGX"
+              }
+            ]
+          },
+          "subsequentCallingPoints": {
+            "callingPointList": [
+              {
+                "callingPoint": [
+                  {
+                    "locationName": "Wakefield Westgate",
+                    "crs": "WKF",
+                    "st": "15:12",
+                    "et": "On time",
+                    "at": "On time"
+                  },
+                  {
+                    "locationName": "Doncaster",
+                    "crs": "DON",
+                    "st": "15:32",
+                    "et": "On time",
+                    "at": "On time"
+                  },
+                  {
+                    "locationName": "London Kings Cross",
+                    "crs": "KGX",
+                    "st": "17:12",
+                    "et": "On time",
+                    "at": "On time"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
