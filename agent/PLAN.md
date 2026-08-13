@@ -58,6 +58,7 @@ and writes to it last.
 | DW-07 | Validation script uses wrong CRS code for Newark | qa |
 | DW-08 | Automate weekly SCHEDULE data refresh via GitHub Actions | devops |
 | DW-09 | Accessibility constraints: departure selection page and route search form | accessibility-specialist |
+| DW-10 | Design: departure selection page and route search form | designer |
 
 ---
 
@@ -101,35 +102,6 @@ P3-04 is done — see the index above.
 
 Bugs and follow-ups get filed here by whoever finds them.
 
-### DW-10 — Design: departure selection page and route search form
-- **owner:** designer
-- **status:** in-progress
-- **depends:** DW-09
-- **why:** Matt has approved two UX changes. First: when a user submits the journey
-  form, instead of going directly to results, they land on a departure selection page
-  showing 1 train before and 4 trains after their requested time (no hour cap — covers
-  low-frequency routes). This makes the selected train explicit rather than silently
-  substituting one. Second: the search form should show origin, destination, and network
-  first, then offer a "Find a specific journey time" option that reveals date and time
-  fields. This supports a future route-overview mode. For now the form always needs a
-  time to produce results; the route-only path is a placeholder for later.
-- **acceptance:**
-  - [ ] Departure selection page designed as real components:
-    - Recap header showing origin → destination and the date
-    - List of up to 5 departures (1 before + 4 after requested time), each showing
-      departure time, destination arrival time, and a clear call to action
-    - Graceful handling of edge cases: fewer than 5 available (e.g. last train of day,
-      first train), zero trains on this route/date
-    - Follows the AAA constraints set in DW-09
-  - [ ] Journey form redesigned:
-    - Origin, destination, and network always visible
-    - A clearly labelled control that reveals date and time fields ("Find a specific
-      journey time" or similar plain English)
-    - Progressive enhancement: the revealed fields are accessible and functional without
-      JavaScript (consider a two-step form or a server-side conditional)
-    - Follows the AAA constraints set in DW-09
-  - [ ] Both screens reviewed in browser at 320 px and 1280 px, both colour schemes
-  - [ ] `specs/design-system.md` updated with any new tokens or component decisions
 
 ### DW-11 — Implement departure selection flow
 - **owner:** developer

@@ -1583,3 +1583,51 @@ identical to the last passing CI run. CI will confirm on PR #34.
 **Next:** DW-09 done (pending PR #34 CI). DW-10 (designer) is now unblocked — it
 depends only on DW-09. DW-06 (Windows build failure, devops) remains open. DW-04
 (RDM pipeline retarget) is blocked on data download.
+
+---
+
+## 2026-08-13T19:30:00Z — DW-10 — designer / orchestrator
+
+**Did:** Added Sections 9 and 10 to `specs/design-system.md`. Section 9 specifies the
+departure selection page with two components: `DepartureHeader` (h1 with `tabindex="-1"`
+for programmatic focus on page load, context paragraph in `--color-muted`) and
+`DepartureList` (ordered list of anchor links, each carrying departure time, route,
+arrival time, and duration — self-descriptive accessible name per 2.4.9). Edge cases
+documented: zero trains, single train, server/API error. Forced-colours CSS for Windows
+High Contrast. Layout described at 320px and 1280px in both colour schemes.
+
+Section 10 specifies the progressive-reveal form. Disclosure toggle uses existing
+`ts-button--secondary` with `aria-expanded` and `aria-controls`. Progressive enhancement
+strategy: server renders the full form visible (no JS needed), JS hides date/time fields
+and shows the toggle on load, restores fields if URL contains `mode=timed`. Focus
+management on reveal (move to date input) and collapse (return to toggle button). Submit
+without date/time auto-reveals fields and announces via `aria-live="polite"`. URL state
+via `history.replaceState`. No new tokens or colour pairings introduced.
+
+Component inventory and decisions table updated with seven new entries.
+
+PR #35 opened on `designer/DW-10-departure-selection-design`.
+
+**Verify:** Typecheck clean, lint clean, 195/195 unit tests pass. Playwright a11y tests
+not run locally (pre-existing DW-06 Windows issue); no app code changed so CI result
+identical to last passing run.
+
+**Learned:**
+- The previous iteration had completed the design work and staged it but did not commit
+  or PR. The work was substantively complete against all acceptance criteria. Assessed
+  and shipped rather than redoing.
+- The "1 uncommitted change" warning from `gh pr create` refers to the spurious `nul`
+  file in the repo root (a Windows artefact). It is not a real uncommitted change to
+  ship.
+- No new design tokens were needed for either component. The disclosure toggle reuses
+  `ts-button--secondary` entirely; the departure list reuses `--color-page-fg`,
+  `--color-muted`, and `--color-field-border`. The design system had enough breadth to
+  cover both new patterns without extension.
+- The inset focus ring (`outline-offset: -2px`) for full-width stacked links is the
+  correct approach: an outset ring would overlap adjacent list items. Both light and dark
+  focus ring colours pass 3:1 against page-bg in this inset position.
+
+**Next:** DW-10 done (pending PR #35 CI). DW-11 (developer, implement departure
+selection flow) is now unblocked — it depends only on DW-10. DW-12 (developer,
+progressive reveal implementation) depends on DW-10 and DW-11. DW-06 (Windows build
+failure, devops) remains open. DW-04 (RDM pipeline retarget) is blocked on data download.
