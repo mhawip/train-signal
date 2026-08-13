@@ -125,7 +125,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-08 — Automate weekly SCHEDULE data refresh via GitHub Actions
 - **owner:** devops
-- **status:** todo
+- **status:** in-progress
 - **depends:** P1-02
 - **why:** `data/schedule-index.json.gz` covers 8 weeks from the date the pipeline ran.
   Without weekly refresh the window shrinks and future-date lookups eventually fail.
