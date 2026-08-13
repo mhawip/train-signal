@@ -101,7 +101,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-04 — Retarget signal pipeline at RDM product
 - **owner:** data-engineer
-- **status:** todo
+- **status:** blocked
 - **depends:** —
 - **why:** Matt verified the RDM "NWR Yellow Train Mobile Network Measurements" product
   (Rail Data Marketplace) on 2026-08-09. It is dated July 2026, contains 5G measurements
@@ -118,10 +118,13 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Row counts logged at each stage (same as P2-03)
   - [ ] Re-runnable to byte-identical output
   - [ ] `npm run verify` green
+- **blocked because:** RDM CSV not yet downloaded to `data/raw/`. The pipeline
+  script cannot be updated without knowing the exact column names, and the output
+  cannot be regenerated without the data. See Q6 in QUESTIONS.md.
 
 ### DW-07 — Validation script uses wrong CRS code for Newark
 - **owner:** qa
-- **status:** todo
+- **status:** in-progress
 - **severity:** low
 - **depends:** —
 - **why:** The P3-01 validation script (`pipeline/p3-01-validate-notspots.ts`) uses CRS

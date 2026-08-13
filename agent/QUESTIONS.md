@@ -13,6 +13,30 @@ a one-line pointer in the index below.
 
 ---
 
+## Open questions
+
+### Q6 — Download RDM yellow-train CSV to data/raw/
+
+**Asked:** 2026-08-13
+**Status:** open
+
+DW-04 (retarget signal pipeline at RDM product) is blocked until the Rail Data
+Marketplace CSV is available locally. The pipeline cannot be updated or re-run without
+the actual file, because the RDM column names may differ from the Ofcom schema and
+cannot be determined without inspecting the header.
+
+**What is needed:** Log into [Rail Data Marketplace](https://raildata.org.uk), navigate
+to the "NWR Yellow Train Mobile Network Measurements" product, and download the CSV to
+`data/raw/`. The file should be placed there as-is (the filename will be documented in
+the pipeline). The `data/raw/` directory is gitignored so the raw file will not be
+committed.
+
+Once downloaded, DW-04 can proceed unattended.
+
+**Answer:** *(Matt to fill in)*
+
+---
+
 ## Resolved (full detail in `agent/QUESTIONS-ARCHIVE.md`)
 
 | ID | Title | Resolved |
