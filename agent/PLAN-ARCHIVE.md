@@ -10,6 +10,23 @@ particular way, or its full original acceptance criteria).
 
 ---
 
+## Discovered work
+
+### DW-02 — Results page: wire up NR SCHEDULE journey data when P1-02 lands
+- **owner:** developer
+- **status:** done
+- **depends:** P1-02
+- **why:** The results page now calls Darwin for today's journeys (P1-01 done). Future-date
+  journeys still show the fixture. Once SCHEDULE (P1-02) is integrated, wire up future-date
+  journeys and remove the fixture notice entirely.
+- **acceptance:**
+  - [x] Results page fetches NR SCHEDULE data for future-date journeys
+  - [x] `JourneyTimeline` receives real `Journey` data for all dates within 8-week horizon
+  - [x] Fixture notice removed (both today and future dates now show real data)
+  - [x] Error state handled (no service found / out of horizon)
+
+---
+
 # Phase 0 — Foundations
 
 ### P0-00 — Competitive analysis: train-signal.vercel.app
