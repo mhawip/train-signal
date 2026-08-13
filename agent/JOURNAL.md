@@ -1520,3 +1520,66 @@ from the last passing run.
 departure selection page and progressive-reveal form, accessibility-specialist) is the
 highest-priority unblocked todo — it gates DW-10, 11, 12, and 13. DW-06 (Windows build
 failure, devops) remains open. DW-04 (RDM data retarget) is blocked on data download.
+
+---
+
+## 2026-08-13T15:45:00Z — DW-09 — accessibility-specialist / orchestrator
+
+**Did:** Documented AAA constraints for two novel interaction patterns in
+`specs/accessibility.md`. Added Section 10 (departure selection page) and Section 11
+(progressive-reveal form), plus updates to the table of contents, page titles (3.14),
+focus order (3.15), multiple ways (3.17), location (3.20), CI integration (8.3), and
+review milestones (8.4). PR #34 opened on `a11y/DW-09-departure-constraints`.
+
+Key decisions:
+- **Departure selection: `<ol>` of `<a>` links, not a radio group.** Links are the
+  native "choose a page" pattern, work without JS, need no ARIA. Each link must have
+  self-descriptive text including departure time, arrival time, and route (2.4.9) and a
+  44×44 px tap target (2.5.5). No auto-redirect even for a single result (3.2.5).
+- **Focus to `<h1>` on page load** via `tabindex="-1"`. Orients the user to the
+  intermediate step without stealing focus (this is a direct response to form submit).
+  Use `:focus:not(:focus-visible)` to suppress the visual ring while retaining the
+  screen reader announcement.
+- **Page title:** "Choose a departure: [Origin] to [Destination], [Date] — Train Signal"
+  to satisfy 2.4.2 and distinguish from the results page in the tab bar (2.4.8).
+- **Progressive reveal: `<button>` + `aria-expanded` + `hidden` attribute.** The
+  `hidden` attribute removes elements from the tab order and the accessibility tree
+  natively (2.1.1) — simpler than `inert`. Trigger label "Add a departure time" /
+  "Remove departure time" (descriptive per 2.4.6, reads at Grade 4).
+- **No-JS strategy: server renders full form visible; JS hides fields and shows toggle.**
+  Toggle button is server-rendered hidden, JS-revealed. This avoids non-functional
+  controls in the no-JS case (3.3.6, 3.2.5).
+- **Validation:** `required` removed by JS when fields are hidden; added back on reveal.
+  Server-side: absent params are not validation errors (3.3.1 — can't report an error
+  on a field the user cannot see).
+- **URL state:** `history.replaceState` with `mode=timed` param. Does not pollute the
+  history stack. Consistent with existing URL-encoding pattern.
+- **Submit without date/time:** currently reveals fields + moves focus to date input +
+  announces via `aria-live="polite"`. No navigation until fields are completed.
+
+**Verify:** Typecheck clean, lint clean, 195/195 unit tests pass. Playwright a11y tests
+not run locally (pre-existing DW-06 Windows issue); no app code changed so results are
+identical to the last passing CI run. CI will confirm on PR #34.
+
+**Learned:**
+- The "links vs radio group" decision for a departure list is not obvious — both can
+  satisfy AAA. The deciding factor is 3.3.6 (Error Prevention): a radio + submit adds a
+  confirmation step for an action that is trivially reversible (press Back). When there
+  is no error to prevent, the confirmation step is friction, not safety. Links are the
+  simpler, correct choice.
+- `tabindex="-1"` on `<h1>` for programmatic focus is a widely used, well-supported
+  pattern for server-rendered page transitions. The key detail is suppressing the focus
+  ring with `:focus:not(:focus-visible)` — screen readers still announce the heading,
+  but sighted users don't see an unexpected outline on a non-interactive heading.
+- `hidden` vs `inert`: `hidden` removes from tab order AND from the accessibility tree.
+  `inert` does the same plus suppresses pointer events. For this use case (`inert` is
+  not needed because the fields are also visually hidden), `hidden` is the right choice
+  — simpler and universally supported.
+- The progressive enhancement strategy (server renders full form; JS progressively hides)
+  avoids `<noscript>` entirely. The logic is: start with the accessible baseline (full
+  form), enhance for JS users (add the disclosure behaviour). Simpler and more robust
+  than trying to render different HTML server-side based on JS availability.
+
+**Next:** DW-09 done (pending PR #34 CI). DW-10 (designer) is now unblocked — it
+depends only on DW-09. DW-06 (Windows build failure, devops) remains open. DW-04
+(RDM pipeline retarget) is blocked on data download.

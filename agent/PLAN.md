@@ -57,6 +57,7 @@ and writes to it last.
 | DW-02 | Results page: wire up NR SCHEDULE journey data | developer |
 | DW-07 | Validation script uses wrong CRS code for Newark | qa |
 | DW-08 | Automate weekly SCHEDULE data refresh via GitHub Actions | devops |
+| DW-09 | Accessibility constraints: departure selection page and route search form | accessibility-specialist |
 
 ---
 
@@ -99,28 +100,6 @@ P3-04 is done — see the index above.
 ## Discovered work
 
 Bugs and follow-ups get filed here by whoever finds them.
-
-### DW-09 — Accessibility constraints: departure selection page and route search form
-- **owner:** accessibility-specialist
-- **status:** in-progress
-- **depends:** —
-- **why:** Two novel interaction patterns need AAA constraints set before design starts.
-  First: a new intermediate "choose departure" page that sits between the search form and
-  the results page, presenting a short list of nearby trains for the user to pick from.
-  Second: a progressive-reveal form that shows origin, destination, and network first,
-  then offers the user a choice to add a specific journey time — revealing date and time
-  fields conditionally. Both patterns have accessibility implications (focus management,
-  conditional field reveal, page-level semantics) that must be resolved before the
-  designer builds anything.
-- **acceptance:**
-  - [ ] `specs/accessibility.md` updated with AAA constraints for the departure selection
-        page: how focus is managed on page load, whether the list is links or a radio
-        group + submit, page title format, screen-reader announcement strategy
-  - [ ] `specs/accessibility.md` updated with AAA constraints for the progressive-reveal
-        form: technique for hiding/showing fields (aria-expanded, aria-controls, inert,
-        or equivalent), ensuring hidden fields are removed from tab order, how the reveal
-        trigger is labelled, keyboard interaction
-  - [ ] Constraints documented before design work begins (DW-10 depends on this)
 
 ### DW-10 — Design: departure selection page and route search form
 - **owner:** designer
