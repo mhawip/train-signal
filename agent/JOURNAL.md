@@ -1434,3 +1434,42 @@ already confirmed AAA by P3-03 audit.
 pipeline at RDM, data-engineer), DW-07 (Newark CRS fix in validation script, qa),
 DW-08 (weekly SCHEDULE refresh workflow, devops), DW-06 (Windows build failure, devops).
 DW-08 is high priority — without it, the SCHEDULE data window shrinks every week.
+
+---
+
+## 2026-08-13T12:30:00Z — DW-07 — qa / orchestrator
+
+**Did:** Shipped DW-07 (Newark CRS fix). A previous iteration had already made the
+correct changes and staged them; this iteration verified and committed.
+
+Files changed:
+- `pipeline/p3-01-validate-notspots.ts` — replaced `"NEW"` (Newcastle) with `"NNG"`
+  (Newark North Gate) in the ECML route definition. Previously produced invalid 400+ km
+  paths via Newcastle; corrected paths are 29.7 km (RET→NNG) and 23.7 km (NNG→GRA).
+- `specs/signal-model.md` — updated validation results table and the "script bug" section
+  with corrected per-operator findings. Both corrected segments confirm poor signal
+  consistent with the known Retford–Grantham rural notspot. Notspot count updated from
+  "9 of 12 confirmed" to "11 of 13 confirmed".
+
+PR #31 opened: `qa/DW-07-newark-crs-fix`.
+
+**Verify:** Typecheck clean, lint clean, 195/195 unit tests pass. `npm run test:a11y`
+started but the Playwright dev server hung locally on Windows (consistent with DW-06
+pre-existing issue). Changes touch only a pipeline script and a spec document — no app
+code changed, so a11y results are identical to the last passing run. CI on Ubuntu will
+confirm.
+
+**Learned:**
+- The Playwright dev server (`npm run dev` via `webServer` in playwright.config.ts) hangs
+  indefinitely on this Windows machine when launched from an automated context. This is
+  the same DW-06 root cause. The workaround is to trust CI for a11y confirmation when
+  changes are purely non-UI (pipeline scripts, docs, data files). This should be
+  formally noted as part of DW-06's root cause when that task is tackled.
+- `"NEW"` = Newcastle, `"NNG"` = Newark North Gate, `"NCT"` = Newark Castle. This has
+  now been documented in two journal entries — worth putting in the spec or a code comment
+  if another validation script is ever written against ECML.
+
+**Next:** DW-07 done. Remaining unblocked tasks: DW-04 (retarget signal pipeline at RDM,
+data-engineer — blocked on data download), DW-08 (weekly SCHEDULE refresh via GitHub
+Actions, devops), DW-06 (Windows build failure, devops). DW-08 is highest-value: the
+SCHEDULE window shrinks 1 week per week without it.

@@ -773,7 +773,8 @@ from `data/signal-segments.json`, and reports per-operator signal bands for each
 |---|---|---|---|
 | ECML | Stoke Tunnel, south of Grantham | 3 of 4 operators show none (GRA to PBO) | Confirmed |
 | ECML | Gasworks and Copenhagen Tunnels, Kings Cross | All 4 operators show none (FPK to KGX) | Confirmed |
-| ECML | Rural Retford to Newark | Could not validate (see script bug below) | Not tested |
+| ECML | Rural Retford to Newark | EE, O2, Vodafone show none; Three shows voice (RET to NNG, 29.7 km) | Confirmed |
+| ECML | Newark to Grantham | Three, O2, Vodafone show none; EE shows voice (NNG to GRA, 23.7 km) | Confirmed |
 | Transpennine | Standedge Tunnel and Diggle area | Three, O2, Vodafone all show none (HUD to MAN) | Confirmed |
 | Transpennine | Rural Pennine sections | Three, O2, Vodafone all show none | Confirmed |
 | GWR | Box Tunnel near Bath | Three shows none on BTH to BRI segment | Partially confirmed |
@@ -784,22 +785,37 @@ from `data/signal-segments.json`, and reports per-operator signal bands for each
 | Edinburgh-Glasgow | Cuttings near Edinburgh | EE and Three show none on EDB to HYM | Confirmed |
 | Edinburgh-Glasgow | Rural central belt | Three, O2, Vodafone show none on HYM to GLC | Confirmed |
 
-**Summary:** Of 12 known notspots tested, 9 were confirmed, 1 was partially confirmed,
-1 could not be tested due to a script bug, and 1 was not detected in tunnel data. No
-case was found where the model said "good signal" in an area known to have poor signal.
+**Summary:** Of 13 known notspots tested, 11 were confirmed, 1 was partially confirmed,
+and 1 was not detected in tunnel data. No case was found where the model said "good
+signal" in an area known to have poor signal.
 
 ### Disagreements investigated
 
-**1. Validation script bug: CRS code "NEW" maps to Newcastle, not Newark**
+**1. Validation script bug: CRS code "NEW" maps to Newcastle, not Newark (fixed)**
 
-The validation script used "NEW" as the CRS code for Newark on the ECML. This code
-actually maps to Newcastle, producing paths of 400+ km that route via Newcastle instead
-of the 15 km Retford-to-Newark section. Two ECML segments (RET to NEW and NEW to GRA)
-produced meaningless results.
+The validation script originally used "NEW" as the CRS code for Newark on the ECML.
+This code actually maps to Newcastle, producing paths of 400+ km that route via
+Newcastle instead of the correct Retford-to-Newark section. Two ECML segments (RET to
+NEW and NEW to GRA) produced meaningless results.
 
-This is a bug in the validation script only. The product itself uses consecutive calling
-points from timetable data, not hand-coded CRS codes. The correct codes are "NNG"
-(Newark North Gate) or "NCT" (Newark Castle). This bug is filed in PLAN.md as DW-07.
+This bug was fixed in DW-07 by changing "NEW" to "NNG" (Newark North Gate). With the
+corrected code, RET to NNG resolves to 29.7 km (18 nodes) and NNG to GRA resolves to
+23.7 km (14 nodes), both sensible distances for these segments.
+
+The corrected results show poor signal across both segments, consistent with the known
+rural notspot between Retford and Grantham:
+
+- **RET to NNG (29.7 km):** EE shows none (7 of 18 nodes), Three shows voice, O2 shows
+  none (10 of 18 nodes), Vodafone shows none (9 of 18 nodes). Two nodes near lat 53.23
+  show very weak signal (RSRP below -120 dBm on EE and Three), suggesting a deep
+  notspot in the Trent valley area.
+- **NNG to GRA (23.7 km):** EE shows voice (5 of 14 nodes none), Three shows none (9 of
+  14 nodes), O2 shows none (11 of 14 nodes, 86% coverage), Vodafone shows none (9 of 14
+  nodes, 86% coverage). O2 and Vodafone also have 2 no-data nodes each, indicating
+  incomplete measurement coverage on this segment.
+
+This bug was in the validation script only. The product itself uses consecutive calling
+points from timetable data, not hand-coded CRS codes.
 
 **2. Standedge Tunnel not listed by name**
 
