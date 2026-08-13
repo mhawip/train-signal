@@ -99,7 +99,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-02 — Results page: wire up NR SCHEDULE journey data when P1-02 lands
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P1-02
 - **why:** The results page now calls Darwin for today's journeys (P1-01 done). Future-date
   journeys still show the fixture. Once SCHEDULE (P1-02) is integrated, wire up future-date
