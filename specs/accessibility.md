@@ -58,6 +58,8 @@ section 8 for exactly what it does and doesn't cover. It is necessary, never suf
 7. [The text-equivalent table](#7-the-text-equivalent-table)
 8. [Testing approach](#8-testing-approach)
 9. [Accessibility statement](#9-accessibility-statement)
+10. [Departure selection page](#10-departure-selection-page)
+11. [Progressive-reveal form](#11-progressive-reveal-form)
 
 ---
 
@@ -415,6 +417,8 @@ Each page must have a descriptive title.
 **For this product:**
 
 - Form page: "Train Signal -- Check your journey signal"
+- Departure selection page: "Choose a departure: Leeds to London, 14 August 2026 --
+  Train Signal" (see section 10.4)
 - Results page: "Train Signal -- Leeds to London, 14 July 2026" (dynamic, including
   the journey)
 - Error page: "Train Signal -- Something went wrong"
@@ -424,7 +428,10 @@ Each page must have a descriptive title.
 Focus order must be logical and match the visual layout.
 
 **For this product:** On the form, focus order is: skip link, then fields in visual
-order (origin, destination, date, time, network), then submit button. On the results
+order (origin, destination, network, then the reveal toggle, then date, time if
+revealed), then submit button (see section 11.8 for full detail). On the departure
+selection page: skip link, then `<h1>` (focused programmatically on load), then each
+departure link in order, then navigation links (see section 10.6). On the results
 page: skip link, then headline, then table, then timeline (if focusable elements exist
 within it), then any navigation.
 
@@ -436,9 +443,11 @@ Superseded by 2.4.9 below.
 
 More than one way to reach each page.
 
-**For this product:** The app has two screens. The form is the entry point. The results
-page is reached via the form and via a direct URL (since state is encoded in the URL).
-This is sufficient.
+**For this product:** The app has three screens (form, departure selection, results). The
+form is the entry point. The departure selection page is reached via the form. The
+results page is reached via the departure selection page and via a direct URL (since
+state is encoded in the URL). Each page is reachable by at least two means (form
+submission and direct URL). This is sufficient.
 
 ### 3.18 -- 2.4.6 Headings and Labels (Level AA)
 
@@ -461,12 +470,15 @@ Superseded by 2.4.13 below.
 
 The user must always know where they are within the site.
 
-**For this product:** With only two screens this is low-risk, but the requirements are:
+**For this product:** With three screens (form, departure selection, results) this is
+moderate-risk. The requirements are:
 
 - The current page must be identifiable from the page title and heading.
+- The departure selection page must clearly communicate that it is an intermediate step,
+  not the results page (see section 10.4 and 10.5).
 - If the results page includes a "Search again" or "New journey" link, the user must
   understand they will return to the form.
-- Breadcrumbs are unnecessary given the two-screen structure, but the heading hierarchy
+- Breadcrumbs are unnecessary given the simple linear flow, but the heading hierarchy
   must orient the user.
 
 ### 3.21 -- 2.4.9 Link Purpose (Link Only) (Level AAA)
@@ -964,7 +976,9 @@ at each review milestone.
 The following must run on every pull request via GitHub Actions:
 
 1. **axe-core via Playwright** on every page and every meaningful state:
-   - Form: empty, filled, with validation errors
+   - Form: empty, filled, with validation errors, **collapsed (date/time hidden),
+     expanded (date/time visible)**
+   - **Departure selection: populated (1--5 results), single result, zero results, error**
    - Results: loading, populated, no-good-window, error
    - The axe ruleset must include `wcag2aaa` tags
 2. **Lighthouse accessibility audit** with a minimum score of 100 (acknowledging this
@@ -976,6 +990,7 @@ The following must run on every pull request via GitHub Actions:
 The accessibility specialist must perform a full manual review at:
 
 - P1-07: after the journey form and timeline table are built, before signal data lands
+- **DW-13: after departure selection page and progressive-reveal form are built**
 - P3-03: full manual audit of the complete product
 - Any PR that changes user-facing HTML, CSS, or strings
 
@@ -1004,6 +1019,423 @@ the footer. It must state:
 - How to report accessibility issues
 - The data vintage disclaimer (since stale signal data is not an accessibility issue
   per se, but transparent communication about data limitations supports understanding)
+
+---
+
+## 10. Departure selection page
+
+This section covers the intermediate page that sits between the journey search form and
+the results page. The user submits the form and lands here, sees up to 5 trains near
+their requested time, picks one, and proceeds to results.
+
+### 10.1 Surface entry in the product
+
+Add to the Surface table in section 1:
+
+| Surface | Key states | Highest-risk criteria |
+|---|---|---|
+| Departure selection (Screen 1b) | Populated (1--5 results), single result, zero results, loading, error | 3.2.2, 3.3.6, 2.4.9, 2.4.8, 2.5.5 |
+
+### 10.2 Interaction semantics: links, not a radio group
+
+The departure list must be rendered as **a list of links** (`<a>` elements inside an
+`<ol>`), not as a radio group with a submit button.
+
+**Reasoning:**
+
+1. **3.3.6 (Error Prevention):** The journey search is inherently reversible -- the user
+   can press Back and search again at no cost. Selecting a departure and loading results
+   is equally reversible -- the user can press Back to return to this list. A radio
+   group + submit adds a confirmation step that provides no meaningful error prevention
+   because there is no destructive or irreversible action. The extra step adds friction
+   without adding safety.
+2. **3.2.2 (On Input):** A link activates on explicit user action (click or Enter), not
+   on selection. There is no change-of-context "on input" because the user must
+   deliberately activate the link. A radio group could tempt an implementation that
+   navigates on selection (which would violate 3.2.2), though a properly implemented
+   radio + submit avoids this. Links are the simpler, harder-to-get-wrong pattern.
+3. **Simplicity:** Links are the native web pattern for "choose one of these pages to go
+   to". They work without JavaScript. They are understood by every screen reader. They
+   produce focusable, activatable elements with no ARIA needed.
+
+**Constraints on the links:**
+
+- Each link must have a **44 x 44 CSS px minimum tap target** (2.5.5). This means the
+  entire row/card containing the departure information must be the link's clickable
+  area, not just the departure time text.
+- Each link's **text must be self-descriptive when read alone** (2.4.9). The link text
+  must include the departure time, the arrival time, and the origin/destination. Example
+  accessible name: "14:35 to London King's Cross, arriving 17:12". The link text must
+  not be "Select" or "View signal" alone.
+- If additional information is presented visually within the link (such as journey
+  duration), it must either be part of the link text or be marked `aria-hidden="true"`
+  if it is redundant with information already in the link text.
+- Links must point to the results page URL with all journey parameters encoded. Each
+  link is a standard `<a href="/results?from=...&to=...&date=...&time=...&network=...">`.
+  No JavaScript is required for navigation.
+
+### 10.3 Focus management on page load
+
+On page load, focus must move to the **`<h1>` element** (set with `tabindex="-1"`).
+
+**Reasoning:**
+
+- The departure selection page is a server-rendered page transition in direct response
+  to the user pressing the submit button. Moving focus to the `<h1>` on a new page load
+  is the standard accessible pattern -- it orients the user and announces the page
+  context via screen reader.
+- Moving focus to the first list item would skip the page heading and any contextual
+  information (the recap of origin, destination, date). The user would not know where
+  they are (violates 2.4.8).
+- Leaving focus on the skip link (the browser default) is acceptable for simple page
+  loads, but this is an intermediate step in a flow. The user has just submitted a form
+  and needs immediate confirmation that something happened. The `<h1>` provides that.
+- This is not "stealing focus" in the 3.2.5 sense -- the user explicitly requested a
+  page transition by submitting the form. Focus management on a new page load in
+  response to user action is permitted and expected.
+
+**Implementation:** The `<h1>` element must have `tabindex="-1"` so it can receive
+programmatic focus. It must not appear in the natural tab order. On server-rendered page
+load, a small inline script (or the framework's page-transition focus management) must
+call `.focus()` on the `<h1>`. The `<h1>` must not have an outline/focus-ring style when
+focused via `tabindex="-1"` -- use `:focus:not(:focus-visible)` to suppress the visual
+ring while retaining screen reader announcement.
+
+### 10.4 Page title
+
+The `<title>` must follow the pattern:
+
+```
+Choose a departure: [Origin] to [Destination], [Date] — Train Signal
+```
+
+Example: `Choose a departure: Leeds to London, 14 August 2026 — Train Signal`
+
+**Reasoning:**
+
+- **2.4.2 (Page Titled):** The title must describe the page purpose.
+- **2.4.8 (Location):** The user must know this is an intermediate step, not the results
+  page. "Choose a departure" makes clear that an action is required.
+- The origin, destination, and date confirm the user's search was understood.
+- The site name at the end follows the existing convention (see section 3.14).
+
+### 10.5 Screen reader announcement strategy
+
+**Heading structure:**
+
+- `<h1>`: "Choose a departure" -- immediately tells the user this is a selection step.
+- Contextual text (not a heading): "Trains from [Origin] to [Destination] on [Date],
+  near [Time]." -- provides the recap.
+- The departure list needs no `<h2>` because the `<h1>` already introduces it and the
+  page has a single purpose. If a "no trains found" or error message appears, it
+  replaces the list content, not the heading.
+
+**Live regions:** None needed on page load. This is a full server-rendered page, not a
+client-side state change. The screen reader will announce the `<h1>` when focus lands on
+it. Do not add `aria-live` to the departure list -- it is static content rendered
+server-side.
+
+If this page is ever converted to client-side rendering (which it should not be), then
+the heading area would need `aria-live="polite"` to announce the new content. But the
+current architecture (server-rendered page) makes this unnecessary.
+
+**Result count:** The contextual text after the `<h1>` should include the count:
+"5 trains from Leeds to London on 14 August, near 10:00." This gives the screen reader
+user an immediate sense of scope before they encounter the list.
+
+### 10.6 Keyboard interaction
+
+- **Tab** moves through the page in document order: skip link, `<h1>` (if focused
+  programmatically on load, it is then skipped by Tab since `tabindex="-1"`), then each
+  departure link in sequence, then the "Back to search" navigation link.
+- **Enter** on a focused departure link navigates to the results page. Standard link
+  behaviour.
+- **Arrow keys** do not have special behaviour. This is a list of links, not a radio
+  group or menu. Users navigate between links with Tab/Shift+Tab. Implementing
+  `role="listbox"` or arrow-key navigation would be non-standard for a list of page
+  links and would confuse users who expect Tab navigation.
+- **Space** on a focused link should also activate it (browsers do this natively for
+  `<a>` elements).
+- The list must be an `<ol>` (ordered list), not `<ul>`, because the departures are in
+  chronological order and the ordinal position carries meaning (the first train before
+  the requested time, then trains after).
+
+### 10.7 Edge cases
+
+**Zero results (no trains found):**
+
+- The `<h1>` remains "Choose a departure".
+- The page body shows a clear message: "We could not find any trains from [Origin] to
+  [Destination] on [Date] near [Time]. Try a different date or time."
+- A "Back to search" link (meeting 2.4.9) is prominent, with a 44 x 44 px tap target.
+- The message must meet Grade 6--8 reading level (3.1.5). No jargon ("No services
+  matched the query").
+- Focus on page load still goes to `<h1>`.
+
+**Single result (one train found):**
+
+- The page must still show the departure selection page with the single option. Do not
+  auto-redirect to results -- that would be an unexpected change of context (3.2.5) and
+  the user would not know which train was selected.
+- The contextual text says "1 train from [Origin] to [Destination] on [Date] near
+  [Time]."
+- The single departure is still rendered as a link inside an `<ol>` with one `<li>`.
+
+**Error (server/API failure):**
+
+- Show an error message in the page body. Follow the existing error page pattern from
+  section 3.14: descriptive heading, plain English explanation, "Back to search" link.
+- Do not use a toast, modal, or auto-dismissing notification.
+
+---
+
+## 11. Progressive-reveal form
+
+This section covers the redesigned journey search form. Origin, destination, and network
+are always visible. Date and time fields are hidden behind a user-triggered control and
+revealed on demand.
+
+### 11.1 Surface entry update
+
+Update the Surface table row for "Journey form (Screen 1)":
+
+| Surface | Key states | Highest-risk criteria |
+|---|---|---|
+| Journey form (Screen 1) | Empty, partially filled, validation errors, submitting, **collapsed (date/time hidden), expanded (date/time visible)** | 1.3.5, 2.5.5, 3.3.1--3.3.6, 2.4.6, **2.1.1, 4.1.3** |
+
+### 11.2 Technique for hiding/showing fields
+
+Use a **`<button>` with `aria-expanded` and `aria-controls`**, combined with the
+`hidden` attribute on the controlled field group.
+
+**Specification:**
+
+```html
+<button
+  type="button"
+  aria-expanded="false"
+  aria-controls="datetime-fields"
+>
+  Add a departure time
+</button>
+
+<div id="datetime-fields" hidden>
+  <!-- date and time fields go here, inside a <fieldset> -->
+</div>
+```
+
+When the user activates the button:
+- Toggle `aria-expanded` between `"false"` and `"true"`.
+- Toggle the `hidden` attribute on `#datetime-fields`.
+- Move focus to the first field inside the revealed group (the date input).
+
+When the user collapses the fields:
+- Set `aria-expanded="false"`.
+- Add `hidden` to `#datetime-fields`.
+- Return focus to the toggle button.
+- Clear any validation errors on the date and time fields.
+
+**Why this technique:**
+
+- **2.1.1 (Keyboard):** The `hidden` attribute removes elements from the tab order and
+  from the accessibility tree. When the fields are hidden, they are unreachable by
+  keyboard. When revealed, they enter the tab order at their DOM position. No extra
+  work is needed.
+- **3.3.2 (Labels or Instructions):** The button label clearly states what will happen.
+  The fields, when revealed, retain their existing `<label>` elements and `<fieldset>`/
+  `<legend>` grouping.
+- **4.1.2 (Name, Role, Value):** `aria-expanded` communicates the toggle state to
+  assistive technology. `aria-controls` identifies the controlled region. These are
+  well-supported ARIA attributes.
+- The `hidden` attribute is preferred over `display: none` in CSS because it is a
+  semantic HTML attribute that clearly communicates intent and is not overridable by a
+  CSS class change without also changing the attribute. The `inert` attribute would also
+  work but has slightly less browser support and is unnecessary here -- `hidden` is
+  sufficient because the fields do not need to remain visible-but-inert.
+
+**Do not use:**
+
+- `visibility: hidden` -- leaves the element in the layout, taking up space.
+- `inert` alone without `hidden` -- the fields would remain visually present but
+  non-interactive, which is confusing.
+- A `<details>`/`<summary>` element -- styling is inconsistent across browsers and the
+  pattern does not easily support moving focus into the revealed content.
+
+### 11.3 Trigger labelling
+
+**Visible text and accessible name:** "Add a departure time"
+
+**Element type:** `<button type="button">`
+
+**Reasoning:**
+
+- **2.4.6 (Headings and Labels):** The label is descriptive. It tells the user what will
+  happen: date and time fields will appear. It does not say "More options" (vague),
+  "Advanced" (jargon), or "Show all fields" (implies the form is incomplete without
+  them).
+- "Add a departure time" (rather than "Find a specific journey time") is shorter, uses
+  the word "departure" consistently with the rest of the product, and reads at Grade 4.
+- The word "Add" is accurate: the user is adding optional information to their search.
+- The control is a `<button>`, not a link (`<a>`), because it does not navigate to a new
+  page -- it reveals content on the current page. Using a link would violate the
+  semantic expectation that links navigate (2.4.9 applies to links, and "Add a departure
+  time" does not describe a link destination).
+- The control is not a checkbox because the action is not a boolean preference -- it is
+  a disclosure that reveals a form section.
+
+**When expanded**, the button text changes to "Remove departure time" (not "Hide" or
+"Close", which are ambiguous). This makes the toggle action clear in both states.
+
+**Target size:** The button must be at least 44 x 44 CSS px (2.5.5).
+
+### 11.4 Progressive enhancement: no-JavaScript strategy
+
+Use approach **(b): the full form is always visible when JavaScript is off.**
+
+**Specification:**
+
+- The `hidden` attribute on `#datetime-fields` must be set by JavaScript, not by the
+  server-rendered HTML.
+- In the server-rendered HTML, the date and time fields are visible and part of the form.
+  The toggle button is also present but has no effect without JavaScript.
+- When JavaScript loads, it adds `hidden` to the field group and sets up the toggle
+  behaviour.
+- The toggle button should be rendered with `hidden` in the server HTML and un-hidden
+  by JavaScript, so that without JS the user sees the complete form and no non-functional
+  button.
+
+**Why approach (b):**
+
+- **3.3.6 (Error Prevention):** The full form is always functional. The user can fill in
+  all fields and submit. There is no risk of a broken form state.
+- **3.2.5 (Change on Request):** No automatic changes occur. Without JavaScript, the
+  form is static HTML. With JavaScript, the progressive enhancement adds the disclosure
+  behaviour, but only in response to user action.
+- Approach (a) (a two-step form) would require a server round-trip to show the second
+  step, adding latency and complexity for no accessibility benefit.
+- Approach (c) (URL param) would work but is over-engineered for a disclosure that only
+  affects the current page's form layout.
+
+**Implementation note:** The `<noscript>` element is not needed. The strategy is:
+server renders the full form with fields visible and the toggle button hidden. JavaScript
+hides the fields and shows the toggle button. This is standard progressive enhancement.
+
+### 11.5 Validation when fields are hidden
+
+**Rule:** If the date and time fields are not revealed (the field group has the `hidden`
+attribute), they must not be validated, either client-side or server-side.
+
+**Client-side:** The `required` attribute must only be present on date and time inputs
+when the field group is visible. When JavaScript hides the field group, it must also
+remove `required` from the date and time inputs. When the fields are revealed, `required`
+is added back.
+
+**Server-side:** The server must check whether date and time parameters are present in
+the submitted request. If they are absent, the server must not treat this as a validation
+error -- it must proceed with a default or route-overview behaviour (when that feature
+is built). If they are present, they must be validated normally.
+
+**Rationale:** Validating invisible fields is a 3.3.1 violation -- the user would
+receive an error message for a field they cannot see or interact with, which is neither
+identifiable nor correctable.
+
+**When no-JS applies:** Without JavaScript, the fields are always visible and always
+carry the `required` attribute. Validation is always applied. This is correct because
+the user can always see and fill the fields.
+
+### 11.6 URL state preservation
+
+Use a **URL parameter** (`mode=timed` or equivalent) to encode the reveal state.
+
+**Specification:**
+
+- When the user reveals the date/time fields, the URL is updated (via
+  `history.replaceState`, not `pushState`) to include `?mode=timed` (or add it to
+  existing params).
+- When the user hides the fields, the `mode` param is removed from the URL.
+- When the form page loads, if `mode=timed` is present in the URL, JavaScript reveals
+  the fields on page load (after the progressive enhancement setup).
+- When the user navigates back from the departure selection or results page, the browser
+  restores the URL with the `mode` param, and the form shows the fields in their
+  previous state.
+- The form values themselves are already preserved via URL params (existing behaviour in
+  `JourneyForm.tsx`).
+
+**Why URL params, not server-side session:**
+
+- The product has no authentication and no server-side session (2.2.5 is not applicable).
+  Introducing session state for a single boolean is disproportionate.
+- URL params are transparent, bookmarkable, and work with the browser's history stack.
+- They support the existing pattern where all form state is encoded in the URL (see
+  section 4.16 and the current `JourneyForm.tsx` implementation).
+
+**Use `replaceState`, not `pushState`:** Toggling the disclosure should not add a
+history entry. If the user opens and closes the fields three times, pressing Back should
+go to the previous page, not cycle through toggle states.
+
+### 11.7 Focus management during reveal and collapse
+
+**On reveal:**
+
+- After the `hidden` attribute is removed and `aria-expanded` is set to `"true"`, move
+  focus to the date input (the first field in the revealed group).
+- This is in response to direct user action (activating the button), so it is not a
+  3.2.5 violation.
+- The screen reader will announce the date input's label and any associated hint text.
+
+**On collapse:**
+
+- After `hidden` is added and `aria-expanded` is set to `"false"`, move focus back to
+  the toggle button.
+- This prevents focus from being lost (if focus was inside the now-hidden group, it
+  would move to `<body>`, disorienting the user).
+
+**Announce the state change:** The `aria-expanded` attribute change is sufficient for
+screen readers to announce the new state ("Add a departure time, collapsed" /
+"Remove departure time, expanded"). No additional `aria-live` region is needed.
+
+### 11.8 Focus order with revealed fields
+
+When the fields are visible, the tab order must be:
+
+1. Skip link
+2. Origin station
+3. Destination station
+4. Mobile network radio group
+5. "Remove departure time" button (the toggle, now in its expanded state)
+6. Date input
+7. Time input
+8. "Find signal" submit button
+
+**Reasoning:** The toggle button must appear in the tab order immediately before the
+fields it controls. This means the DOM order must place the button between the network
+field and the date/time fieldset. When the fields are hidden, the user tabs from the
+network radio group to the "Add a departure time" button, then to "Find signal". When
+the fields are revealed, the user tabs from the button into the date field, then time
+field, then to "Find signal".
+
+This matches the visual layout: the toggle button is above the revealed fields, not
+below them.
+
+### 11.9 Interaction with the departure selection page
+
+When the form is submitted **without** date and time fields revealed:
+
+- For the current version (until route-overview mode is built), the form must not submit.
+  Instead, reveal the date/time fields automatically, move focus to the date input, and
+  announce via `aria-live="polite"`: "Enter a date and time to search for trains." This
+  is not a validation error -- it is a prompt to complete the form.
+- This is acceptable under 3.2.5 because it is in direct response to the user pressing
+  submit. It does not navigate away or change context unexpectedly.
+- When route-overview mode is implemented in a future task, submitting without date/time
+  will go to a route overview page instead. At that point, this constraint should be
+  revisited.
+
+When the form is submitted **with** date and time fields:
+
+- Navigate to the departure selection page (section 10) as normal.
+- The URL includes all params including `mode=timed` so the form state is preserved on
+  Back navigation.
 
 ---
 
