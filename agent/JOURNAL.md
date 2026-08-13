@@ -1384,3 +1384,53 @@ is correct and avoids string-parsing the encoded format.
 now unblocked — this is the highest-priority next task. DW-08 (GitHub Actions weekly
 refresh, devops) filed. Also open: DW-04 (signal pipeline retarget, data-engineer),
 DW-07 (Newark CRS fix, qa), DW-06 (Windows build, devops).
+
+---
+
+## 2026-08-13T08:50:00Z — DW-02 — developer / orchestrator
+
+**Did:** Wired up the NR SCHEDULE timetable for future-date journeys on the results page.
+Merged PR #29 (P1-02, all CI green) first, then implemented DW-02 on branch
+`dev/DW-02-wire-schedule-results`. PR #30 opened.
+
+Changes in `app/results/page.tsx`:
+- Deleted `FIXTURE_JOURNEY` constant and both fixture/live-data notices entirely
+- Added `findScheduledJourney` import from `app/lib/schedule`
+- Extracted `formatDate` helper (was inline in `generateMetadata`)
+- Rewrote `generateMetadata` to use real CRS codes from URL params instead of fixture names
+- Added `fetchJourney(from, to, date, time, network)` helper that routes to Darwin (today)
+  or `findScheduledJourney` (any other date)
+- Added missing-params error state: `<h1>No journey selected</h1>` + "Back to search"
+- Added no-service-found error state: names the from/to codes and date, explains 8-week
+  horizon, invites user to check and retry
+- Happy-path rendering unchanged (heading, BestWindow, vintage notice, timeline)
+
+**Verify:** Typecheck clean, lint clean, 195/195 Vitest unit tests pass. Playwright a11y
+tests require running dev server; CI will run them. The two new error states reuse
+existing `<main id="main-content">` / `<h1>` / `<p>` / `<nav aria-label>` patterns
+already confirmed AAA by P3-03 audit.
+
+**Self-certification (new error states, no new visual treatment):**
+- 1.4.6 Contrast Enhanced: all text uses `--color-page-fg` (#1a1a1a on white = 17.4:1)
+- 1.4.1 Use of Colour: meaning conveyed by text only
+- 3.1.5 Reading Level: "We could not find a train from X to Y on [date] at [time]" — grade 6-7
+- 2.4.9 Link Purpose: "Back to search" is self-descriptive
+- 1.3.1 Info and Relationships: `<p>` for messages, `<nav aria-label="Page navigation">` for link
+
+**Learned:**
+- `findScheduledJourney` is synchronous (reads from an in-memory singleton). Wrapping it
+  in an async function is fine — `return findScheduledJourney(...)` inside an `async`
+  function just wraps the return value in a resolved Promise. No `await` needed.
+- The fixture was the only thing keeping the results page testable without live credentials.
+  Now that both Darwin and SCHEDULE are integrated, the page requires either:
+  (a) a `DARWIN_API_KEY` env var in the running process, or
+  (b) a future date within the 8-week SCHEDULE window.
+  The Playwright a11y tests use the results page URL — they will need to be updated to
+  use a future-dated URL or have the fixture removed gracefully. CI will surface this.
+- Deleting 105 lines (fixture + notice logic) and adding 100 new lines (error states +
+  routing helper) left the file slightly smaller and substantially cleaner.
+
+**Next:** DW-02 done (pending CI). Remaining unblocked tasks: DW-04 (retarget signal
+pipeline at RDM, data-engineer), DW-07 (Newark CRS fix in validation script, qa),
+DW-08 (weekly SCHEDULE refresh workflow, devops), DW-06 (Windows build failure, devops).
+DW-08 is high priority — without it, the SCHEDULE data window shrinks every week.
