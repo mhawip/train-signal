@@ -228,7 +228,7 @@ const routes: RouteSpec[] = [
       "WKF",
       "DON",
       "RET",
-      "NEW",
+      "NNG",
       "GRA",
       "PBO",
       "HUN",

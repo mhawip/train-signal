@@ -55,6 +55,7 @@ and writes to it last.
 | P1-01 | Darwin LDBWS integration | data-engineer |
 | P1-02 | Network Rail SCHEDULE timetable | data-engineer |
 | DW-02 | Results page: wire up NR SCHEDULE journey data | developer |
+| DW-07 | Validation script uses wrong CRS code for Newark | qa |
 
 ---
 
@@ -101,7 +102,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-04 — Retarget signal pipeline at RDM product
 - **owner:** data-engineer
-- **status:** todo
+- **status:** blocked
 - **depends:** —
 - **why:** Matt verified the RDM "NWR Yellow Train Mobile Network Measurements" product
   (Rail Data Marketplace) on 2026-08-09. It is dated July 2026, contains 5G measurements
@@ -118,21 +119,9 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Row counts logged at each stage (same as P2-03)
   - [ ] Re-runnable to byte-identical output
   - [ ] `npm run verify` green
-
-### DW-07 — Validation script uses wrong CRS code for Newark
-- **owner:** qa
-- **status:** todo
-- **severity:** low
-- **depends:** —
-- **why:** The P3-01 validation script (`pipeline/p3-01-validate-notspots.ts`) uses CRS
-  code "NEW" for Newark on the ECML route, but "NEW" maps to Newcastle. This produces
-  invalid 400+ km paths for the RET-to-NEW and NEW-to-GRA segments, making those two
-  segments untestable. The product itself is unaffected (it uses timetable calling points,
-  not hand-coded CRS codes).
-- **acceptance:**
-  - [ ] Replace "NEW" with "NNG" (Newark North Gate) in the ECML route definition
-  - [ ] Re-run the script and confirm RET-to-NNG and NNG-to-GRA produce sensible paths
-  - [ ] Document any new findings from the corrected segments
+- **blocked because:** RDM CSV not yet downloaded to `data/raw/`. The pipeline
+  script cannot be updated without knowing the exact column names, and the output
+  cannot be regenerated without the data. See Q6 in QUESTIONS.md.
 
 ### DW-08 — Automate weekly SCHEDULE data refresh via GitHub Actions
 - **owner:** devops
