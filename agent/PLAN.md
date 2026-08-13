@@ -105,7 +105,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-11 — Implement departure selection flow
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-10
 - **why:** The design from DW-10 requires a new server-rendered `/departures` page and
   changes to the multi-result lookup logic in both Darwin and SCHEDULE libraries.
