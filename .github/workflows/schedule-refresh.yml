@@ -1,0 +1,65 @@
+# DW-08: Weekly SCHEDULE data refresh
+#
+# Runs pipeline/p1-02-build-schedule.ts on a weekly schedule to keep
+# data/schedule-index.json.gz current. The schedule index covers an 8-week
+# window from the date the pipeline ran; without weekly refresh, future-date
+# lookups eventually fail.
+#
+# Required secrets (set in GitHub repo Settings > Secrets > Actions):
+#   NR_FEEDS_USER  — Network Rail Data Feeds username
+#   NR_FEEDS_PASS  — Network Rail Data Feeds password
+#
+# The workflow will fail if these secrets are not configured. That is expected
+# until Matt adds them in the repo settings.
+#
+# On success with changed data: commits and pushes directly to main.
+# On failure: GitHub Actions sends email to repo owners by default.
+
+name: Schedule Refresh
+
+on:
+  schedule:
+    # Every Sunday at 02:00 UTC (after NR refreshes the feed ~02:00 UK time)
+    - cron: '0 2 * * 0'
+  workflow_dispatch: # Manual trigger for testing
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: refresh-schedule-data
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          # Fetch full history so git operations work correctly
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run schedule pipeline
+        run: npx tsx pipeline/p1-02-build-schedule.ts
+        env:
+          NR_FEEDS_USER: ${{ secrets.NR_FEEDS_USER }}
+          NR_FEEDS_PASS: ${{ secrets.NR_FEEDS_PASS }}
+
+      - name: Commit and push if data changed
+        run: |
+          set -e
+          if git diff --quiet data/schedule-index.json.gz; then
+            echo "No change to schedule data, skipping commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add data/schedule-index.json.gz
+            git commit -m "chore: refresh schedule-index.json.gz (automated weekly)"
+            git push origin main
+            echo "Schedule data updated and pushed to main."
+          fi
