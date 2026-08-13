@@ -1339,3 +1339,48 @@ timetable, data-engineer) — this is the 8-week horizon that serves the core us
 (booking a future meeting). After P1-02 merges, DW-02 becomes unblocked. Also still open:
 DW-04 (retarget signal pipeline at RDM, data-engineer), DW-07 (CRS fix, qa),
 DW-06 (Windows build, devops).
+
+---
+
+## 2026-08-13T07:00:00Z — P1-02 — data-engineer / orchestrator
+
+**Did:** Completed and shipped P1-02 (Network Rail SCHEDULE timetable). A previous loop
+iteration had started this task (committed the in-progress marker and built the data file)
+but died before committing the implementation. The branch `de/P1-02-nr-schedule-timetable`
+had four untracked files:
+
+- `pipeline/p1-02-build-schedule.ts` — CIF JSONL pipeline: downloads the NR full timetable
+  feed with Basic Auth + redirect handling, streams and parses it line by line, filters to
+  passenger services with known CRS codes (via TIPLOC→CRS map from stations.json), encodes
+  to a compact pipe-delimited string format with a deduplicated route table, applies an
+  8-week window filter, sorts deterministically, and writes gzip-compressed output. Supports
+  `--dry-run` and `--offline` flags. Row counts logged at each stage.
+- `app/lib/schedule.ts` — server-side lookup module. Lazy singleton loads
+  `schedule-index.json.gz`. `findScheduledJourney()` checks: origin in byOrigin index,
+  date range, day-of-week bitmask (0=Mon,6=Sun), STP overlay resolution (O>N>P), cancellation
+  records, departure at or after requested time. Returns `Journey | null`. Never imported
+  client-side (uses Node fs/zlib/path built-ins).
+- `app/lib/schedule.test.ts` — 23 tests covering: decoding helpers, day-of-week, STP
+  priority, cancellation matching, time filtering, date-range edges, case-insensitivity,
+  Sunday services, and calling-point trimming.
+- `data/schedule-index.json.gz` — 4.3 MB gzipped (~25 MB uncompressed), built from the
+  real NR CIF full timetable. Within the committed derived-data policy.
+
+All 195 unit tests pass (23 new). Typecheck and lint clean. Accessibility: no new
+UI components — self-certified, no review dispatch needed.
+
+**Verify:** 195/195 Vitest tests pass. `npm run typecheck` clean. `npm run lint` clean.
+(Cannot run `npm run verify` locally due to DW-06 Windows build failure; CI is the gate.)
+
+**Learned:** The previous iteration died after building the data and pipeline files but
+before committing them — leaving 4 untracked files. The implementation was correct and
+complete; this iteration only needed to run checks, update the plan, and ship. When the
+branch already has a `Mark in-progress` commit and untracked implementation files, do not
+reset — assess the work first. The byOrigin index in the pipeline uses the pre-encoding
+`filteredSchedules[i].p[0].c` (not the encoded string) to extract the origin CRS — this
+is correct and avoids string-parsing the encoded format.
+
+**Next:** P1-02 done. DW-02 (wire up results page for future-date journeys, developer) is
+now unblocked — this is the highest-priority next task. DW-08 (GitHub Actions weekly
+refresh, devops) filed. Also open: DW-04 (signal pipeline retarget, data-engineer),
+DW-07 (Newark CRS fix, qa), DW-06 (Windows build, devops).

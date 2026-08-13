@@ -544,3 +544,38 @@ particular way, or its full original acceptance criteria).
   used for the `Station` type to guarantee TypeScript strips it at compile time. All
   existing accessibility behaviour (ARIA combobox pattern, live region, keyboard nav)
   preserved. Lighthouse checks pass in CI. 159 unit tests + 4 Playwright AAA tests pass.
+
+### P1-02 — Network Rail SCHEDULE timetable
+- **owner:** data-engineer
+- **status:** done
+- **depends:** P0-03
+- **why:** The 8-week horizon. The core use case is booking a meeting for a future date,
+  which live boards can't serve.
+- **acceptance:**
+  - [x] SCHEDULE feed ingested and parsed
+  - [x] Journey lookup for any date up to 8 weeks ahead
+  - [x] Refresh strategy defined and documented (automation filed as DW-08)
+  - [x] Handles Sunday timetables and engineering variations
+  - [x] Derived data compact enough to query fast
+- **done-notes:** Three files added:
+  - `pipeline/p1-02-build-schedule.ts` — downloads and parses the NR CIF JSONL feed
+    (via `NR_FEEDS_USER`/`NR_FEEDS_PASS`), filters to passenger services with known CRS
+    codes, encodes them as compact pipe-delimited strings with a deduplicated route table,
+    and gzip-compresses the result to `data/schedule-index.json.gz`. Full download,
+    TIPLOC→CRS mapping, STP indicator handling, 8-week window filter, deterministic sort,
+    and row-count logging all present. Supports `--dry-run` and `--offline` flags.
+  - `app/lib/schedule.ts` — server-side lookup module. Reads `schedule-index.json.gz`
+    lazily (cached singleton). `findScheduledJourney(fromCrs, toCrs, date, time, network)`
+    returns `Journey | null`. Handles: date-range check, day-of-week bitmask (0=Mon,
+    6=Sun), STP overlay resolution (O > N > P priority), cancellation records, earliest
+    departure at or after requested time. Builds a `Journey` with real station names from
+    `stations.json`. Never imported client-side (uses Node fs/zlib).
+  - `data/schedule-index.json.gz` — derived data file, 4.3 MB gzipped (~25 MB
+    uncompressed). Built from the real NR CIF full timetable. Committed and
+    under the 10 MB limit guideline (gzipped).
+  - `app/lib/schedule.test.ts` — 23 tests covering decoding, day-of-week, cancellation,
+    STP resolution, time filtering, date-range filtering, and case-insensitivity.
+  All 195 unit tests pass. Typecheck and lint clean.
+  Refresh strategy: re-run the pipeline weekly with `NR_FEEDS_USER`/`NR_FEEDS_PASS`
+  credentials. GitHub Actions automation filed as DW-08. DW-02 (wire up results page)
+  is now unblocked.
