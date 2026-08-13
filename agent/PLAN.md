@@ -103,7 +103,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-10 — Design: departure selection page and route search form
 - **owner:** designer
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-09
 - **why:** Matt has approved two UX changes. First: when a user submits the journey
   form, instead of going directly to results, they land on a departure selection page
