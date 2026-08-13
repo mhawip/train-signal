@@ -12,6 +12,21 @@ particular way, or its full original acceptance criteria).
 
 ## Discovered work
 
+### DW-07 — Validation script uses wrong CRS code for Newark
+- **owner:** qa
+- **status:** done
+- **severity:** low
+- **depends:** —
+- **why:** The P3-01 validation script (`pipeline/p3-01-validate-notspots.ts`) uses CRS
+  code "NEW" for Newark on the ECML route, but "NEW" maps to Newcastle. This produces
+  invalid 400+ km paths for the RET-to-NEW and NEW-to-GRA segments, making those two
+  segments untestable. The product itself is unaffected (it uses timetable calling points,
+  not hand-coded CRS codes).
+- **acceptance:**
+  - [x] Replace "NEW" with "NNG" (Newark North Gate) in the ECML route definition
+  - [x] Re-run the script and confirm RET-to-NNG and NNG-to-GRA produce sensible paths
+  - [x] Document any new findings from the corrected segments
+
 ### DW-02 — Results page: wire up NR SCHEDULE journey data when P1-02 lands
 - **owner:** developer
 - **status:** done
