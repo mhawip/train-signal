@@ -54,6 +54,7 @@ and writes to it last.
 | P3-04 | Performance | developer |
 | P1-01 | Darwin LDBWS integration | data-engineer |
 | P1-02 | Network Rail SCHEDULE timetable | data-engineer |
+| DW-02 | Results page: wire up NR SCHEDULE journey data | developer |
 
 ---
 
@@ -96,19 +97,6 @@ P3-04 is done — see the index above.
 ## Discovered work
 
 Bugs and follow-ups get filed here by whoever finds them.
-
-### DW-02 — Results page: wire up NR SCHEDULE journey data when P1-02 lands
-- **owner:** developer
-- **status:** in-progress
-- **depends:** P1-02
-- **why:** The results page now calls Darwin for today's journeys (P1-01 done). Future-date
-  journeys still show the fixture. Once SCHEDULE (P1-02) is integrated, wire up future-date
-  journeys and remove the fixture notice entirely.
-- **acceptance:**
-  - [ ] Results page fetches NR SCHEDULE data for future-date journeys
-  - [ ] `JourneyTimeline` receives real `Journey` data for all dates within 8-week horizon
-  - [ ] Fixture notice removed (both today and future dates now show real data)
-  - [ ] Error state handled (no service found / out of horizon)
 
 
 ### DW-04 — Retarget signal pipeline at RDM product
