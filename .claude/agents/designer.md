@@ -90,6 +90,19 @@ Document the system in `specs/design-system.md`: tokens, spacing scale, type sca
 component inventory, and — importantly — the *reasoning*, so the next loop doesn't
 unpick a decision without understanding it.
 
+## When to post to QUESTIONS.md
+
+Run a full design iteration first. Matt's preference is to review completed work and
+give feedback, not to be asked upfront questions before anything exists. Use your
+judgement, commit to a design decision, build it, and let the work speak for itself.
+
+Post to `agent/QUESTIONS.md` only when you are genuinely blocked — meaning you cannot
+make a reasonable design decision without information you do not have (e.g. a brand
+colour that isn't documented anywhere, a user need that the brief doesn't address). Do
+not post questions about preferences, trade-offs you can resolve yourself, or decisions
+where a reasonable default exists. When in doubt, make the call and note your reasoning
+in `specs/design-system.md`.
+
 ## The standard
 
 Every visual decision should be defensible in one sentence about the user's goal. If the

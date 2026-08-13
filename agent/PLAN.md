@@ -99,6 +99,112 @@ P3-04 is done — see the index above.
 
 Bugs and follow-ups get filed here by whoever finds them.
 
+### DW-09 — Accessibility constraints: departure selection page and route search form
+- **owner:** accessibility-specialist
+- **status:** todo
+- **depends:** —
+- **why:** Two novel interaction patterns need AAA constraints set before design starts.
+  First: a new intermediate "choose departure" page that sits between the search form and
+  the results page, presenting a short list of nearby trains for the user to pick from.
+  Second: a progressive-reveal form that shows origin, destination, and network first,
+  then offers the user a choice to add a specific journey time — revealing date and time
+  fields conditionally. Both patterns have accessibility implications (focus management,
+  conditional field reveal, page-level semantics) that must be resolved before the
+  designer builds anything.
+- **acceptance:**
+  - [ ] `specs/accessibility.md` updated with AAA constraints for the departure selection
+        page: how focus is managed on page load, whether the list is links or a radio
+        group + submit, page title format, screen-reader announcement strategy
+  - [ ] `specs/accessibility.md` updated with AAA constraints for the progressive-reveal
+        form: technique for hiding/showing fields (aria-expanded, aria-controls, inert,
+        or equivalent), ensuring hidden fields are removed from tab order, how the reveal
+        trigger is labelled, keyboard interaction
+  - [ ] Constraints documented before design work begins (DW-10 depends on this)
+
+### DW-10 — Design: departure selection page and route search form
+- **owner:** designer
+- **status:** todo
+- **depends:** DW-09
+- **why:** Matt has approved two UX changes. First: when a user submits the journey
+  form, instead of going directly to results, they land on a departure selection page
+  showing 1 train before and 4 trains after their requested time (no hour cap — covers
+  low-frequency routes). This makes the selected train explicit rather than silently
+  substituting one. Second: the search form should show origin, destination, and network
+  first, then offer a "Find a specific journey time" option that reveals date and time
+  fields. This supports a future route-overview mode. For now the form always needs a
+  time to produce results; the route-only path is a placeholder for later.
+- **acceptance:**
+  - [ ] Departure selection page designed as real components:
+    - Recap header showing origin → destination and the date
+    - List of up to 5 departures (1 before + 4 after requested time), each showing
+      departure time, destination arrival time, and a clear call to action
+    - Graceful handling of edge cases: fewer than 5 available (e.g. last train of day,
+      first train), zero trains on this route/date
+    - Follows the AAA constraints set in DW-09
+  - [ ] Journey form redesigned:
+    - Origin, destination, and network always visible
+    - A clearly labelled control that reveals date and time fields ("Find a specific
+      journey time" or similar plain English)
+    - Progressive enhancement: the revealed fields are accessible and functional without
+      JavaScript (consider a two-step form or a server-side conditional)
+    - Follows the AAA constraints set in DW-09
+  - [ ] Both screens reviewed in browser at 320 px and 1280 px, both colour schemes
+  - [ ] `specs/design-system.md` updated with any new tokens or component decisions
+
+### DW-11 — Implement departure selection flow
+- **owner:** developer
+- **status:** todo
+- **depends:** DW-10
+- **why:** The design from DW-10 requires a new server-rendered `/departures` page and
+  changes to the multi-result lookup logic in both Darwin and SCHEDULE libraries.
+- **acceptance:**
+  - [ ] New `app/departures/page.tsx` server component; URL pattern
+        `/departures?from=CRS&to=CRS&date=YYYY-MM-DD&time=HH:MM&network=...`
+  - [ ] Darwin lookup extended to return up to 5 services (1 before + 4 at/after
+        requested time). Time-before search may require a second Darwin call with an
+        earlier `timeOffset` or scanning the response window.
+  - [ ] SCHEDULE lookup extended to return up to 5 matches on the same basis
+  - [ ] Departure selection page renders the list server-side; each departure is a link
+        to `/results?...&time=<actual-departure-time>` — no JavaScript required
+  - [ ] Focus management on page load follows the DW-09 constraints
+  - [ ] `JourneyForm.tsx` `handleSubmit` updated to navigate to `/departures` instead
+        of `/results`
+  - [ ] The existing `/results` URL still works directly (bookmarks, back navigation)
+  - [ ] `npm run verify` green
+
+### DW-12 — Implement route search form progressive reveal
+- **owner:** developer
+- **status:** todo
+- **depends:** DW-10, DW-11
+- **why:** The redesigned form from DW-10 shows origin, destination, and network first,
+  then reveals date and time fields via a user-triggered control. DW-11 must land first
+  so the form has a working destination to submit to.
+- **acceptance:**
+  - [ ] `JourneyForm.tsx` restructured: origin, destination, network always rendered;
+        date and time fields revealed by the "Find a specific journey time" control
+  - [ ] Progressive enhancement: works without JavaScript (server-side conditional or
+        a two-step form approach per the DW-09 constraints)
+  - [ ] Hidden fields are genuinely removed from tab order when not revealed
+  - [ ] Validation still fires correctly — fields only validated if revealed/active
+  - [ ] URL state preserved: form pre-fills from params including the reveal state
+  - [ ] `npm run verify` green
+
+### DW-13 — Accessibility review of DW-11 and DW-12
+- **owner:** accessibility-specialist
+- **status:** todo
+- **depends:** DW-11, DW-12
+- **why:** Both a new intermediate page in the journey flow and a progressive-reveal
+  form are novel UI patterns that require independent accessibility review per the
+  project's non-negotiables. Self-certification by the developer is not sufficient here.
+- **acceptance:**
+  - [ ] Departure selection page reviewed against all applicable WCAG 2.2 AAA criteria,
+        specifically: focus management (2.4.3), page title (2.4.2), link purpose (2.4.9),
+        consistent navigation (3.2.3)
+  - [ ] Progressive-reveal form reviewed against: labels (1.3.1, 2.4.6), keyboard
+        (2.1.1), focus visible (2.4.13), error identification (3.3.1), status messages
+        (4.1.3)
+  - [ ] Axe-core passes on both pages with no violations
+  - [ ] Any issues filed as new DW tasks; blocker issues block merge
 
 ### DW-04 — Retarget signal pipeline at RDM product
 - **owner:** data-engineer
