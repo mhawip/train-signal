@@ -56,6 +56,7 @@ and writes to it last.
 | P1-02 | Network Rail SCHEDULE timetable | data-engineer |
 | DW-02 | Results page: wire up NR SCHEDULE journey data | developer |
 | DW-07 | Validation script uses wrong CRS code for Newark | qa |
+| DW-08 | Automate weekly SCHEDULE data refresh via GitHub Actions | devops |
 
 ---
 
@@ -229,21 +230,6 @@ Bugs and follow-ups get filed here by whoever finds them.
   script cannot be updated without knowing the exact column names, and the output
   cannot be regenerated without the data. See Q6 in QUESTIONS.md.
 
-### DW-08 — Automate weekly SCHEDULE data refresh via GitHub Actions
-- **owner:** devops
-- **status:** in-progress
-- **depends:** P1-02
-- **why:** `data/schedule-index.json.gz` covers 8 weeks from the date the pipeline ran.
-  Without weekly refresh the window shrinks and future-date lookups eventually fail.
-  `pipeline/p1-02-build-schedule.ts` exists and is re-runnable; it just needs a
-  scheduled workflow to drive it automatically.
-- **acceptance:**
-  - [ ] GitHub Actions workflow runs `pipeline/p1-02-build-schedule.ts` on a weekly
-        schedule (e.g. every Sunday night)
-  - [ ] Workflow reads `NR_FEEDS_USER` and `NR_FEEDS_PASS` from Actions secrets
-  - [ ] If the output file changes, commits and pushes to `main` automatically
-  - [ ] Workflow failure sends a visible notification (Actions default email is fine)
-  - [ ] `npm run verify` still green after the workflow is added
 
 ### DW-06 — Investigate local Windows build failure
 - **owner:** devops

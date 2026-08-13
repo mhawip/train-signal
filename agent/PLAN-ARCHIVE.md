@@ -12,6 +12,22 @@ particular way, or its full original acceptance criteria).
 
 ## Discovered work
 
+### DW-08 — Automate weekly SCHEDULE data refresh via GitHub Actions
+- **owner:** devops
+- **status:** done
+- **depends:** P1-02
+- **why:** `data/schedule-index.json.gz` covers 8 weeks from the date the pipeline ran.
+  Without weekly refresh the window shrinks and future-date lookups eventually fail.
+  `pipeline/p1-02-build-schedule.ts` exists and is re-runnable; it just needs a
+  scheduled workflow to drive it automatically.
+- **acceptance:**
+  - [x] GitHub Actions workflow runs `pipeline/p1-02-build-schedule.ts` on a weekly
+        schedule (e.g. every Sunday night)
+  - [x] Workflow reads `NR_FEEDS_USER` and `NR_FEEDS_PASS` from Actions secrets
+  - [x] If the output file changes, commits and pushes to `main` automatically
+  - [x] Workflow failure sends a visible notification (Actions default email is fine)
+  - [x] `npm run verify` still green after the workflow is added
+
 ### DW-07 — Validation script uses wrong CRS code for Newark
 - **owner:** qa
 - **status:** done

@@ -1473,3 +1473,50 @@ confirm.
 data-engineer — blocked on data download), DW-08 (weekly SCHEDULE refresh via GitHub
 Actions, devops), DW-06 (Windows build failure, devops). DW-08 is highest-value: the
 SCHEDULE window shrinks 1 week per week without it.
+
+---
+
+## 2026-08-13T14:30:00Z — DW-08 — devops / orchestrator
+
+**Did:** Shipped DW-08 (weekly SCHEDULE data refresh). Also resolved housekeeping:
+merged PR #31 (DW-07, all CI green), rescued uncommitted planning additions (DW-09
+through DW-13 + designer agent guidance) from the stale DW-07 branch into PR #32
+(merged), resolved a PLAN.md merge conflict on local main caused by the local branch
+diverging 3 commits from origin/main.
+
+Files created:
+- `.github/workflows/schedule-refresh.yml` — runs `pipeline/p1-02-build-schedule.ts`
+  every Sunday at 02:00 UTC and on `workflow_dispatch`. Reads `NR_FEEDS_USER` /
+  `NR_FEEDS_PASS` from Actions secrets. Checks `git diff --quiet data/schedule-index.json.gz`;
+  if changed, configures `github-actions[bot]` identity, commits, and pushes to main.
+  If unchanged, logs and exits clean. Permissions: `contents: write`. Uses Node 22 with
+  npm cache, consistent with `ci.yml`.
+
+PR #33 opened: `devops/DW-08-schedule-refresh`. Lint and secret-scan passed immediately;
+typecheck, unit, a11y, lighthouse in progress at time of writing. Auto-merge enabled.
+
+**Verify:** Typecheck, lint, 195 unit tests — all pass (per devops agent). Playwright
+a11y tests not run locally (DW-06 Windows issue); CI on Ubuntu will confirm. Workflow
+file is pure YAML — no TypeScript or app code changed, so a11y results are unchanged
+from the last passing run.
+
+**Learned:**
+- When a squash-merged PR lands on origin/main while local main has been carrying commits
+  from the feature branch (because `git pull` ran before the branch was merged), a
+  PLAN.md conflict is guaranteed: local has the task `in-progress`, remote has it removed
+  (archived by the PR). The correct resolution is always to accept the remote removal —
+  the archive entry is authoritative. This scenario will recur whenever two iterations
+  run in close succession.
+- The planning tasks DW-09 through DW-13 (departure selection + progressive form) were
+  added to PLAN.md by a previous iteration on the DW-07 branch but never committed or
+  PRed. They are now in main via PR #32. Future iterations can pick them up. DW-09
+  (accessibility-specialist, no deps) is the next unblocked task.
+- `NR_FEEDS_USER` and `NR_FEEDS_PASS` still need to be added to GitHub repo Settings >
+  Secrets > Actions before the workflow will succeed. Matt needs to do this. Until then
+  the workflow will fail on its first scheduled run — that failure is expected and will
+  generate a notification email, which is itself a useful prompt.
+
+**Next:** DW-08 done (pending CI on PR #33). DW-09 (accessibility constraints for
+departure selection page and progressive-reveal form, accessibility-specialist) is the
+highest-priority unblocked todo — it gates DW-10, 11, 12, and 13. DW-06 (Windows build
+failure, devops) remains open. DW-04 (RDM data retarget) is blocked on data download.
