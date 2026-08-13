@@ -53,6 +53,7 @@ and writes to it last.
 | P3-03 | Manual accessibility audit | accessibility-specialist |
 | P3-04 | Performance | developer |
 | P1-01 | Darwin LDBWS integration | data-engineer |
+| P1-02 | Network Rail SCHEDULE timetable | data-engineer |
 
 ---
 
@@ -69,20 +70,7 @@ P0-00 through P0-06 are done — see the index above.
 Get a real journey on screen. No signal data yet — prove the timetable and timeline work
 first.
 
-P1-01, P1-03 through P1-07 are done — see the index above.
-
-### P1-02 — Network Rail SCHEDULE timetable
-- **owner:** data-engineer
-- **status:** in-progress
-- **depends:** P0-03
-- **why:** The 8-week horizon. The core use case is booking a meeting for a future date,
-  which live boards can't serve.
-- **acceptance:**
-  - [ ] SCHEDULE feed ingested and parsed
-  - [ ] Journey lookup for any date up to 8 weeks ahead
-  - [ ] Refresh strategy defined and automated
-  - [ ] Handles Sunday timetables and engineering variations
-  - [ ] Derived data compact enough to query fast
+P1-01 through P1-07 are done — see the index above.
 
 ---
 
@@ -157,6 +145,22 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Replace "NEW" with "NNG" (Newark North Gate) in the ECML route definition
   - [ ] Re-run the script and confirm RET-to-NNG and NNG-to-GRA produce sensible paths
   - [ ] Document any new findings from the corrected segments
+
+### DW-08 — Automate weekly SCHEDULE data refresh via GitHub Actions
+- **owner:** devops
+- **status:** todo
+- **depends:** P1-02
+- **why:** `data/schedule-index.json.gz` covers 8 weeks from the date the pipeline ran.
+  Without weekly refresh the window shrinks and future-date lookups eventually fail.
+  `pipeline/p1-02-build-schedule.ts` exists and is re-runnable; it just needs a
+  scheduled workflow to drive it automatically.
+- **acceptance:**
+  - [ ] GitHub Actions workflow runs `pipeline/p1-02-build-schedule.ts` on a weekly
+        schedule (e.g. every Sunday night)
+  - [ ] Workflow reads `NR_FEEDS_USER` and `NR_FEEDS_PASS` from Actions secrets
+  - [ ] If the output file changes, commits and pushes to `main` automatically
+  - [ ] Workflow failure sends a visible notification (Actions default email is fine)
+  - [ ] `npm run verify` still green after the workflow is added
 
 ### DW-06 — Investigate local Windows build failure
 - **owner:** devops
