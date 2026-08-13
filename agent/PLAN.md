@@ -102,7 +102,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-09 — Accessibility constraints: departure selection page and route search form
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** Two novel interaction patterns need AAA constraints set before design starts.
   First: a new intermediate "choose departure" page that sits between the search form and
