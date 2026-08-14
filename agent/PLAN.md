@@ -107,7 +107,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-12 — Implement route search form progressive reveal
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-10, DW-11
 - **why:** The redesigned form from DW-10 shows origin, destination, and network first,
   then reveals date and time fields via a user-triggered control. DW-11 must land first
