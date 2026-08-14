@@ -33,13 +33,10 @@ Defined in `.claude/agents/`. Each loop dispatches to whichever role the task ca
 
 | Role | Owns |
 |---|---|
-| `product-manager` | Scope, priority, acceptance criteria, deciding when to ask Matt |
-| `accessibility-specialist` | AAA constraints, review of every UI change, axe configuration |
-| `designer` | Design system, layout, visual language — within a11y constraints |
+| `product` | Scope, priority, acceptance criteria, testing the result, deciding when to ask Matt |
+| `designer` | Design system, visual language, WCAG 2.2 AAA compliance — all together, not in sequence |
 | `developer` | Implementation |
-| `qa` | Test strategy, finding bugs, filing them back into `PLAN.md` |
-| `data-engineer` | Ofcom and rail data pipelines |
-| `devops` | CI, Vercel, GitHub Actions, secrets |
+| `infra` | Ofcom/rail data pipelines, CI, Vercel, GitHub Actions, secrets |
 
 **Handoffs happen through `PLAN.md`,** not through direct messaging. When the developer
 finishes a UI task, it does not "hand to" the accessibility specialist — it marks its
