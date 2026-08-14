@@ -59,6 +59,7 @@ and writes to it last.
 | DW-08 | Automate weekly SCHEDULE data refresh via GitHub Actions | devops |
 | DW-09 | Accessibility constraints: departure selection page and route search form | accessibility-specialist |
 | DW-10 | Design: departure selection page and route search form | designer |
+| DW-11 | Implement departure selection flow | developer |
 
 ---
 
@@ -103,29 +104,6 @@ P3-04 is done — see the index above.
 Bugs and follow-ups get filed here by whoever finds them.
 
 
-### DW-11 — Implement departure selection flow
-- **owner:** developer
-- **status:** in-progress
-- **depends:** DW-10
-- **why:** The design from DW-10 requires a new server-rendered `/departures` page and
-  changes to the multi-result lookup logic in both Darwin and SCHEDULE libraries.
-- **acceptance:**
-  - [ ] New `app/departures/page.tsx` server component; URL pattern
-        `/departures?from=CRS&to=CRS&date=YYYY-MM-DD&time=HH:MM&network=...`
-  - [ ] Darwin lookup extended to return up to 5 services (1 before + 4 at/after
-        requested time). Time-before search may require a second Darwin call with an
-        earlier `timeOffset` or scanning the response window.
-  - [ ] SCHEDULE lookup extended to return up to 5 matches on the same basis
-  - [ ] Departure selection page renders the list server-side; each departure is a link
-        to `/results?...&time=<actual-departure-time>` — no JavaScript required
-  - [ ] Focus management on page load follows the DW-09 constraints
-  - [ ] `JourneyForm.tsx` `handleSubmit` updated to navigate to `/departures` instead
-        of `/results`
-  - [ ] The existing `/results` URL still works directly (bookmarks, back navigation)
-  - [ ] typecheck, lint, and unit tests pass (`npm run typecheck && npm run lint && npm run test`)
-  - [ ] Playwright a11y suite: run if it completes within the Bash timeout; if it hangs
-        (known DW-06 Windows issue), note it in the journal and rely on CI — same
-        precedent as DW-07. Do not retry Playwright indefinitely.
 
 ### DW-12 — Implement route search form progressive reveal
 - **owner:** developer

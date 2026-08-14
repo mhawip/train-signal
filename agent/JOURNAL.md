@@ -1631,3 +1631,49 @@ identical to last passing run.
 selection flow) is now unblocked — it depends only on DW-10. DW-12 (developer,
 progressive reveal implementation) depends on DW-10 and DW-11. DW-06 (Windows build
 failure, devops) remains open. DW-04 (RDM pipeline retarget) is blocked on data download.
+
+---
+
+## 2026-08-14T08:35:00Z — DW-11 — developer / orchestrator
+
+**Did:** Found substantial prior work on `dev/DW-11-departure-selection-flow` from a
+previous iteration that died before committing. Assessed it as complete and correct
+against all acceptance criteria, then shipped it.
+
+Changes landed:
+- `app/departures/page.tsx`: New server component. Fetches from Darwin (today) or
+  SCHEDULE (future dates). Renders an ordered list of departure links. Handles error and
+  zero-result states with plain-language messages. Page title reflects the route.
+- `app/components/FocusHeading.tsx`: New component. `h1` with `tabIndex=-1` that
+  receives programmatic focus on mount. Visual focus ring suppressed via
+  `:focus:not(:focus-visible)` — screen readers still announce the heading, sighted
+  users don't see an unexpected outline. Per DW-09 focus management constraint.
+- `app/lib/darwin.ts`: Added `fetchDepartureList` + `parseDarwinDepartureList`. Returns
+  up to 5 `DepartureSummary` objects (1 before + 4 at/after requested time) by scanning
+  Darwin's response window. No second API call needed.
+- `app/lib/schedule.ts`: Added `findScheduledDepartures`. Same 1-before + 4-at-or-after
+  logic with STP conflict resolution.
+- `app/lib/journey-types.ts`: Added `DepartureSummary` interface.
+- `app/lib/journey-params.ts`: Added `buildDeparturesUrl`.
+- `app/components/JourneyForm.tsx`: `handleSubmit` now navigates to `/departures`.
+- `app/globals.css`: CSS for `.ts-departure-header__heading`, `.ts-departure-list`,
+  `.ts-departure-list__link`, `.ts-back-link`, and related modifiers.
+- `agent/ralph.ps1`: Added `--max-turns 80` to cap iterations per loop run.
+- Tests for `parseDarwinDepartureList`, `findScheduledDepartures`, `buildDeparturesUrl`.
+
+**Verify:** Typecheck clean, lint clean, 214/214 unit tests pass (19 new). Playwright
+not run locally (pre-existing DW-06 Windows hang). CI will confirm on PR #36.
+
+**Learned:**
+- Darwin returns up to `numRows` services in a single call. The 1-before + 4-after
+  selection can be done by scanning that response — no second API call needed. This is
+  simpler and avoids two round-trips for the common case.
+- The `nul` file in the repo root is a persistent Windows artifact (created when bash
+  redirects output to `/dev/null` on Windows and the shell interprets it literally). It
+  is harmless and never committed — ignore it in every iteration.
+- When a previous iteration left work uncommitted, assess it before redoing it. All
+  acceptance criteria were met; the only missing step was committing and opening a PR.
+
+**Next:** DW-11 done (pending PR #36 CI). DW-12 (developer, progressive reveal form)
+is now unblocked — it depends on DW-10 and DW-11, both done. DW-13 (accessibility
+review of DW-11 and DW-12) depends on both and remains blocked until DW-12 lands.
