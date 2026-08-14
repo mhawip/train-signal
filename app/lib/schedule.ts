@@ -13,7 +13,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as zlib from "zlib";
-import type { CallingPoint, Journey } from "@/app/lib/journey-types";
+import type { CallingPoint, DepartureSummary, Journey } from "@/app/lib/journey-types";
 
 // ---------------------------------------------------------------------------
 // Data types
@@ -384,6 +384,164 @@ export function findScheduledJourney(
 
   const best = resolved[0];
   return buildJourney(best.schedule, best.fromIdx, best.toIdx, date, network);
+}
+
+// ---------------------------------------------------------------------------
+// Departure list (multiple services for the selection page)
+// ---------------------------------------------------------------------------
+
+/**
+ * Find up to 5 scheduled departures from `fromCrs` to `toCrs` on `date`
+ * near `time`. Returns 1 service before the requested time (if available)
+ * and up to 4 services at or after the requested time.
+ *
+ * @param fromCrs  - Origin station CRS code (e.g. "LDS")
+ * @param toCrs    - Destination station CRS code (e.g. "KGX")
+ * @param date     - ISO date string "YYYY-MM-DD"
+ * @param time     - Time string "HH:MM"
+ * @returns Array of DepartureSummary objects, may be empty
+ */
+export function findScheduledDepartures(
+  fromCrs: string,
+  toCrs: string,
+  date: string,
+  time: string,
+): DepartureSummary[] {
+  const data = getScheduleData();
+  if (!data) return [];
+
+  const fromUpper = fromCrs.toUpperCase();
+  const toUpper = toCrs.toUpperCase();
+  const dayIndex = getDayIndex(date);
+  const nameMap = getStationNameMap();
+
+  // Look up candidates by origin
+  const indices = data.byOrigin[fromUpper];
+  if (!indices || indices.length === 0) return [];
+
+  // Decode cancellations once
+  const decodedCancellations = data.cancellations.map(decodeCancellation);
+
+  interface CandidateMatch {
+    depTime: string;
+    arrTime: string;
+    originName: string;
+    destName: string;
+    stpPriority: number;
+    uid: string;
+  }
+
+  const allMatches: CandidateMatch[] = [];
+
+  for (const idx of indices) {
+    const sched = decodeSchedule(data.schedules[idx], data.routes);
+
+    // Find fromCrs and toCrs in calling points; toCrs must be after fromCrs
+    let fromIdx = -1;
+    let toIdx = -1;
+    for (let i = 0; i < sched.p.length; i++) {
+      if (sched.p[i].c === fromUpper && fromIdx === -1) {
+        fromIdx = i;
+      }
+      if (sched.p[i].c === toUpper && fromIdx !== -1) {
+        toIdx = i;
+        break;
+      }
+    }
+    if (fromIdx === -1 || toIdx === -1 || toIdx <= fromIdx) continue;
+
+    // Date within validity range
+    if (date < sched.f || date > sched.t) continue;
+
+    // Day-of-week check
+    if (sched.w[dayIndex] !== "1") continue;
+
+    // Cancellation check
+    if (isCancelled(sched.u, date, dayIndex, decodedCancellations)) continue;
+
+    // Departure time at origin
+    const depTime = sched.p[fromIdx].d;
+    if (!depTime) continue;
+
+    // Arrival time at destination
+    const arrTime = sched.p[toIdx].a;
+    if (!arrTime) continue;
+
+    const originName = nameMap.get(fromUpper) ?? fromUpper;
+    const destName = nameMap.get(toUpper) ?? toUpper;
+
+    allMatches.push({
+      depTime,
+      arrTime,
+      originName,
+      destName,
+      stpPriority: STP_PRIORITY[sched.s] ?? 0,
+      uid: sched.u,
+    });
+  }
+
+  if (allMatches.length === 0) return [];
+
+  // Resolve STP conflicts: group by UID, keep highest priority
+  const byUid = new Map<string, CandidateMatch[]>();
+  for (const m of allMatches) {
+    if (!byUid.has(m.uid)) byUid.set(m.uid, []);
+    byUid.get(m.uid)!.push(m);
+  }
+
+  const resolved: CandidateMatch[] = [];
+  for (const group of byUid.values()) {
+    if (group.length === 1) {
+      resolved.push(group[0]);
+    } else {
+      group.sort((a, b) => b.stpPriority - a.stpPriority);
+      resolved.push(group[0]);
+    }
+  }
+
+  // Sort by departure time
+  resolved.sort((a, b) => {
+    if (a.depTime < b.depTime) return -1;
+    if (a.depTime > b.depTime) return 1;
+    return 0;
+  });
+
+  // Split into before and at-or-after the requested time
+  const before: CandidateMatch[] = [];
+  const atOrAfter: CandidateMatch[] = [];
+
+  for (const m of resolved) {
+    if (isAtOrAfter(m.depTime, time)) {
+      atOrAfter.push(m);
+    } else {
+      before.push(m);
+    }
+  }
+
+  // Take the last service before the requested time (closest to it)
+  const result: DepartureSummary[] = [];
+
+  if (before.length > 0) {
+    const closest = before[before.length - 1];
+    result.push({
+      departureTime: closest.depTime,
+      arrivalTime: closest.arrTime,
+      originName: closest.originName,
+      destinationName: closest.destName,
+    });
+  }
+
+  // Take up to 4 services at or after
+  for (const m of atOrAfter.slice(0, 4)) {
+    result.push({
+      departureTime: m.depTime,
+      arrivalTime: m.arrTime,
+      originName: m.originName,
+      destinationName: m.destName,
+    });
+  }
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------

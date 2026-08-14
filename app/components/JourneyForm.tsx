@@ -7,7 +7,7 @@ import { RadioGroup } from "./RadioGroup";
 import { Button } from "./Button";
 import {
   parseJourneyParams,
-  buildResultsUrl,
+  buildDeparturesUrl,
   getTodayISO,
   getMaxDateISO,
   NETWORKS,
@@ -137,7 +137,7 @@ export function JourneyForm() {
       return;
     }
 
-    const url = buildResultsUrl({
+    const url = buildDeparturesUrl({
       from: fromCRS,
       to: toCRS,
       date,

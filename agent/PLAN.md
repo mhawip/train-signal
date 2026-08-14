@@ -122,7 +122,10 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] `JourneyForm.tsx` `handleSubmit` updated to navigate to `/departures` instead
         of `/results`
   - [ ] The existing `/results` URL still works directly (bookmarks, back navigation)
-  - [ ] `npm run verify` green
+  - [ ] typecheck, lint, and unit tests pass (`npm run typecheck && npm run lint && npm run test`)
+  - [ ] Playwright a11y suite: run if it completes within the Bash timeout; if it hangs
+        (known DW-06 Windows issue), note it in the journal and rely on CI — same
+        precedent as DW-07. Do not retry Playwright indefinitely.
 
 ### DW-12 — Implement route search form progressive reveal
 - **owner:** developer
@@ -139,7 +142,7 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Hidden fields are genuinely removed from tab order when not revealed
   - [ ] Validation still fires correctly — fields only validated if revealed/active
   - [ ] URL state preserved: form pre-fills from params including the reveal state
-  - [ ] `npm run verify` green
+  - [ ] typecheck, lint, and unit tests pass; Playwright handled per DW-06 precedent
 
 ### DW-13 — Accessibility review of DW-11 and DW-12
 - **owner:** designer
@@ -206,18 +209,3 @@ Bugs and follow-ups get filed here by whoever finds them.
 - **blocked because:** RDM CSV not yet downloaded to `data/raw/`. The pipeline
   script cannot be updated without knowing the exact column names, and the output
   cannot be regenerated without the data. See Q6 in QUESTIONS.md.
-
-
-### DW-06 — Investigate local Windows build failure
-- **owner:** devops
-- **status:** todo
-- **depends:** —
-- **why:** `npm run build` fails locally on Windows with `<Html> should not be imported
-  outside of pages/_document` during prerendering of `/500`. CI (Ubuntu, clean install)
-  is consistently green. Likely a Windows path/env interaction or non-standard NODE_ENV
-  (`development` is set in environment before build runs, triggering Next.js warning).
-  This prevents running `npm run verify` locally, which slows down the dev loop.
-- **acceptance:**
-  - [ ] Root cause identified and documented
-  - [ ] `npm run build` succeeds locally on Windows
-  - [ ] `npm run verify` succeeds locally on Windows

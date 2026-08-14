@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import {
   findScheduledJourney,
+  findScheduledDepartures,
   _setScheduleData,
   _resetScheduleData,
   getDayIndex,
@@ -315,5 +316,125 @@ describe("findScheduledJourney", () => {
     expect(result).not.toBeNull();
     expect(result!.callingPoints).toHaveLength(3);
     expect(result!.callingPoints.map((cp) => cp.crs)).toEqual(["LDS", "WKF", "DON"]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// findScheduledDepartures tests
+// ---------------------------------------------------------------------------
+
+describe("findScheduledDepartures", () => {
+  beforeEach(() => {
+    _resetScheduleData();
+  });
+
+  it("returns empty array when schedule data is missing", () => {
+    _setScheduleData(null);
+    const result = findScheduledDepartures("LDS", "KGX", "2026-08-12", "14:00");
+    expect(result).toEqual([]);
+  });
+
+  it("returns 1 before and 1 at-or-after when both exist", () => {
+    // SERVICE_A departs 14:12, SERVICE_B departs 15:00
+    // Requested time 14:30 -> A is before, B is at-or-after
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A, SERVICE_B]));
+    const result = findScheduledDepartures("LDS", "KGX", "2026-08-12", "14:30");
+
+    expect(result).toHaveLength(2);
+    expect(result[0].departureTime).toBe("14:12");
+    expect(result[0].arrivalTime).toBe("16:27");
+    expect(result[1].departureTime).toBe("15:00");
+    expect(result[1].arrivalTime).toBe("17:12");
+  });
+
+  it("returns all at-or-after when none depart before", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A, SERVICE_B]));
+    const result = findScheduledDepartures("LDS", "KGX", "2026-08-12", "14:00");
+
+    expect(result).toHaveLength(2);
+    expect(result[0].departureTime).toBe("14:12");
+    expect(result[1].departureTime).toBe("15:00");
+  });
+
+  it("returns only the closest before when all depart before requested time", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A, SERVICE_B]));
+    const result = findScheduledDepartures("LDS", "KGX", "2026-08-12", "23:00");
+
+    // Only the closest before (15:00)
+    expect(result).toHaveLength(1);
+    expect(result[0].departureTime).toBe("15:00");
+  });
+
+  it("returns empty array when no services match the route", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A]));
+    const result = findScheduledDepartures("LDS", "MAN", "2026-08-12", "14:00");
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array when date is outside validity range", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A]));
+    const result = findScheduledDepartures("LDS", "KGX", "2027-01-01", "14:00");
+    expect(result).toEqual([]);
+  });
+
+  it("returns empty array on wrong day of week", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A]));
+    // Sunday -- SERVICE_A runs Mon-Fri
+    const result = findScheduledDepartures("LDS", "KGX", "2026-08-16", "14:00");
+    expect(result).toEqual([]);
+  });
+
+  it("excludes cancelled services", () => {
+    const cancellations = [
+      encCancel("W12345", "2026-08-10", "2026-08-14", "1111100"),
+    ];
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A, SERVICE_B], cancellations));
+    const result = findScheduledDepartures("LDS", "KGX", "2026-08-12", "14:00");
+
+    // SERVICE_A is cancelled, only SERVICE_B remains
+    expect(result).toHaveLength(1);
+    expect(result[0].departureTime).toBe("15:00");
+  });
+
+  it("resolves STP overlay over permanent for same UID", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A, SERVICE_A_OVERLAY, SERVICE_B]));
+    const result = findScheduledDepartures("LDS", "KGX", "2026-08-12", "14:00");
+
+    // Overlay replaces permanent for W12345: departs 14:15 instead of 14:12
+    expect(result).toHaveLength(2);
+    expect(result[0].departureTime).toBe("14:15");
+    expect(result[1].departureTime).toBe("15:00");
+  });
+
+  it("limits to 4 services at-or-after", () => {
+    // Create 6 services all at or after 10:00
+    const manyRoutes = [...ROUTES];
+    const services: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const hour = 10 + i;
+      const hourStr = String(hour).padStart(2, "0");
+      const arrHour = hour + 2;
+      const arrStr = String(arrHour).padStart(2, "0");
+      services.push(
+        enc(
+          `S${i}`, "P", "2026-08-01", "2026-12-14", "1111100", 2,
+          [{ d: `${hourStr}:00` }, { a: `${arrStr}:00` }],
+        ),
+      );
+    }
+    _setScheduleData(makeIndex(manyRoutes, services));
+    const result = findScheduledDepartures("LDS", "KGX", "2026-08-12", "10:00");
+
+    // Should return at most 4 at-or-after (no before available)
+    expect(result).toHaveLength(4);
+    expect(result[0].departureTime).toBe("10:00");
+    expect(result[3].departureTime).toBe("13:00");
+  });
+
+  it("handles case-insensitive CRS codes", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A]));
+    const result = findScheduledDepartures("lds", "kgx", "2026-08-12", "14:00");
+    expect(result).toHaveLength(1);
+    expect(result[0].departureTime).toBe("14:12");
   });
 });

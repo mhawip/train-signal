@@ -28,3 +28,21 @@ export interface Journey {
   /** ISO date "YYYY-MM-DD" */
   date: string;
 }
+
+/**
+ * Summary of a single departure for the departure selection page.
+ *
+ * Contains just enough information to display the departure list
+ * and build the results page URL. Does not include full calling
+ * point data -- that is fetched on the results page.
+ */
+export interface DepartureSummary {
+  /** Actual departure time at origin, "HH:MM" */
+  departureTime: string;
+  /** Actual arrival time at destination, "HH:MM" */
+  arrivalTime: string;
+  /** Origin station name */
+  originName: string;
+  /** Destination station name */
+  destinationName: string;
+}

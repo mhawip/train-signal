@@ -724,6 +724,101 @@ legend.ts-field__label + * {
 }
 
 /* ================================================================
+ * DEPARTURE SELECTION PAGE
+ *
+ * The intermediate page between the form and results. Shows up to 5
+ * departure options as links. Each link meets the 44px minimum
+ * target size (2.5.5) and has self-descriptive text (2.4.9).
+ *
+ * WCAG requirements:
+ * - 1.4.6: All text uses tokens verified at 7:1
+ * - 2.4.9: Link text includes time, route, and arrival
+ * - 2.5.5: min-height: var(--target-min) on each link
+ * - 2.4.13: Inset focus ring with 3:1 contrast
+ * - 3.2.5: No auto-redirect even for single results
+ * ================================================================ */
+
+.ts-departure-header__heading {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  color: var(--color-page-fg);
+  margin-bottom: var(--space-2);
+}
+
+.ts-departure-header__heading:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.ts-departure-header__context {
+  font-size: var(--font-size-base);
+  color: var(--color-muted);
+  line-height: var(--line-height-body);
+  margin-bottom: var(--space-6);
+}
+
+.ts-departure-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ts-departure-list__item {
+  border-bottom: 1px solid var(--color-field-border);
+}
+
+.ts-departure-list__item:last-child {
+  border-bottom: none;
+}
+
+.ts-departure-list__link {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-4);
+  min-height: var(--target-min);
+  padding: var(--space-3) var(--space-4);
+  text-decoration: none;
+  color: var(--color-page-fg);
+}
+
+.ts-departure-list__link:hover {
+  background-color: var(--color-field-bg);
+}
+
+.ts-departure-list__link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.ts-departure-list__time {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-heading);
+  color: var(--color-page-fg);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 4rem;
+}
+
+.ts-departure-list__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.ts-departure-list__route {
+  font-size: var(--font-size-base);
+  color: var(--color-page-fg);
+  font-weight: var(--font-weight-normal);
+}
+
+.ts-departure-list__meta {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+}
+
+/* ================================================================
  * JOURNEY DETAILS TABLE
  *
  * Semantic HTML table for the text-equivalent timeline.
@@ -1159,5 +1254,15 @@ legend.ts-field__label + * {
 
   .ts-legend__swatch {
     border-color: ButtonText;
+  }
+
+  .ts-departure-list__link {
+    border-bottom: 1px solid ButtonText;
+  }
+
+  .ts-departure-list__link:hover {
+    background-color: Highlight;
+    color: HighlightText;
+    forced-color-adjust: none;
   }
 }

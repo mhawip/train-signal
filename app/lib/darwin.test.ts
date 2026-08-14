@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { fetchDepartures, parseDarwinResponse } from "./darwin";
+import { fetchDepartures, parseDarwinResponse, parseDarwinDepartureList } from "./darwin";
 import * as journeyParams from "@/app/lib/journey-params";
 import darwinFixture from "./__fixtures__/darwin-lds-kgx.json";
 
@@ -162,6 +162,61 @@ describe("parseDarwinResponse", () => {
     const wakefield = journey!.callingPoints[1];
     expect(wakefield.scheduledArrival).toBe("14:25");
     expect(wakefield.scheduledDeparture).toBe("14:25");
+  });
+});
+
+describe("parseDarwinDepartureList", () => {
+  it("returns departures from the fixture", () => {
+    // Fixture has two services: 14:12 and 15:00
+    // Requesting time 14:30 should give 1 before (14:12) and 1 at-or-after (15:00)
+    const result = parseDarwinDepartureList(darwinFixture, "KGX", "14:30");
+
+    expect(result).toHaveLength(2);
+    expect(result[0].departureTime).toBe("14:12");
+    expect(result[0].arrivalTime).toBe("16:27");
+    expect(result[0].originName).toBe("Leeds");
+    expect(result[0].destinationName).toBe("London Kings Cross");
+    expect(result[1].departureTime).toBe("15:00");
+    expect(result[1].arrivalTime).toBe("17:12");
+  });
+
+  it("returns all services at-or-after when none depart before", () => {
+    // Both services (14:12, 15:00) are at or after 14:00
+    const result = parseDarwinDepartureList(darwinFixture, "KGX", "14:00");
+
+    expect(result).toHaveLength(2);
+    expect(result[0].departureTime).toBe("14:12");
+    expect(result[1].departureTime).toBe("15:00");
+  });
+
+  it("returns only the before-service when all depart before requested time", () => {
+    // Both services (14:12, 15:00) depart before 23:00
+    const result = parseDarwinDepartureList(darwinFixture, "KGX", "23:00");
+
+    // Should return just the last one before (15:00)
+    expect(result).toHaveLength(1);
+    expect(result[0].departureTime).toBe("15:00");
+  });
+
+  it("returns an empty array when no services call at destination", () => {
+    const result = parseDarwinDepartureList(darwinFixture, "MAN", "14:00");
+    expect(result).toHaveLength(0);
+  });
+
+  it("returns an empty array for an empty board", () => {
+    const emptyResponse = {
+      GetStationBoardResult: {
+        locationName: "Leeds",
+        crs: "LDS",
+      },
+    };
+    const result = parseDarwinDepartureList(emptyResponse as never, "KGX", "14:00");
+    expect(result).toHaveLength(0);
+  });
+
+  it("returns an empty array for a missing board", () => {
+    const result = parseDarwinDepartureList({} as never, "KGX", "14:00");
+    expect(result).toHaveLength(0);
   });
 });
 
