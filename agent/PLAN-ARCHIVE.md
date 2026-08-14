@@ -680,3 +680,27 @@ particular way, or its full original acceptance criteria).
   Refresh strategy: re-run the pipeline weekly with `NR_FEEDS_USER`/`NR_FEEDS_PASS`
   credentials. GitHub Actions automation filed as DW-08. DW-02 (wire up results page)
   is now unblocked.
+
+### DW-11 — Implement departure selection flow
+- **owner:** developer
+- **status:** done
+- **depends:** DW-10
+- **why:** The design from DW-10 requires a new server-rendered `/departures` page and
+  changes to the multi-result lookup logic in both Darwin and SCHEDULE libraries.
+- **acceptance:**
+  - [x] New `app/departures/page.tsx` server component; URL pattern
+        `/departures?from=CRS&to=CRS&date=YYYY-MM-DD&time=HH:MM&network=...`
+  - [x] Darwin lookup extended to return up to 5 services (1 before + 4 at/after
+        requested time). Implemented by scanning the response window returned by Darwin
+        (no second API call needed — Darwin returns up to 10 services in one call).
+  - [x] SCHEDULE lookup extended to return up to 5 matches on the same basis
+  - [x] Departure selection page renders the list server-side; each departure is a link
+        to `/results?...&time=<actual-departure-time>` — no JavaScript required
+  - [x] Focus management on page load follows the DW-09 constraints (FocusHeading
+        component: h1 with tabIndex=-1, programmatic focus on mount)
+  - [x] `JourneyForm.tsx` `handleSubmit` updated to navigate to `/departures` instead
+        of `/results`
+  - [x] The existing `/results` URL still works directly (bookmarks, back navigation)
+  - [x] typecheck, lint, and unit tests pass (214 tests)
+  - [x] Playwright a11y suite: not run locally (pre-existing DW-06 Windows hang);
+        CI will confirm on PR #36. Same precedent as DW-07.

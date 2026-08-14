@@ -59,6 +59,7 @@ and writes to it last.
 | DW-08 | Automate weekly SCHEDULE data refresh via GitHub Actions | devops |
 | DW-09 | Accessibility constraints: departure selection page and route search form | accessibility-specialist |
 | DW-10 | Design: departure selection page and route search form | designer |
+| DW-11 | Implement departure selection flow | developer |
 
 ---
 
@@ -103,26 +104,6 @@ P3-04 is done — see the index above.
 Bugs and follow-ups get filed here by whoever finds them.
 
 
-### DW-11 — Implement departure selection flow
-- **owner:** developer
-- **status:** todo
-- **depends:** DW-10
-- **why:** The design from DW-10 requires a new server-rendered `/departures` page and
-  changes to the multi-result lookup logic in both Darwin and SCHEDULE libraries.
-- **acceptance:**
-  - [ ] New `app/departures/page.tsx` server component; URL pattern
-        `/departures?from=CRS&to=CRS&date=YYYY-MM-DD&time=HH:MM&network=...`
-  - [ ] Darwin lookup extended to return up to 5 services (1 before + 4 at/after
-        requested time). Time-before search may require a second Darwin call with an
-        earlier `timeOffset` or scanning the response window.
-  - [ ] SCHEDULE lookup extended to return up to 5 matches on the same basis
-  - [ ] Departure selection page renders the list server-side; each departure is a link
-        to `/results?...&time=<actual-departure-time>` — no JavaScript required
-  - [ ] Focus management on page load follows the DW-09 constraints
-  - [ ] `JourneyForm.tsx` `handleSubmit` updated to navigate to `/departures` instead
-        of `/results`
-  - [ ] The existing `/results` URL still works directly (bookmarks, back navigation)
-  - [ ] `npm run verify` green
 
 ### DW-12 — Implement route search form progressive reveal
 - **owner:** developer
@@ -139,7 +120,7 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Hidden fields are genuinely removed from tab order when not revealed
   - [ ] Validation still fires correctly — fields only validated if revealed/active
   - [ ] URL state preserved: form pre-fills from params including the reveal state
-  - [ ] `npm run verify` green
+  - [ ] typecheck, lint, and unit tests pass; Playwright handled per DW-06 precedent
 
 ### DW-13 — Accessibility review of DW-11 and DW-12
 - **owner:** designer
@@ -206,18 +187,3 @@ Bugs and follow-ups get filed here by whoever finds them.
 - **blocked because:** RDM CSV not yet downloaded to `data/raw/`. The pipeline
   script cannot be updated without knowing the exact column names, and the output
   cannot be regenerated without the data. See Q6 in QUESTIONS.md.
-
-
-### DW-06 — Investigate local Windows build failure
-- **owner:** devops
-- **status:** todo
-- **depends:** —
-- **why:** `npm run build` fails locally on Windows with `<Html> should not be imported
-  outside of pages/_document` during prerendering of `/500`. CI (Ubuntu, clean install)
-  is consistently green. Likely a Windows path/env interaction or non-standard NODE_ENV
-  (`development` is set in environment before build runs, triggering Next.js warning).
-  This prevents running `npm run verify` locally, which slows down the dev loop.
-- **acceptance:**
-  - [ ] Root cause identified and documented
-  - [ ] `npm run build` succeeds locally on Windows
-  - [ ] `npm run verify` succeeds locally on Windows

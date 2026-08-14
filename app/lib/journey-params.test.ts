@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   parseJourneyParams,
   buildResultsUrl,
+  buildDeparturesUrl,
   getTodayISO,
   getMaxDateISO,
   isValidNetwork,
@@ -33,6 +34,24 @@ describe("buildResultsUrl", () => {
   it("omits empty params", () => {
     const url = buildResultsUrl({ from: "KGX", to: "", date: "", time: "", network: "" });
     expect(url).toContain("from=KGX");
+    expect(url).not.toContain("to=");
+  });
+});
+
+describe("buildDeparturesUrl", () => {
+  it("builds a /departures URL with all params", () => {
+    const url = buildDeparturesUrl({ from: "LDS", to: "KGX", date: "2026-08-14", time: "10:00", network: "EE" });
+    expect(url).toMatch(/^\/departures\?/);
+    expect(url).toContain("from=LDS");
+    expect(url).toContain("to=KGX");
+    expect(url).toContain("date=2026-08-14");
+    expect(url).toContain("time=10%3A00");
+    expect(url).toContain("network=EE");
+  });
+
+  it("omits empty params", () => {
+    const url = buildDeparturesUrl({ from: "LDS", to: "", date: "", time: "", network: "" });
+    expect(url).toContain("from=LDS");
     expect(url).not.toContain("to=");
   });
 });

@@ -81,6 +81,23 @@ export function getMaxDateISO(): string {
 }
 
 /**
+ * Encode journey form values as a URL for the departure selection page.
+ * Same params as buildResultsUrl but points to /departures.
+ *
+ * @returns The URL string including the leading "?"
+ */
+export function buildDeparturesUrl(params: JourneyParams): string {
+  const searchParams = new URLSearchParams();
+  if (params.from) searchParams.set("from", params.from);
+  if (params.to) searchParams.set("to", params.to);
+  if (params.date) searchParams.set("date", params.date);
+  if (params.time) searchParams.set("time", params.time);
+  if (params.network) searchParams.set("network", params.network);
+
+  return `/departures?${searchParams.toString()}`;
+}
+
+/**
  * Check whether a network value is one of the valid options.
  */
 export function isValidNetwork(value: string): value is Network {

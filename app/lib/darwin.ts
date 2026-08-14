@@ -8,7 +8,7 @@
  * The API key is read from process.env.DARWIN_API_KEY at call time.
  */
 
-import type { CallingPoint, Journey } from "@/app/lib/journey-types";
+import type { CallingPoint, DepartureSummary, Journey } from "@/app/lib/journey-types";
 import { getTodayISO } from "@/app/lib/journey-params";
 
 // ---------------------------------------------------------------------------
@@ -222,6 +222,168 @@ function getCallingPoints(svc: DarwinService): DarwinCallingPoint[] {
   // Darwin can return multiple lists for split services;
   // we take the first list which is the main route.
   return lists[0].callingPoint ?? [];
+}
+
+// ---------------------------------------------------------------------------
+// Departure list (multiple services for the selection page)
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch up to 5 departure summaries from Darwin for a same-day journey.
+ *
+ * Returns 1 service before the requested time (if available) and up to 4
+ * services at or after the requested time. Returns an empty array if
+ * Darwin is unavailable or returns no matching services.
+ *
+ * @param fromCrs - Origin station CRS code (e.g. "LDS")
+ * @param toCrs - Destination station CRS code (e.g. "KGX")
+ * @param date - ISO date string "YYYY-MM-DD"
+ * @param time - Time string "HH:MM"
+ * @returns Array of DepartureSummary objects, may be empty
+ */
+export async function fetchDepartureList(
+  fromCrs: string,
+  toCrs: string,
+  date: string,
+  time: string,
+): Promise<DepartureSummary[]> {
+  // Only query Darwin for today's services
+  const today = getTodayISO();
+  if (date !== today) {
+    return [];
+  }
+
+  const apiKey = process.env.DARWIN_API_KEY;
+  if (!apiKey) {
+    console.warn("DARWIN_API_KEY is not configured; cannot fetch live data.");
+    return [];
+  }
+
+  const url = new URL(DARWIN_BASE_URL);
+  url.searchParams.set("numRows", "10");
+  url.searchParams.set("crs", fromCrs.toUpperCase());
+  url.searchParams.set("filterCrs", toCrs.toUpperCase());
+  url.searchParams.set("filterType", "to");
+  url.searchParams.set("timeWindow", "120");
+  url.searchParams.set("accessToken", apiKey);
+
+  let response: Response;
+  try {
+    response = await fetch(url.toString(), {
+      headers: { Accept: "application/json" },
+      next: { revalidate: 60 },
+    });
+  } catch {
+    console.error("Darwin API request failed (network error).");
+    return [];
+  }
+
+  if (!response.ok) {
+    console.error(
+      `Darwin API returned status ${response.status}: ${response.statusText}`,
+    );
+    return [];
+  }
+
+  let data: DarwinResponse;
+  try {
+    data = (await response.json()) as DarwinResponse;
+  } catch {
+    console.error("Darwin API returned invalid JSON.");
+    return [];
+  }
+
+  return parseDarwinDepartureList(data, toCrs, time);
+}
+
+/**
+ * Parse a Darwin API response into up to 5 DepartureSummary objects.
+ *
+ * Includes 1 service departing before the requested time (if available)
+ * and up to 4 services departing at or after the requested time.
+ *
+ * Exported for testing.
+ */
+export function parseDarwinDepartureList(
+  data: DarwinResponse,
+  toCrs: string,
+  time: string,
+): DepartureSummary[] {
+  const board = data?.GetStationBoardResult;
+  if (!board) return [];
+
+  const services = board.trainServices?.service;
+  if (!services || services.length === 0) return [];
+
+  const toUpper = toCrs.toUpperCase();
+
+  // Collect all services that call at the destination
+  const validServices: Array<{
+    svc: DarwinService;
+    depTime: string;
+    arrTime: string;
+    originName: string;
+    destName: string;
+  }> = [];
+
+  for (const svc of services) {
+    const callingPoints = getCallingPoints(svc);
+    const destCp = callingPoints.find(
+      (cp) => cp.crs.toUpperCase() === toUpper,
+    );
+    if (!destCp) continue;
+
+    const originName =
+      svc.origin?.location?.[0]?.locationName ?? board.locationName;
+    const destName = destCp.locationName;
+
+    validServices.push({
+      svc,
+      depTime: svc.std,
+      arrTime: destCp.st,
+      originName,
+      destName,
+    });
+  }
+
+  if (validServices.length === 0) return [];
+
+  // Split into before and at-or-after the requested time
+  const before: typeof validServices = [];
+  const atOrAfter: typeof validServices = [];
+
+  for (const vs of validServices) {
+    if (isAtOrAfter(vs.depTime, time)) {
+      atOrAfter.push(vs);
+    } else {
+      before.push(vs);
+    }
+  }
+
+  // Take the last service before the requested time (closest to it)
+  const result: DepartureSummary[] = [];
+
+  if (before.length > 0) {
+    const closest = before[before.length - 1];
+    result.push({
+      departureTime: closest.depTime,
+      arrivalTime: closest.arrTime,
+      originName: closest.originName,
+      destinationName: closest.destName,
+    });
+  }
+
+  // Take up to 4 services at or after the requested time
+  for (const vs of atOrAfter.slice(0, 4)) {
+    result.push({
+      departureTime: vs.depTime,
+      arrivalTime: vs.arrTime,
+      originName: vs.originName,
+      destinationName: vs.destName,
+    });
+  }
+
+  return result;
 }
 
 /**
