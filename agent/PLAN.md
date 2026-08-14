@@ -106,7 +106,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-13 — Accessibility review of DW-11 and DW-12
 - **owner:** designer
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-11, DW-12
 - **why:** Both a new intermediate page in the journey flow and a progressive-reveal
   form are novel UI patterns that require independent accessibility review per the
