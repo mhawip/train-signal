@@ -71,10 +71,10 @@ embarrassing bugs live.
 
 When you finish UI work, decide whether it needs independent review.
 
-**File an `accessibility-specialist` review task** in `agent/PLAN.md` if the change
-introduces a new component, a new visual treatment, a new interaction or keyboard
-pattern, any new use of colour, or anything else genuinely novel. Don't mark your own
-homework on new ground — you've been staring at it too long to see it clearly.
+**File a `designer` review task** in `agent/PLAN.md` if the change introduces a new
+component, a new visual treatment, a new interaction or keyboard pattern, any new use
+of colour, or anything else genuinely novel. Don't mark your own homework on new ground
+— you've been staring at it too long to see it clearly.
 
 **Self-certify instead** — no separate review task — only when *all* of the following
 hold:

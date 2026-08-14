@@ -172,10 +172,17 @@ while ($true) {
             # --dangerously-skip-permissions is required for unattended running; the
             # guard rails are the CI gates and the git workflow, not interactive prompts.
             #
+            # --max-turns caps the number of tool-call round-trips per iteration.
+            # Without it, an agent stuck retrying a failing verify step (e.g. Playwright
+            # hanging on Windows) will run indefinitely. 80 turns is enough for any task
+            # that belongs in a single iteration; tasks that genuinely need more should be
+            # split in PLAN.md rather than running unbounded.
+            #
             # Tee to a variable rather than the file, so the output is still streamed live
             # but is also in hand afterwards, whether or not there was any of it.
             claude -p $prompt `
                 --dangerously-skip-permissions `
+                --max-turns 80 `
                 --output-format text 2>&1 | Tee-Object -Variable captured
 
             $exitCode = $LASTEXITCODE

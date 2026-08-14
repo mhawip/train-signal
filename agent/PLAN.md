@@ -142,7 +142,7 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] `npm run verify` green
 
 ### DW-13 — Accessibility review of DW-11 and DW-12
-- **owner:** accessibility-specialist
+- **owner:** designer
 - **status:** todo
 - **depends:** DW-11, DW-12
 - **why:** Both a new intermediate page in the journey flow and a progressive-reveal
@@ -158,8 +158,34 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Axe-core passes on both pages with no violations
   - [ ] Any issues filed as new DW tasks; blocker issues block merge
 
+### DW-06 — Fix local Windows verify: Playwright hang and build failure
+- **owner:** infra
+- **status:** todo
+- **depends:** —
+- **why:** Two related Windows-only issues are actively blocking the ralph loop from
+  completing full `npm run verify` runs locally. Without this fix, every developer
+  iteration must skip Playwright and rely on CI — slowing the feedback loop and making
+  local work less safe.
+  1. **Playwright hangs:** `npm run test:a11y` never exits. The webServer starts `npm run dev`,
+     but the process hangs indefinitely rather than timing out. Observed in DW-07 and
+     every DW-11 iteration since. Diagnosis options: port 3000 already in use, dev server
+     not signalling readiness on Windows, or the Playwright HTML reporter hanging on
+     cleanup. CI (Ubuntu) is green.
+  2. **Build failure:** `npm run build` fails locally with `<Html> should not be imported
+     outside of pages/_document` during `/500` prerender. Likely `NODE_ENV=development`
+     set in the local shell before build runs, triggering a Next.js warning that becomes
+     an error. CI is green because it runs in a clean env.
+- **acceptance:**
+  - [ ] Root cause of Playwright hang identified; `npm run test:a11y` exits cleanly
+        locally on Windows (pass or fail — not hang)
+  - [ ] Root cause of build failure identified; `npm run build` succeeds locally
+  - [ ] `npm run verify` completes locally on Windows with all checks either passing or
+        reporting a real failure (not hanging)
+  - [ ] Findings documented in journal; fix committed if code change needed
+
+
 ### DW-04 — Retarget signal pipeline at RDM product
-- **owner:** data-engineer
+- **owner:** infra
 - **status:** blocked
 - **depends:** —
 - **why:** Matt verified the RDM "NWR Yellow Train Mobile Network Measurements" product

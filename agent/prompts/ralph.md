@@ -47,7 +47,7 @@ work to save iterations; do bundle work that would only ever ship together anywa
 **If nothing is available:**
 - If tasks are blocked only on questions in `QUESTIONS.md`, find work that isn't. There
   is almost always something — tests, docs, refactoring, accessibility review.
-- If the backlog is genuinely empty, dispatch to `product-manager` to plan the next
+- If the backlog is genuinely empty, dispatch to `product` to plan the next
   phase from the brief.
 - If the product is complete against the brief, write that conclusion to `JOURNAL.md`
   and exit.
@@ -58,8 +58,7 @@ is what stops two loops colliding.
 ## 3. Dispatch to the right role
 
 Use the Agent tool with the `subagent_type` matching the task's `owner` field:
-`product-manager`, `accessibility-specialist`, `designer`, `developer`, `qa`,
-`data-engineer`, `devops`.
+`product`, `designer`, `developer`, `infra`.
 
 Give the agent everything it needs to work cold:
 - The full task text and its acceptance criteria
