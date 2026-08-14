@@ -12,6 +12,37 @@ particular way, or its full original acceptance criteria).
 
 ## Discovered work
 
+### DW-10 — Design: departure selection page and route search form
+- **owner:** designer
+- **status:** done
+- **depends:** DW-09
+- **why:** Matt has approved two UX changes. First: when a user submits the journey
+  form, instead of going directly to results, they land on a departure selection page
+  showing 1 train before and 4 trains after their requested time (no hour cap — covers
+  low-frequency routes). This makes the selected train explicit rather than silently
+  substituting one. Second: the search form should show origin, destination, and network
+  first, then offer a "Find a specific journey time" option that reveals date and time
+  fields. This supports a future route-overview mode. For now the form always needs a
+  time to produce results; the route-only path is a placeholder for later.
+- **acceptance:**
+  - [x] Departure selection page designed as real components:
+    - Recap header showing origin → destination and the date
+    - List of up to 5 departures (1 before + 4 after requested time), each showing
+      departure time, destination arrival time, and a clear call to action
+    - Graceful handling of edge cases: fewer than 5 available (e.g. last train of day,
+      first train), zero trains on this route/date
+    - Follows the AAA constraints set in DW-09
+  - [x] Journey form redesigned:
+    - Origin, destination, and network always visible
+    - A clearly labelled control that reveals date and time fields ("Add a departure time")
+    - Progressive enhancement: server renders full form; JS hides date/time and shows toggle
+    - Follows the AAA constraints set in DW-09
+  - [x] Both screens reviewed at 320 px and 1280 px, both colour schemes
+  - [x] `specs/design-system.md` updated with sections 9 and 10, component inventory,
+        and decisions table entries
+
+---
+
 ### DW-09 — Accessibility constraints: departure selection page and route search form
 - **owner:** accessibility-specialist
 - **status:** done
