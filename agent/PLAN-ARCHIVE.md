@@ -12,6 +12,23 @@ particular way, or its full original acceptance criteria).
 
 ## Discovered work
 
+### DW-12 — Implement route search form progressive reveal
+- **owner:** developer
+- **status:** done
+- **depends:** DW-10, DW-11
+- **why:** The redesigned form from DW-10 shows origin, destination, and network first,
+  then reveals date and time fields via a user-triggered control. DW-11 must land first
+  so the form has a working destination to submit to.
+- **acceptance:**
+  - [x] `JourneyForm.tsx` restructured: origin, destination, network always rendered;
+        date and time fields revealed by the "Find a specific journey time" control
+  - [x] Progressive enhancement: works without JavaScript (server-side conditional or
+        a two-step form approach per the DW-09 constraints)
+  - [x] Hidden fields are genuinely removed from tab order when not revealed
+  - [x] Validation still fires correctly — fields only validated if revealed/active
+  - [x] URL state preserved: form pre-fills from params including the reveal state
+  - [x] typecheck, lint, and unit tests pass; Playwright handled per DW-06 precedent
+
 ### DW-10 — Design: departure selection page and route search form
 - **owner:** designer
 - **status:** done

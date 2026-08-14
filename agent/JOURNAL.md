@@ -1677,3 +1677,57 @@ not run locally (pre-existing DW-06 Windows hang). CI will confirm on PR #36.
 **Next:** DW-11 done (pending PR #36 CI). DW-12 (developer, progressive reveal form)
 is now unblocked — it depends on DW-10 and DW-11, both done. DW-13 (accessibility
 review of DW-11 and DW-12) depends on both and remains blocked until DW-12 lands.
+
+---
+
+## 2026-08-14 — DW-12 — developer
+
+**Did:** Implemented progressive-reveal form in `JourneyForm.tsx`. Key changes:
+
+- Restructured form field order: origin, destination, network (always visible),
+  then disclosure toggle button, then date/time fields, then submit.
+- Progressive enhancement: server renders full form with all fields visible and
+  toggle button hidden. After hydration, JS hides date/time behind the toggle
+  (unless `mode=timed` URL param is present).
+- Toggle button uses `aria-expanded` + `aria-controls` per specs/accessibility.md
+  section 11.2. Text changes between "Add a departure time" / "Remove departure
+  time". Chevron indicator (decorative, aria-hidden).
+- `hidden` attribute (not CSS `display:none`) controls visibility, removing fields
+  from tab order and accessibility tree when collapsed.
+- Validation gated: date/time fields only validated when revealed. Submitting with
+  fields hidden auto-reveals them with an aria-live prompt ("Enter a date and time
+  to search for trains.") rather than navigating.
+- Focus management: reveal focuses the date input; collapse returns focus to toggle.
+- URL state: `history.replaceState` adds/removes `mode=timed` on toggle.
+- Added CSS for `.ts-disclosure-toggle`, `.ts-disclosure-toggle__chevron`,
+  `.ts-disclosure-prompt` to `globals.css`.
+- 14 new unit tests in `JourneyForm.test.tsx` covering: initial hidden state,
+  toggle reveal/collapse, aria-expanded states, chevron text, validation gating,
+  submit-without-reveal prompt, URL mode param, error clearing on collapse,
+  prompt clearing on date interaction.
+
+Files changed:
+- `app/components/JourneyForm.tsx` -- restructured with progressive reveal
+- `app/globals.css` -- three new CSS rules for disclosure toggle
+- `app/components/JourneyForm.test.tsx` -- new file, 14 tests
+
+**Verify:** Typecheck clean, lint clean, 228/228 unit tests pass (14 new). Playwright
+not run locally (pre-existing DW-06 Windows hang).
+
+**Learned:**
+- The progressive enhancement approach (server renders fields visible, JS hides on
+  mount) works cleanly as a React pattern: `isEnhanced` starts false, useEffect sets
+  it true, and this drives both the toggle button visibility and the datetime fields
+  hidden state. No hydration mismatch because the initial React state matches the
+  server render.
+- `userEvent.type` on `<input type="date">` does not reliably fire onChange in jsdom.
+  `fireEvent.change` with a target value works. This is a known jsdom limitation
+  with date inputs.
+- The `hidden` attribute in React is controlled via `hidden={boolean}` -- when the
+  boolean is `false`, React does not render the attribute at all (correct behaviour,
+  since `hidden=""` and `hidden="false"` both hide the element in HTML).
+
+**Next:** DW-12 done. DW-13 (accessibility review of DW-11 and DW-12) is now
+unblocked. This is a novel UI pattern (disclosure toggle with focus management)
+and requires independent accessibility specialist review -- self-certification
+is not appropriate here.
