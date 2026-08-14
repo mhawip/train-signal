@@ -655,6 +655,37 @@ legend.ts-field__label + * {
   font-size: var(--font-size-base);
 }
 
+/* --- Disclosure toggle (progressive reveal of date/time fields) ---
+ * Uses the existing ts-button ts-button--secondary base styles.
+ * The additional class adds the inline-flex gap for the chevron,
+ * the margin below, and the target size.
+ * See specs/design-system.md section 10. */
+.ts-disclosure-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--target-min);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-4);
+}
+
+/* Chevron indicator: purely decorative (aria-hidden).
+ * Downward triangle when collapsed, upward when expanded. */
+.ts-disclosure-toggle__chevron {
+  font-size: var(--font-size-sm);
+  line-height: 1;
+}
+
+/* Prompt text shown when submit auto-reveals the date/time fields.
+ * Announced via aria-live="polite" (4.1.3).
+ * Uses --color-muted: 7.00:1 light, 7.16:1 dark -- passes 7:1. */
+.ts-disclosure-prompt {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  margin-bottom: var(--space-2);
+}
+
 /* --- Form actions (submit button row) --- */
 .ts-form__actions {
   margin-top: var(--space-6);

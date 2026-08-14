@@ -60,6 +60,7 @@ and writes to it last.
 | DW-09 | Accessibility constraints: departure selection page and route search form | accessibility-specialist |
 | DW-10 | Design: departure selection page and route search form | designer |
 | DW-11 | Implement departure selection flow | developer |
+| DW-12 | Implement route search form progressive reveal | developer |
 
 ---
 
@@ -102,25 +103,6 @@ P3-04 is done — see the index above.
 ## Discovered work
 
 Bugs and follow-ups get filed here by whoever finds them.
-
-
-
-### DW-12 — Implement route search form progressive reveal
-- **owner:** developer
-- **status:** in-progress
-- **depends:** DW-10, DW-11
-- **why:** The redesigned form from DW-10 shows origin, destination, and network first,
-  then reveals date and time fields via a user-triggered control. DW-11 must land first
-  so the form has a working destination to submit to.
-- **acceptance:**
-  - [ ] `JourneyForm.tsx` restructured: origin, destination, network always rendered;
-        date and time fields revealed by the "Find a specific journey time" control
-  - [ ] Progressive enhancement: works without JavaScript (server-side conditional or
-        a two-step form approach per the DW-09 constraints)
-  - [ ] Hidden fields are genuinely removed from tab order when not revealed
-  - [ ] Validation still fires correctly — fields only validated if revealed/active
-  - [ ] URL state preserved: form pre-fills from params including the reveal state
-  - [ ] typecheck, lint, and unit tests pass; Playwright handled per DW-06 precedent
 
 ### DW-13 — Accessibility review of DW-11 and DW-12
 - **owner:** designer
