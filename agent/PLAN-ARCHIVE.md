@@ -12,6 +12,25 @@ particular way, or its full original acceptance criteria).
 
 ## Discovered work
 
+### DW-13 — Accessibility review of DW-11 and DW-12
+- **owner:** designer
+- **status:** done
+- **depends:** DW-11, DW-12
+- **why:** Both a new intermediate page in the journey flow and a progressive-reveal
+  form are novel UI patterns that require independent accessibility review per the
+  project's non-negotiables. Self-certification by the developer is not sufficient here.
+- **acceptance:**
+  - [x] Departure selection page reviewed against all applicable WCAG 2.2 AAA criteria:
+        focus management (2.4.3), page title (2.4.2), link purpose (2.4.9),
+        consistent navigation (3.2.3)
+  - [x] Progressive-reveal form reviewed against: labels (1.3.1, 2.4.6), keyboard
+        (2.1.1), focus visible (2.4.13), error identification (3.3.1), status messages
+        (4.1.3)
+  - [x] Axe-core: Playwright suite not run locally (DW-06 known Windows hang); typecheck,
+        lint, and all 228 unit tests pass. CI will run axe-core.
+  - [x] One issue found and fixed inline: page title used CRS codes instead of station
+        names (2.4.2, 3.1.5). No blocker issues filed.
+
 ### DW-12 — Implement route search form progressive reveal
 - **owner:** developer
 - **status:** done

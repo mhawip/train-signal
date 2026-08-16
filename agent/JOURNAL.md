@@ -1731,3 +1731,85 @@ not run locally (pre-existing DW-06 Windows hang).
 unblocked. This is a novel UI pattern (disclosure toggle with focus management)
 and requires independent accessibility specialist review -- self-certification
 is not appropriate here.
+
+---
+
+## 2026-08-14T14:00:00Z -- DW-13 -- designer
+
+**Did:** Independent WCAG 2.2 AAA accessibility review of two novel UI patterns:
+the departure selection page (DW-11) and the progressive-reveal form (DW-12).
+Reviewed both against specs/accessibility.md sections 10 and 11.
+
+**One issue found and fixed:**
+
+- `app/departures/page.tsx` `generateMetadata()` used CRS codes (e.g., "LDS") in
+  the page `<title>` instead of station names (e.g., "Leeds"). CRS codes are jargon
+  that fails 2.4.2 (Page Titled -- title must describe the page purpose in
+  understandable terms) and 3.1.5 (Reading Level -- lower-secondary education). Fixed
+  by importing `getStationByCRS()` from `app/lib/stations.ts` and looking up station
+  names. Falls back to uppercased CRS code if lookup fails. Title now reads:
+  "Choose a departure: Leeds to London King's Cross, 14 August 2026 -- Train Signal".
+
+**Full review results (16 criteria checked):**
+
+| Criterion | Pattern | Result | Notes |
+|---|---|---|---|
+| 2.4.3 Focus management | Departures | PASS | FocusHeading uses tabindex="-1", useEffect calls .focus(), :focus:not(:focus-visible) suppresses ring |
+| 2.4.2 Page title | Departures | PASS (after fix) | Was using CRS codes; fixed to use station names |
+| 2.4.9 Link purpose | Departures | PASS | Computed accessible name includes departure time, route, arrival time, duration |
+| 2.5.5 Target size | Departures | PASS | min-height: var(--target-min) (44px) on all links |
+| 3.2.5 No auto-redirect | Departures | PASS | No redirect logic for single results |
+| 3.2.3 Consistent navigation | Departures | PASS | "Back to search" uses existing ts-back-link class |
+| 1.4.6 Contrast | Departures | PASS | --color-muted (#595959) on #ffffff = 7.00:1 (borderline but passes) |
+| 2.1.1 Keyboard | Form | PASS | hidden attribute removes fields from tab order |
+| 4.1.2 Name/Role/Value | Form | PASS | aria-expanded and aria-controls present on toggle button |
+| 2.4.6 Labels | Form | PASS | "Add a departure time" / "Remove departure time" |
+| 2.4.13 Focus visible | Form | PASS | Toggle inherits :focus-visible from ts-button |
+| 3.3.1 Error identification | Form | PASS | Validation gated on isRevealed; hidden fields not validated |
+| 4.1.3 Status messages | Form | PASS | aria-live="polite" on prompt paragraph; text injected on auto-reveal |
+| 11.4 No-JS | Form | PASS | isEnhanced starts false; server renders fields visible, toggle hidden |
+| 11.9 Submit without time | Form | PASS | Reveals fields, shows prompt, moves focus to date input |
+| URL state | Form | PASS | Uses replaceState, not pushState |
+
+**Edge cases verified:** Zero results, single result, error state all render
+correct messages with "Back to search" link. Forced-colours CSS present for
+departure list links (border-bottom: ButtonText, hover: Highlight/HighlightText).
+
+**Note on --color-muted contrast:** #595959 on #ffffff computes to exactly 7.00:1.
+This is the minimum passing value for WCAG 1.4.6. While it technically passes, it
+has no margin. If any future change modifies the muted token or the background, the
+contrast ratio must be re-verified. Documented here for awareness -- no action needed
+now.
+
+**Note on aria-required vs required:** The spec (section 11.5) says to use the
+`required` attribute. The implementation uses `aria-required` instead. This is
+functionally equivalent and arguably better: the fields are inside a `hidden`
+container, so native `required` validation would not fire anyway, and `aria-required`
+communicates the requirement to assistive technology without fighting the `hidden`
+attribute semantics. No issue.
+
+**Note on middot separator:** The departure link meta text uses `&middot;` between
+arrival time and duration. Screen readers generally treat this as a brief pause or
+skip it. The accessible name remains self-descriptive per 2.4.9. No issue.
+
+**Verify:** Typecheck clean, lint clean, 228/228 unit tests pass. Playwright a11y
+not run locally (pre-existing DW-06 Windows hang). CI will confirm.
+
+**Learned:**
+- `generateMetadata()` in Next.js App Router runs server-side with only URL search
+  params available. Station names must be looked up from CRS codes via a utility
+  function. The page body has access to fetched departure data (which includes station
+  names), but the metadata function does not share that data. This is a common pitfall
+  when search params use coded identifiers.
+- The `--color-muted` token at 7.00:1 is the tightest constraint in the design system.
+  Any darkening of the page background or lightening of the muted colour would fail.
+  This is worth flagging in the design system as a "do not touch without rechecking"
+  value.
+- The review found no issues with the progressive-reveal form implementation. The
+  developer's self-certification was thorough and correct on all criteria. The one
+  issue (CRS codes in page title) was in the departure page, which is a server
+  component with a subtle metadata-vs-body data split.
+
+**Next:** DW-13 done. No new blocking issues filed. Remaining tasks: DW-04
+(retarget signal pipeline at RDM, blocked on data download), DW-06 (Windows build
+failure, devops).

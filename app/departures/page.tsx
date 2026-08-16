@@ -4,6 +4,7 @@ import { FocusHeading } from "@/app/components/FocusHeading";
 import { fetchDepartureList } from "@/app/lib/darwin";
 import { findScheduledDepartures } from "@/app/lib/schedule";
 import { buildResultsUrl, getTodayISO } from "@/app/lib/journey-params";
+import { getStationByCRS } from "@/app/lib/stations";
 import type { DepartureSummary } from "@/app/lib/journey-types";
 
 interface DeparturesPageProps {
@@ -116,8 +117,13 @@ export async function generateMetadata({
     return { title: "Choose a departure — Train Signal" };
   }
 
-  const from = params.from.toUpperCase();
-  const to = params.to.toUpperCase();
+  // Use station names (not CRS codes) in the page title for plain
+  // English (3.1.5) and a meaningful title (2.4.2). Fall back to the
+  // uppercased CRS code if the lookup fails.
+  const fromStation = getStationByCRS(params.from);
+  const toStation = getStationByCRS(params.to);
+  const from = fromStation ? fromStation.name : params.from.toUpperCase();
+  const to = toStation ? toStation.name : params.to.toUpperCase();
   const dateStr = params.date ? formatDateFull(params.date) : "";
   const datePart = dateStr ? `, ${dateStr}` : "";
 

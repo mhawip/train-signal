@@ -61,6 +61,7 @@ and writes to it last.
 | DW-10 | Design: departure selection page and route search form | designer |
 | DW-11 | Implement departure selection flow | developer |
 | DW-12 | Implement route search form progressive reveal | developer |
+| DW-13 | Accessibility review of DW-11 and DW-12 | designer |
 
 ---
 
@@ -103,23 +104,6 @@ P3-04 is done — see the index above.
 ## Discovered work
 
 Bugs and follow-ups get filed here by whoever finds them.
-
-### DW-13 — Accessibility review of DW-11 and DW-12
-- **owner:** designer
-- **status:** todo
-- **depends:** DW-11, DW-12
-- **why:** Both a new intermediate page in the journey flow and a progressive-reveal
-  form are novel UI patterns that require independent accessibility review per the
-  project's non-negotiables. Self-certification by the developer is not sufficient here.
-- **acceptance:**
-  - [ ] Departure selection page reviewed against all applicable WCAG 2.2 AAA criteria,
-        specifically: focus management (2.4.3), page title (2.4.2), link purpose (2.4.9),
-        consistent navigation (3.2.3)
-  - [ ] Progressive-reveal form reviewed against: labels (1.3.1, 2.4.6), keyboard
-        (2.1.1), focus visible (2.4.13), error identification (3.3.1), status messages
-        (4.1.3)
-  - [ ] Axe-core passes on both pages with no violations
-  - [ ] Any issues filed as new DW tasks; blocker issues block merge
 
 ### DW-06 — Fix local Windows verify: Playwright hang and build failure
 - **owner:** infra
