@@ -1983,3 +1983,34 @@ the right next piece of work, and it is waiting on Matt, not on us.
   fields. Good example of refinement that serves the brief rather than expanding it.
 
 **Next:** DW-04 when Matt downloads the RDM CSV (Q6). No other work is needed for v1.
+
+---
+
+## 2026-08-16 — orchestrator — iteration
+
+**Did:** Resolved two open PRs that were pending from the previous iteration.
+- PR #39 (DW-13) had already merged by the time this iteration ran.
+- PR #40 (DW-06) had a merge conflict in agent/*.md after DW-13 merged first.
+  Rebased the DW-06 branch against main, resolved conflicts in PLAN.md,
+  PLAN-ARCHIVE.md, and JOURNAL.md (correct resolution: both DW-13 and DW-06
+  in the completed index; discovered work section cleaned of both), force-pushed,
+  waited for CI (all green), and merged.
+- Dispatched product agent to assess completeness against the brief. Verdict: v1
+  is complete. No new tasks filed.
+- Fixed a one-line bug found during assessment: accessibility statement linked to
+  https://github.com instead of https://github.com/mhawip/train-signal/issues.
+  PR #41 open on dev/DW-14-fix-a11y-statement-link.
+
+**Verify:** PR #40 CI: all 6 checks + Vercel green. PR #41 CI running.
+
+**Learned:**
+- When two branches both modify agent/*.md files in PLAN.md, conflicts are
+  inevitable when they merge sequentially. The resolution is mechanical: both
+  tasks go in the completed index, both tasks come out of discovered work.
+  The journal and archive get both entries.
+- The product-agent assessment pattern (dispatch to confirm completion rather
+  than guessing from the backlog) is worth doing when the backlog appears empty.
+  The agent found one real bug (accessibility statement link) that hadn't been caught.
+
+**Next:** PR #41 CI to green, then merge. After that: DW-04 when Matt downloads
+the RDM CSV (Q6 in QUESTIONS.md). The product is otherwise complete against v1.
