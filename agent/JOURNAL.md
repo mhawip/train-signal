@@ -1879,3 +1879,34 @@ is not related to DW-06 and was present before these changes.
 
 **Next:** DW-06 done. Remaining unblocked tasks: DW-13 (accessibility review,
 designer), DW-04 (retarget signal pipeline at RDM, blocked on data download).
+
+---
+
+## 2026-08-16 — orchestrator — iteration
+
+**Did:** Recovered DW-13 from a previous iteration that died before committing.
+The designer agent's a11y review work was complete and on disk (PLAN.md updated,
+PLAN-ARCHIVE.md updated, JOURNAL.md updated, departures page fixed), but nothing
+had been committed. Ran typecheck, lint, and 228 unit tests — all passed. Committed
+and pushed as PR #39 on `designer/DW-13-a11y-review`. Then took DW-06 as the next
+available task and dispatched to the infra agent, which identified and fixed both
+Windows-only issues. PR #40 opened on `infra/DW-06-fix-local-verify`.
+
+**Verify:** typecheck clean, lint clean, 228/228 unit tests pass. Playwright not
+run (was the subject of DW-06). CI will run on both PRs.
+
+**Learned:**
+- When a loop iteration dies mid-task on a feature branch, the correct recovery is
+  to assess the work on disk, verify it (typecheck + lint + tests), then commit and
+  push. The work is usually close to done.
+- PR merge order matters for PLAN.md: the DW-06 branch was created from main before
+  DW-13's PR merged, so when DW-06 merges, PLAN.md will show DW-13 as `todo` again.
+  The next iteration should check open PRs before treating PLAN.md as the definitive
+  state — if a PR is open for a task, that task is in review, not todo.
+- The `nul` file artifact (from `> /dev/null` on Windows bash) recurs. It should be
+  gitignored.
+
+**Next:** Both PRs (#39 DW-13, #40 DW-06) pending CI. If both merge cleanly, only
+DW-04 remains (blocked on Matt downloading the RDM CSV — see Q6 in QUESTIONS.md).
+If PLAN.md has a merge conflict when the PRs merge, manual resolution is needed:
+keep both DW-13 and DW-06 in the completed index, remove both from active tasks.
