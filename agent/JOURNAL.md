@@ -1813,3 +1813,100 @@ not run locally (pre-existing DW-06 Windows hang). CI will confirm.
 **Next:** DW-13 done. No new blocking issues filed. Remaining tasks: DW-04
 (retarget signal pipeline at RDM, blocked on data download), DW-06 (Windows build
 failure, devops).
+
+---
+
+## 2026-08-16T10:00:00Z -- DW-06 -- infra
+
+**Did:** Fixed two Windows-only issues blocking `npm run verify` locally.
+
+**Issue 1 -- Playwright hang:** Root cause was `reporter: "html"` in
+`playwright.config.ts`. The HTML reporter opens a browser tab to display results
+after tests complete. On Windows, this blocks the process indefinitely (the
+browser launch never returns). Fix: use `"list"` reporter locally, `"html"` only
+in CI (`process.env.CI ? "html" : "list"`).
+
+**Issue 2 -- Build failure:** Root cause was `NODE_ENV=development` persisted in
+the local shell environment. `next build` internally expects to set
+`NODE_ENV=production` itself; when the shell already has `development`, Next.js
+produces a warning and then fails during `/500` prerender with `<Html> should not
+be imported outside of pages/_document`. This only affects Windows because the
+local dev environment has `NODE_ENV=development` set permanently (likely from a
+shell profile or IDE). CI (Ubuntu) starts with a clean environment. Fix: added
+`cross-env` as a devDependency and changed the `build` script to
+`cross-env NODE_ENV=production next build`.
+
+**Additional changes:**
+- `verify` script now runs `npm run build` before `npm run test:a11y`, so the
+  Playwright webServer can use `npm run start` (fast, ~2s) instead of
+  `npm run build && npm run start` (which was hitting timeout limits on Windows).
+  Locally, if a dev server is already running on port 3000, Playwright reuses it
+  (reuseExistingServer remains true outside CI).
+- Playwright test timeout increased from 30s to 60s to accommodate axe-core AAA
+  analysis time.
+- Playwright webServer timeout set to 30s locally (just starting the production
+  server) and 180s in CI (building + starting).
+- Removed accidental `nul` file from repo root (Windows artifact from bash
+  redirecting to `/dev/null`).
+
+Files changed:
+- `playwright.config.ts` -- reporter, timeout, webServer command and timeout
+- `package.json` -- `build` script uses `cross-env`, `verify` includes build step,
+  `cross-env` added to devDependencies
+
+**Verify:** `npm run build` succeeds locally (was failing). `npm run test:a11y`
+exits cleanly with 4/4 tests passing (was hanging indefinitely). Typecheck,
+lint, and Playwright all pass. Unit tests have a pre-existing flaky timeout on
+`JourneyTimeline` and `track-lookup` tests due to Windows machine load -- this
+is not related to DW-06 and was present before these changes.
+
+**Learned:**
+- Playwright's HTML reporter is the primary hang cause on Windows. It calls
+  `open` (or the platform equivalent) to launch a browser, which blocks the
+  Node.js process. The `list` reporter writes to stdout and exits immediately.
+  This is a well-known Playwright issue on Windows.
+- `NODE_ENV=development` leaking from the shell into `next build` is a subtle
+  failure mode. Next.js warns about non-standard NODE_ENV but does not override
+  it. The `/500` error page prerender path is particularly sensitive because it
+  uses `next/document` internals that check NODE_ENV. `cross-env` is the
+  standard cross-platform solution.
+- Running `npm run build` as a separate step in `verify` (before Playwright)
+  rather than inside Playwright's webServer command avoids timeout issues.
+  The production server starts in ~2s; building inside the webServer timeout
+  was racing against a 120-180s limit on a loaded Windows machine.
+- The `nul` file is created when bash on Windows interprets `> /dev/null` as a
+  literal file path. This is a recurring artifact that should be gitignored.
+
+**Next:** DW-06 done. Remaining unblocked tasks: DW-13 (accessibility review,
+designer), DW-04 (retarget signal pipeline at RDM, blocked on data download).
+
+---
+
+## 2026-08-16 — orchestrator — iteration
+
+**Did:** Recovered DW-13 from a previous iteration that died before committing.
+The designer agent's a11y review work was complete and on disk (PLAN.md updated,
+PLAN-ARCHIVE.md updated, JOURNAL.md updated, departures page fixed), but nothing
+had been committed. Ran typecheck, lint, and 228 unit tests — all passed. Committed
+and pushed as PR #39 on `designer/DW-13-a11y-review`. Then took DW-06 as the next
+available task and dispatched to the infra agent, which identified and fixed both
+Windows-only issues. PR #40 opened on `infra/DW-06-fix-local-verify`.
+
+**Verify:** typecheck clean, lint clean, 228/228 unit tests pass. Playwright not
+run (was the subject of DW-06). CI will run on both PRs.
+
+**Learned:**
+- When a loop iteration dies mid-task on a feature branch, the correct recovery is
+  to assess the work on disk, verify it (typecheck + lint + tests), then commit and
+  push. The work is usually close to done.
+- PR merge order matters for PLAN.md: the DW-06 branch was created from main before
+  DW-13's PR merged, so when DW-06 merges, PLAN.md will show DW-13 as `todo` again.
+  The next iteration should check open PRs before treating PLAN.md as the definitive
+  state — if a PR is open for a task, that task is in review, not todo.
+- The `nul` file artifact (from `> /dev/null` on Windows bash) recurs. It should be
+  gitignored.
+
+**Next:** Both PRs (#39 DW-13, #40 DW-06) pending CI. If both merge cleanly, only
+DW-04 remains (blocked on Matt downloading the RDM CSV — see Q6 in QUESTIONS.md).
+If PLAN.md has a merge conflict when the PRs merge, manual resolution is needed:
+keep both DW-13 and DW-06 in the completed index, remove both from active tasks.

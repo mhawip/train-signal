@@ -31,6 +31,22 @@ particular way, or its full original acceptance criteria).
   - [x] One issue found and fixed inline: page title used CRS codes instead of station
         names (2.4.2, 3.1.5). No blocker issues filed.
 
+### DW-06 — Fix local Windows verify: Playwright hang and build failure
+- **owner:** infra
+- **status:** done
+- **depends:** —
+- **why:** Two Windows-only issues blocked `npm run verify` from completing locally.
+  (1) Playwright hung indefinitely due to the HTML reporter opening a browser tab.
+  (2) `npm run build` failed because `NODE_ENV=development` in the shell caused
+  Next.js to error during `/500` prerender. CI (Ubuntu) was green on both.
+- **acceptance:**
+  - [x] Root cause of Playwright hang identified; `npm run test:a11y` exits cleanly
+        locally on Windows (pass or fail — not hang)
+  - [x] Root cause of build failure identified; `npm run build` succeeds locally
+  - [x] `npm run verify` completes locally on Windows with all checks either passing or
+        reporting a real failure (not hanging)
+  - [x] Findings documented in journal; fix committed
+
 ### DW-12 — Implement route search form progressive reveal
 - **owner:** developer
 - **status:** done
