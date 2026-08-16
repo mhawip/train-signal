@@ -107,7 +107,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-06 — Fix local Windows verify: Playwright hang and build failure
 - **owner:** infra
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** Two related Windows-only issues are actively blocking the ralph loop from
   completing full `npm run verify` runs locally. Without this fix, every developer
