@@ -64,6 +64,7 @@ and writes to it last.
 | DW-13 | Accessibility review of DW-11 and DW-12 | designer |
 | DW-06 | Fix local Windows verify: Playwright hang and build failure | infra |
 | DW-14 | Ship design iteration: accordion form, optional network, worst-case signal | developer |
+| DW-15 | Design: route overview results and no-network disclaimer | designer |
 
 ---
 
@@ -107,33 +108,6 @@ P3-04 is done — see the index above.
 
 Bugs and follow-ups get filed here by whoever finds them.
 
-### DW-15 — Design: route overview results and no-network disclaimer
-- **owner:** designer
-- **status:** in-progress
-- **depends:** DW-14
-- **why:** Two new results-page states need accessibility constraints and visual design
-  before implementation can begin.
-- **state 1 — route overview (no time entered):**
-  The user enters only origin + destination (and optionally a network). The form submits
-  without a departure time. Results show signal for the *most common stopping pattern*
-  between those two stations (derived from SCHEDULE data — the stopping pattern that
-  appears most frequently across all scheduled services). Timeline shows stop-to-stop
-  segments proportionally by scheduled duration, with no clock times (since there is no
-  specific departure). Heading should make the "typical journey" framing clear.
-- **state 2 — no-network disclaimer:**
-  When no network is selected, results show worst-case signal across all four operators.
-  A small inline notice on the results page should explain this and offer a link back to
-  the search page (pre-filled with current from/to/date/time params, with the network
-  accordion open) so the user can refine by network without re-entering everything.
-- **acceptance:**
-  - [ ] Accessibility constraints written (WCAG 2.2 AAA) for both states before any
-        implementation begins — same rigour as DW-09
-  - [ ] Visual design specified for both states: component layout, copy, typography,
-        all interactive states
-  - [ ] Back-link URL pattern for the no-network disclaimer specified (params to include)
-  - [ ] Self-certification checklist completed
-  - [ ] No open accessibility questions at time of hand-off to developer
-
 ### DW-16 — Implement route overview results (no time → most common stopping pattern)
 - **owner:** developer
 - **status:** todo
@@ -153,11 +127,17 @@ Bugs and follow-ups get filed here by whoever finds them.
   - Timeline component: handle null/absent clock times — show stop names and proportional
     segment bars without the time column
   - Heading, context text, and "typical journey" framing as designed in DW-15
+- **note:** There is a minor inconsistency between the two DW-15 specs. `specs/accessibility.md`
+  section 12.5 lists 4 columns: Station, Leg duration, Expected signal, **Confidence**.
+  `specs/design-system.md` section 11 HTML example shows 4 columns: Station, Leg duration,
+  Expected signal, **Journey time**. The accessibility spec is authoritative. Use the
+  accessibility spec column set (Station, Leg duration, Expected signal, Confidence) and
+  drop the Journey time column — it is meaningless without a departure time.
 - **acceptance:**
   - [ ] Submitting with only origin + destination (no time) reaches a results page
   - [ ] Most common stopping pattern is selected (unit test: given a fixture with known
         pattern counts, returns the correct one)
-  - [ ] Timeline renders correctly with no clock times
+  - [ ] Timeline renders correctly with no clock times — 4 columns per accessibility.md 12.5
   - [ ] Results page heading makes "typical journey" framing clear (per DW-15 design)
   - [ ] Specific-train path (with time) still works as before
   - [ ] `npm run verify` green
@@ -183,6 +163,48 @@ Bugs and follow-ups get filed here by whoever finds them.
   - [ ] Network accordion is open when user arrives via the back-link
   - [ ] Notice not shown when a network is selected
   - [ ] `npm run verify` green
+
+### DW-18 — Accessibility review of DW-16 (route overview)
+- **owner:** accessibility-specialist
+- **status:** todo
+- **depends:** DW-16
+- **why:** The route overview table replaces Arrives/Departs with a "Leg duration" column
+  — a new table structure not yet reviewed with a screen reader. The DW-15 self-cert
+  flagged this for independent verification.
+- **scope:** Verify with NVDA (Windows) or VoiceOver (macOS) that:
+  - The 4-column route-overview table (Station, Leg duration, Expected signal, Confidence)
+    reads correctly row by row
+  - The caption "Typical journey: [Origin] to [Destination]" is announced
+  - The origin row's en dash in Leg duration is announced meaningfully (or at minimum,
+    not confusingly)
+  - The `<tfoot>` total row makes sense in reading order
+  - No criterion in accessibility.md section 12 is violated by the implementation
+- **acceptance:**
+  - [ ] Screen reader walkthrough documented (reader, OS, findings)
+  - [ ] Any violations filed as new tasks or fixed in-place
+  - [ ] `npm run verify` green (no regression)
+
+### DW-19 — Accessibility review of DW-17 (no-network notice)
+- **owner:** accessibility-specialist
+- **status:** todo
+- **depends:** DW-17
+- **why:** The `role="note"` + `aria-label="Network notice"` pattern is new to this
+  product. The DW-15 self-cert flagged it for independent verification that the notice
+  is announced as expected and not intrusive.
+- **scope:** Verify with NVDA or VoiceOver that:
+  - The notice is announced as a note landmark (or equivalent) when the user navigates
+    to it by landmark or by Tab
+  - The `aria-label` ("Network notice") is announced
+  - The link text "Search again with your network selected" is self-descriptive in
+    isolation (2.4.9)
+  - The link target size meets 44px (2.5.5) in the rendered implementation
+  - The notice background tokens (`--color-notice-bg`, `--color-notice-border`) render
+    correctly in both light and dark schemes, and in forced-colors mode
+  - No criterion in accessibility.md section 13 is violated by the implementation
+- **acceptance:**
+  - [ ] Screen reader walkthrough documented
+  - [ ] Any violations filed as new tasks or fixed in-place
+  - [ ] `npm run verify` green (no regression)
 
 ### DW-04 — Retarget signal pipeline at RDM product
 - **owner:** infra

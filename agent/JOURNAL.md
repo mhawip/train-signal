@@ -2037,3 +2037,26 @@ Changes shipped:
 - DW-14's unit tests failing was expected: when a component is redesigned from a disclosure toggle to an accordion pattern, every test that queries by the old button label breaks. The fix is mechanical but must be done before shipping.
 
 **Next:** DW-15 (designer — accessibility constraints and visual design for route overview results and no-network disclaimer). DW-15 depends on DW-14 (now done). DW-04 remains blocked on Q6 (Matt to download RDM CSV).
+
+---
+
+## 2026-08-17T17:30:00Z — DW-15 — orchestrator/designer
+
+**Did:** Picked up uncommitted DW-15 designer work from `designer/DW-15-route-overview-design` branch. The previous designer agent had written comprehensive specs but not committed. Assessed the work, ran verify (failed on first attempt due to port 3000 conflict; killed the occupying process and re-ran — all 228 unit tests + 4 a11y tests passed). Committed the spec changes and opened a PR.
+
+Changes shipped:
+- `specs/accessibility.md`: sections 12 (Route overview results page) and 13 (No-network disclaimer notice). Full WCAG 2.2 AAA constraints: page titles, heading hierarchy, table columns, copy, contrast ratios, focus rings, keyboard behaviour, forced colours, self-certification checklists.
+- `specs/design-system.md`: sections 11 (Route overview) and 12 (No-network disclaimer). HTML structure, CSS, design tokens (`--color-notice-bg`, `--color-notice-border`), copy strings, back-link URL pattern (`?network=open` sentinel), forced-colours override.
+
+Known inconsistency found and documented: `accessibility.md` 12.5 lists Confidence as the 4th table column; `design-system.md` 11 HTML example shows Journey time. Accessibility spec wins — developer should use Confidence, drop Journey time. Noted in DW-16 task and archive.
+
+Follow-up tasks filed: DW-18 (a11y review of route-overview table, post DW-16) and DW-19 (a11y review of no-network notice, post DW-17).
+
+**Verify:** Pass. 228 unit tests, 4 a11y Playwright tests. Typecheck and lint clean. The first verify run failed because a process was occupying port 3000 (same issue as DW-14). Fixed by killing the process with `Stop-Process` in PowerShell.
+
+**Learned:**
+- The port 3000 conflict pattern is now fully established: always check `netstat -ano | findstr ":3000"` before running `test:a11y` locally on Windows. If LISTENING, kill with `powershell -Command "Stop-Process -Id <PID> -Force"`.
+- DW-15 was a documentation-only task (spec files, no application code). `npm run verify` still runs because the a11y suite tests the application. Green verify confirms no application regression.
+- Internal inconsistencies within a single iteration's spec work can happen when two spec files each represent the same design element (the table structure) and the designer made a different choice in each. Always cross-check accessibility.md against design-system.md before filing the developer task.
+
+**Next:** DW-16 (developer — implement route overview results) and DW-17 (developer — implement no-network disclaimer) are now unblocked. Either can run next. DW-04 remains blocked on Q6.

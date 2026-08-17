@@ -60,6 +60,8 @@ section 8 for exactly what it does and doesn't cover. It is necessary, never suf
 9. [Accessibility statement](#9-accessibility-statement)
 10. [Departure selection page](#10-departure-selection-page)
 11. [Progressive-reveal form](#11-progressive-reveal-form)
+12. [Route overview results page](#12-route-overview-results-page)
+13. [No-network disclaimer notice](#13-no-network-disclaimer-notice)
 
 ---
 
@@ -1436,6 +1438,342 @@ When the form is submitted **with** date and time fields:
 - Navigate to the departure selection page (section 10) as normal.
 - The URL includes all params including `mode=timed` so the form state is preserved on
   Back navigation.
+
+---
+
+## 12. Route overview results page
+
+This section covers the results page state when the user submits the form with
+origin and destination but **no departure time**. Instead of a specific train, the
+page shows signal quality for the most common stopping pattern between the two
+stations (derived from SCHEDULE data). There is no specific departure, so clock
+times are absent from the table and the best-window component.
+
+### 12.1 Surface entry
+
+Add to the Surface table in section 1:
+
+| Surface | Key states | Highest-risk criteria |
+|---|---|---|
+| Route overview results (Screen 2b) | Populated, no-good-window, error, with/without network | 1.4.1, 1.4.6, 1.4.8, 3.1.5, 2.4.8, 2.4.10, 1.3.1 |
+
+### 12.2 Page title -- 2.4.2
+
+The `<title>` must follow the pattern:
+
+```
+[Origin] to [Destination] route signal -- Train Signal
+```
+
+Example: `Leeds to London route signal -- Train Signal`
+
+The word "route" distinguishes this page from a specific-train result (which
+includes a date). This helps screen reader users identify where they are (2.4.8)
+without relying on visual cues.
+
+### 12.3 Heading structure -- 2.4.10, 1.3.1
+
+The heading hierarchy must be:
+
+- `<h1>`: "[Origin] to [Destination] signal" -- same pattern as the specific-train
+  page, but without a date.
+- `<h2>` (in the BestWindow section): "Best window" or "No good signal window
+  found" -- unchanged from the specific-train page.
+- `<h2>` (in the JourneyTimeline section): "Journey details" -- unchanged.
+- `<h2>` (in the VisualTimeline section, if present): "Journey timeline" --
+  unchanged.
+
+A subtitle paragraph immediately after the `<h1>` must state: "Typical stopping
+pattern. Times and signal may vary by train." This provides context (2.4.8) and
+meets the accuracy constraint (never claim accuracy we do not have). It is a `<p>`,
+not a heading, to avoid inflating the heading hierarchy.
+
+### 12.4 The "typical journey" framing -- 3.1.5, 3.1.3
+
+All copy must communicate that this is a route overview, not a specific service.
+The framing word is "typical" (Flesch-Kincaid Grade 4), not "most frequent stopping
+pattern" or "canonical route". Specific requirements:
+
+- The subtitle: "Typical stopping pattern. Times and signal may vary by train."
+- The best-window component must not show clock times (because there are none).
+  Instead it shows station names and duration. See section 12.6.
+- The table caption: "Typical journey: [Origin] to [Destination]" -- the word
+  "Typical" is the distinguishing cue.
+- No user-visible string may imply this is a specific timetabled service.
+
+### 12.5 Text-equivalent table without clock times -- 1.3.1, 7.1, 7.2
+
+The table is the primary accessible representation. When no departure time exists,
+the Departs and Arrives columns must be replaced with a single "Leg duration"
+column. The table must not show empty or placeholder time cells -- empty cells
+are ambiguous to screen reader users who cannot see the visual context.
+
+**Column structure for route overview:**
+
+| Column | Content | Constraints |
+|---|---|---|
+| Station | Station name | `<th scope="row">`, plain text, no abbreviations |
+| Leg duration | Duration of the segment arriving at this station, e.g. "22 min" | Uses the existing `formatDuration` helper. Origin row shows en dash. |
+| Expected signal | Same as the specific-train table (section 7.2) | Plain English, icon + label, same content |
+| Confidence | Same as the specific-train table | "High", "Medium", "Low", or "No data" |
+
+**Table caption:** "Typical journey: [Origin] to [Destination]"
+
+**Column header `<th>` elements** must use `scope="col"`. The Station column cells
+must use `<th scope="row">`.
+
+**Why replace columns rather than show blanks:** Empty cells in a screen reader are
+announced as "blank" or skipped entirely, depending on the reader. A sighted user
+sees the empty cell and infers "no times available"; a screen reader user hears
+"blank" twice in every row with no explanation. This violates 1.3.1 (information
+conveyed visually -- the absence of times implies a route overview -- is not
+conveyed programmatically). Replacing the columns with "Leg duration" makes the
+table self-explanatory without relying on the surrounding context.
+
+### 12.6 Best-window component without clock times -- 3.1.5
+
+When no clock times are available, the BestWindow component must not show a time
+range. It must show a station-to-station description with duration.
+
+**Copy patterns:**
+
+Good window found:
+> "Best window: [duration] of expected [quality] signal, [StartStation] to
+> [EndStation]. Good enough for a [call type]."
+
+Example:
+> "Best window: 45 minutes of expected voice and video signal, York to Doncaster.
+> Good enough for a video call."
+
+No good window:
+> (Unchanged from current pattern -- see existing BestWindow component.)
+
+**The heading text remains "Best window"** -- it is the same component, the same
+role. Only the detail paragraph changes.
+
+**Low confidence note:** Unchanged: "Based on limited data for this route."
+
+### 12.7 Visual distinction from specific-train results -- 1.3.1, 2.4.8
+
+The route overview must be visually distinguishable from a specific-train result
+without relying on colour (1.4.1). The distinguishing cues are:
+
+1. **The subtitle** ("Typical stopping pattern. Times and signal may vary by
+   train.") -- present only on route overview.
+2. **The absence of clock times** in the table and best-window component.
+3. **The table caption** includes the word "Typical".
+
+These are all text-based cues that work for sighted users, screen reader users,
+and users with colour vision deficiency. No colour-based or icon-based distinction
+is needed.
+
+### 12.8 Keyboard and focus -- 2.1.1, 2.1.3, 2.4.3
+
+Keyboard interaction is identical to the specific-train results page. Focus order:
+skip link, `<h1>`, best-window section, table (scrollable region), visual timeline,
+navigation links. No new interactive elements are introduced.
+
+### 12.9 Live regions and announcements -- 4.1.3
+
+Same pattern as the specific-train results page. If the page is server-rendered
+(full page load), no live region is needed -- the screen reader announces the
+`<h1>` on page load. If the page is client-rendered, the heading area must use
+`aria-live="polite"`.
+
+### 12.10 Zoom and reflow -- 1.4.4, 1.4.10
+
+Identical to the specific-train results page. The route-overview table has fewer
+columns (4 vs 6), so it reflows more easily at 320px. No additional constraints.
+
+### 12.11 Forced colours -- 1.4.8
+
+No new visual treatments are introduced that would interact with forced-colours
+mode. The subtitle uses standard text. The table uses standard table elements. The
+visual timeline is unchanged.
+
+---
+
+## 13. No-network disclaimer notice
+
+This section covers the inline notice displayed on the results page when no mobile
+network is selected. The notice explains that results show worst-case signal across
+all four operators and provides a link back to the search page with the network
+accordion pre-opened.
+
+### 13.1 Surface entry
+
+This is a state of the existing results page (Screen 2), not a new surface.
+Update the key states for "Results page" in section 1:
+
+| Surface | Key states | Highest-risk criteria |
+|---|---|---|
+| Results page (Screen 2) | Loading, populated, no-good-window, error, **no-network notice** | 1.4.1, 1.4.6, 1.4.8, 1.4.11, 1.1.1, 1.3.1, **2.4.9, 2.5.5** |
+
+### 13.2 Component semantics -- 1.3.1, 1.3.6
+
+The notice must be a `<div>` with `role="note"` (WAI-ARIA 1.2). This communicates
+to assistive technology that the content is parenthetical or supplementary to the
+main content. It must not be `role="alert"` (the information is not urgent or
+time-sensitive) or `role="status"` (it is not a status update -- it is static
+content rendered with the page).
+
+The notice must have an accessible name via `aria-label="Network notice"` or
+`aria-labelledby` pointing to a heading within the notice. Since the notice does
+not warrant a heading in the hierarchy (it is supplementary), `aria-label` is
+appropriate.
+
+### 13.3 Copy -- 3.1.5, 3.1.3
+
+The notice copy must be plain English at Grade 6-8 reading level. The exact
+strings are:
+
+**Notice body:**
+
+> "No mobile network selected. These results show the worst expected signal across
+> EE, O2, Vodafone, and Three. If you know your network, results will be more
+> accurate."
+
+**Link text:**
+
+> "Search again with your network selected"
+
+This link text is self-descriptive when read alone (2.4.9). It tells the user
+what will happen: they will return to the search form with their network selection
+open. It does not say "click here", "go back", or "change network".
+
+### 13.4 Link behaviour and URL pattern -- 3.3.7, 3.3.6
+
+The link must navigate to the search form page (`/`) with all current journey
+parameters preserved and a sentinel parameter that opens the network accordion.
+
+**URL pattern:**
+
+```
+/?from=[CRS]&to=[CRS]&network=open
+```
+
+If date and time were provided:
+
+```
+/?from=[CRS]&to=[CRS]&date=[YYYY-MM-DD]&time=[HH:MM]&mode=timed&network=open
+```
+
+**The sentinel value `network=open`** signals the form to reveal the network
+accordion on load without pre-selecting any network. This is distinct from a
+truthy network value like `network=EE` (which would pre-select EE).
+
+**How JourneyForm handles `network=open`:** The existing code at line 86-89 of
+`JourneyForm.tsx` reveals the network accordion when `searchParams.get("network")`
+is truthy. The value `"open"` is truthy, so the accordion will open. The
+`RadioGroup` component receives `"open"` as the `value` prop, but since `"open"`
+does not match any of the radio button values (`"EE"`, `"O2"`, `"Vodafone"`,
+`"Three"`), no radio button is pre-selected. This is the correct behaviour.
+
+**The developer must add one guard:** when building the departures URL or results
+URL from form state, if `network` equals `"open"`, treat it as empty (no network
+selected). This prevents `network=open` from being passed to the results page as
+if it were a real network name.
+
+**Rationale:**
+
+- **3.3.7 (Redundant Entry):** The user must not re-enter their origin and
+  destination. The link preserves all params.
+- **3.3.6 (Error Prevention):** The action is reversible (the user can press Back
+  to return to results).
+- **2.4.9 (Link Purpose):** The link text describes the destination and purpose.
+
+### 13.5 Contrast -- 1.4.6, 1.4.11
+
+The notice uses a background colour to distinguish it from surrounding content.
+The background and text must meet AAA contrast requirements.
+
+**Light scheme:**
+
+- Notice background: `--color-notice-bg` = `#f0f0f0` (light grey)
+- Notice text: `--color-page-fg` = `#1a1a1a`
+- Contrast ratio: `#1a1a1a` on `#f0f0f0` = 16.02:1. Passes 7:1.
+- Notice border-left: `--color-notice-border` = `#5c5c5c` (matches field border)
+- Border against background: `#5c5c5c` on `#f0f0f0` = 3.65:1. Passes 3:1 (1.4.11).
+- Border against page background: `#5c5c5c` on `#ffffff` = 6.69:1. Passes 3:1.
+- Link text: `--color-page-fg` = `#1a1a1a` (underlined, not colour-differentiated).
+  Contrast: 16.02:1 on notice background. Passes 7:1.
+
+**Dark scheme:**
+
+- Notice background: `--color-notice-bg` = `#1e1e1e` (slightly lighter than page bg)
+- Notice text: `--color-page-fg` = `#e8e8e8`
+- Contrast ratio: `#e8e8e8` on `#1e1e1e` = 14.43:1. Passes 7:1.
+- Notice border-left: `--color-notice-border` = `#999999`
+- Border against background: `#999999` on `#1e1e1e` = 5.13:1. Passes 3:1.
+- Border against page background: `#999999` on `#121212` = 6.58:1. Passes 3:1.
+- Link text: `#e8e8e8` on `#1e1e1e` = 14.43:1. Passes 7:1.
+
+### 13.6 Link target size -- 2.5.5
+
+The link within the notice is a block-level element, not inline text. It must have
+`min-height: var(--target-min)` (44px) and sufficient padding to meet the 44x44
+CSS px target. The link is rendered as a standalone paragraph within the notice, not
+as inline text within a sentence. This ensures the tap target is unambiguous and
+meets the minimum size without relying on line-height calculations.
+
+### 13.7 Line length and spacing -- 1.4.8
+
+The notice sits within the `--max-width-text` (40rem) container. At 16px body size,
+this caps lines at approximately 80 characters. Line height is `--line-height-body`
+(1.5). Paragraph spacing within the notice follows the standard `margin-bottom:
+1.5em` rule.
+
+### 13.8 Keyboard access -- 2.1.1, 2.1.3
+
+The link within the notice is a standard `<a>` element. It is reachable via Tab and
+activatable via Enter. No special keyboard handling is needed.
+
+### 13.9 Focus indicator -- 2.4.13
+
+The link uses the global focus ring: `outline: 2px solid var(--color-focus);
+outline-offset: 2px`. The focus ring sits against the notice background.
+
+| Scheme | Focus colour | Adjacent colour (notice bg) | Ratio | Passes 3:1? |
+|---|---|---|---|---|
+| Light | `#0044cc` | `#f0f0f0` | 5.95:1 | Yes |
+| Dark | `#6699ff` | `#1e1e1e` | 5.26:1 | Yes |
+
+### 13.10 Reading level -- 3.1.5
+
+All notice copy is plain English. Verification:
+
+- "No mobile network selected." -- Grade 4.
+- "These results show the worst expected signal across EE, O2, Vodafone, and
+  Three." -- Grade 8 (the brand names are proper nouns, not complex vocabulary).
+- "If you know your network, results will be more accurate." -- Grade 6.
+- "Search again with your network selected" -- Grade 6.
+
+All pass the Grade 6-8 target.
+
+### 13.11 Colour independence -- 1.4.1
+
+The notice is distinguished from surrounding content by:
+
+1. A left border (structural, not colour-only).
+2. A background fill (lighter/darker than the page background, providing a
+   luminance shift visible in greyscale).
+3. The text content itself (the words "No mobile network selected" are
+   unambiguous).
+
+The notice does not use colour as the sole means of conveying any information.
+
+### 13.12 Forced colours -- 1.4.8
+
+In `forced-colors: active`, the background colour is suppressed. The left border
+must use `border-left: 4px solid ButtonText` to remain visible. The text uses
+system colours automatically. The link uses system `LinkText` colour. The notice
+remains readable and identifiable.
+
+### 13.13 Zoom and reflow -- 1.4.4, 1.4.10
+
+The notice is a simple text block within the 40rem container. At 320px effective
+width, it reflows to full width. No horizontal scroll. No clipped content. The left
+border and padding are preserved at all zoom levels.
 
 ---
 
