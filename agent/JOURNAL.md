@@ -2060,3 +2060,31 @@ Follow-up tasks filed: DW-18 (a11y review of route-overview table, post DW-16) a
 - Internal inconsistencies within a single iteration's spec work can happen when two spec files each represent the same design element (the table structure) and the designer made a different choice in each. Always cross-check accessibility.md against design-system.md before filing the developer task.
 
 **Next:** DW-16 (developer — implement route overview results) and DW-17 (developer — implement no-network disclaimer) are now unblocked. Either can run next. DW-04 remains blocked on Q6.
+
+---
+
+## 2026-08-17T22:30:00Z — DW-16 — orchestrator/developer
+
+**Did:** Picked up uncommitted DW-16 developer work from `dev/DW-16-route-overview` branch. Previous developer agent had written comprehensive implementation (490 insertions, 85 deletions across 11 files) but not committed. Assessed the work, ran verify (typecheck, lint, 233 unit tests, 6 Playwright a11y tests — all green), committed, pushed, and opened PR #43.
+
+Changes shipped:
+- `app/lib/journey-params.ts`: `buildRouteOverviewUrl` — encodes origin + destination (+ optional network) as `/results?from=X&to=Y`
+- `app/components/JourneyForm.tsx`: submitting with date/time accordion closed navigates to route-overview URL
+- `app/lib/schedule.ts`: `findTypicalJourney(fromCrs, toCrs, network)` — scans all schedules, counts stopping patterns by CRS sequence, returns most-frequent as a `Journey` with `date: ""` (sentinel)
+- `app/results/page.tsx`: route-overview branch (missing date+time params); calls `findTypicalJourney`; "No route found" error state; "Typical stopping pattern" subtitle; metadata title for route-overview mode
+- `app/components/JourneyTimeline.tsx`: route-overview layout — 4 columns (Station, Leg duration, Expected signal, Confidence) per accessibility.md §12.5; caption "Typical journey: X to Y"; leg durations from illustrative schedule times
+- `app/components/BestWindow.tsx`: route-overview mode (startTime/endTime null) — station-to-station framing with duration, no clock times
+- `app/lib/best-window.ts`: `BestWindow.startTime`/`.endTime` typed `string | null`; set null when `journey.date === ""`
+- `app/globals.css`: `.ts-route-subtitle` style (muted, base font)
+- `app/lib/schedule.test.ts`: `findTypicalJourney` unit tests (most-frequent-pattern, null-when-no-route, case-insensitive CRS, illustrative times retained)
+- `app/components/JourneyForm.test.tsx`: route-overview navigation, network param included, validates-only-when-revealed
+- `e2e/results.spec.ts`: two new axe-core a11y tests for route-overview with and without network
+
+**Verify:** typecheck clean, lint clean, 233 unit tests pass, 6 Playwright a11y tests pass. First `test:a11y` attempt timed out because server wasn't pre-built; fixed by running `npm run build` then `npm run start` in background before test run.
+
+**Learned:**
+- The local a11y suite config runs `npm run start` (not `npm run build && npm run start`) when `reuseExistingServer: true` and no server is present. This means a fresh branch checkout needs a manual build first, or the suite will time out at 30s. The fix: always run `npm run build` before `npm run test:a11y` on a first-run. CI is immune (it always builds first).
+- The DW-15 column inconsistency (accessibility.md §12.5 has "Confidence", design-system.md §11 HTML has "Journey time") was correctly resolved in the implementation: Confidence wins, Journey time dropped. This was the right call — Journey time is meaningless without a departure time in route-overview mode.
+- `findTypicalJourney` does not apply date/day-of-week/cancellation filtering — it counts patterns across all scheduled services regardless of when they run. This is intentional: the typical pattern is structural, not temporal. The function is called from a server component with no date context.
+
+**Next:** DW-17 (developer — no-network disclaimer with back-to-search link) and DW-18 (accessibility-specialist review of DW-16 route overview) are both unblocked. DW-18 requires a screen reader walkthrough; DW-17 is a pure developer task. Either can run next. DW-04 remains blocked on Q6.
