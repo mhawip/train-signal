@@ -1910,3 +1910,107 @@ run (was the subject of DW-06). CI will run on both PRs.
 DW-04 remains (blocked on Matt downloading the RDM CSV — see Q6 in QUESTIONS.md).
 If PLAN.md has a merge conflict when the PRs merge, manual resolution is needed:
 keep both DW-13 and DW-06 in the completed index, remove both from active tasks.
+
+---
+
+## 2026-08-16 — v1-assessment — product-manager
+
+**Did:** Full product assessment against specs/brief.md. Read the brief, the complete
+PLAN.md and PLAN-ARCHIVE.md backlogs, all application pages (home, departures, results,
+accessibility statement), the layout, key components (JourneyForm, BestWindow,
+JourneyTimeline, VisualTimeline), and open questions.
+
+**Verdict: v1 is complete against the brief.** Every item in brief section 5 ("Scope --
+v1 -- In scope") is delivered and working:
+
+1. **GB National Rail journeys** -- origin/destination station search (CRS + name),
+   date within 8-week horizon, time. Darwin for today, NR SCHEDULE for future dates.
+   Departure selection intermediate page (DW-11) improves the flow beyond what the
+   brief specified.
+2. **Per-network results** -- EE, O2, Vodafone, Three. Radio group in form, signal
+   lookup keyed by operator MCC/MNC.
+3. **Three-band signal verdict** -- "Voice and video", "Voice only", "No signal
+   expected". Conservative tie-breaking (none > voice > video). Low-confidence segments
+   visually distinct with dashed border and "(limited data)" label.
+4. **Journey timeline** -- text-equivalent table (accessible primary) and visual
+   vertical timeline (progressive enhancement). Calling points with times, signal bands
+   between them.
+5. **"Best window to book"** -- plain-English sentence above the timeline with clock
+   times, duration, quality, and station names. Handles "no good window" honestly.
+6. **Tunnels called out** -- detected via 200m proximity to OSM tunnel geometry, named
+   inline in the table. (Accessibility statement honestly notes the visual timeline
+   shows tunnels as notes within bands, not separate segments.)
+
+**Success criteria (brief section 4):**
+- Landing to answer: architecture supports it (server components, 332KB removed from
+  client bundle, station search via API not bundled JSON).
+- Accuracy: conservative by design. 2018-19 data stated in the UI. Language is always
+  "expected" / "likely". Sparse data degrades to "No data", not a guess.
+- WCAG 2.2 AAA: multiple independent audits (P1-07, DW-05, DW-09, DW-13, P3-03).
+  Accessibility statement published. 4 Playwright axe-core AAA tests in CI.
+- Phone/train/bad connection: performance pass done (P3-04).
+
+**What remains:**
+
+- **DW-04 (retarget signal pipeline at RDM data)** -- blocked on Q6: Matt needs to
+  download the 2026 RDM CSV to `data/raw/`. This is an enhancement (newer data with 5G
+  measurements), not a gap against the v1 brief. The product works correctly with the
+  2018-19 Ofcom data and states the vintage honestly. Once Matt downloads the file,
+  DW-04 can proceed unattended.
+
+- **Minor: accessibility statement GitHub link** -- the "Report a problem" section links
+  to `https://github.com` rather than `https://github.com/mhawip/train-signal`. Not
+  filing a task for this; it is a one-line fix that any developer iteration can pick up.
+
+**Not filing new tasks.** The backlog is clean. The product does exactly what the brief
+says it should do. The temptation here is to add polish -- route overview mode, better
+tunnel rendering in the visual timeline, loading states, error retry -- but none of
+those are in the v1 brief, and the product's value comes from its simplicity. DW-04 is
+the right next piece of work, and it is waiting on Matt, not on us.
+
+**Verify:** Assessment only; no code changes.
+
+**Learned:**
+- 36 tasks completed across 4 phases plus 13 discovered-work items, by 7 agent roles.
+  The dependency graph (accessibility constraints before design before implementation)
+  held throughout and prevented the usual pattern of accessibility retrofitting.
+- The biggest risk from the brief -- "is the yellow-train data dense enough?" -- was
+  resolved early (P2-01 thin slice) and validated late (P3-01 cross-check against
+  mastdatabase notspots). 9 of 12 known notspots confirmed, direction of error is
+  conservative. This is the right failure mode.
+- Progressive reveal of date/time fields (DW-12) was discovered work that improved the
+  form without scope creep -- it makes the form feel simpler while keeping all five
+  fields. Good example of refinement that serves the brief rather than expanding it.
+
+**Next:** DW-04 when Matt downloads the RDM CSV (Q6). No other work is needed for v1.
+
+---
+
+## 2026-08-16 — orchestrator — iteration
+
+**Did:** Resolved two open PRs that were pending from the previous iteration.
+- PR #39 (DW-13) had already merged by the time this iteration ran.
+- PR #40 (DW-06) had a merge conflict in agent/*.md after DW-13 merged first.
+  Rebased the DW-06 branch against main, resolved conflicts in PLAN.md,
+  PLAN-ARCHIVE.md, and JOURNAL.md (correct resolution: both DW-13 and DW-06
+  in the completed index; discovered work section cleaned of both), force-pushed,
+  waited for CI (all green), and merged.
+- Dispatched product agent to assess completeness against the brief. Verdict: v1
+  is complete. No new tasks filed.
+- Fixed a one-line bug found during assessment: accessibility statement linked to
+  https://github.com instead of https://github.com/mhawip/train-signal/issues.
+  PR #41 open on dev/DW-14-fix-a11y-statement-link.
+
+**Verify:** PR #40 CI: all 6 checks + Vercel green. PR #41 CI running.
+
+**Learned:**
+- When two branches both modify agent/*.md files in PLAN.md, conflicts are
+  inevitable when they merge sequentially. The resolution is mechanical: both
+  tasks go in the completed index, both tasks come out of discovered work.
+  The journal and archive get both entries.
+- The product-agent assessment pattern (dispatch to confirm completion rather
+  than guessing from the backlog) is worth doing when the backlog appears empty.
+  The agent found one real bug (accessibility statement link) that hadn't been caught.
+
+**Next:** PR #41 CI to green, then merge. After that: DW-04 when Matt downloads
+the RDM CSV (Q6 in QUESTIONS.md). The product is otherwise complete against v1.

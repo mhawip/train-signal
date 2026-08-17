@@ -449,6 +449,62 @@ function findTunnelsOnPath(pathNodeIds: string[]): string[] {
 }
 
 // ---------------------------------------------------------------------------
+// Worst-case classification across all operators
+//
+// Used when no network is selected: returns the worst signal band seen
+// across EE, O2, Vodafone, and Three. This is conservative -- it tells
+// the user the worst they are likely to experience regardless of network.
+// ---------------------------------------------------------------------------
+
+const ALL_OPERATORS = ["EE", "O2", "Vodafone", "Three"];
+
+// Band quality rank (higher = better for the user)
+const BAND_RANK: Record<string, number> = {
+  "no-data": 0,
+  "none": 1,
+  "voice": 2,
+  "video": 3,
+};
+
+function classifySegmentWorstCase(
+  pathNodeIds: string[]
+): Omit<SegmentSignal, "tunnels"> {
+  let worstBand: SignalBand = "no-data";
+  let hasData = false;
+  let hasLowConfidence = false;
+  let maxCoveredNodes = 0;
+  const totalNodes = pathNodeIds.length;
+
+  for (const op of ALL_OPERATORS) {
+    const result = classifySegment(pathNodeIds, op);
+    if (result.band === "no-data") continue;
+
+    if (!hasData) {
+      worstBand = result.band;
+      hasData = true;
+    } else if (BAND_RANK[result.band] < BAND_RANK[worstBand]) {
+      worstBand = result.band;
+    }
+
+    if (result.confidence === "low") hasLowConfidence = true;
+    if (result.coveredNodes > maxCoveredNodes) {
+      maxCoveredNodes = result.coveredNodes;
+    }
+  }
+
+  if (!hasData) {
+    return { band: "no-data", confidence: "no-data", coveredNodes: 0, totalNodes };
+  }
+
+  return {
+    band: worstBand,
+    confidence: hasLowConfidence ? "low" : "high",
+    coveredNodes: maxCoveredNodes,
+    totalNodes,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Main export
 // ---------------------------------------------------------------------------
 
@@ -462,7 +518,8 @@ function findTunnelsOnPath(pathNodeIds: string[]): string[] {
  *   1. Look up their track-graph node IDs from stationNodes
  *   2. If a station CRS is not in stationNodes, result is band: "unknown"
  *   3. Find the shortest path between those nodes
- *   4. Classify the signal along that path for the journey's operator
+ *   4. Classify the signal along that path for the journey's operator,
+ *      or worst-case across all operators if no network is selected
  *   5. Detect tunnels along the path
  */
 export function getJourneySignal(journey: Journey): SegmentSignal[] {
@@ -505,7 +562,9 @@ export function getJourneySignal(journey: Journey): SegmentSignal[] {
       continue;
     }
 
-    const classification = classifySegment(pathNodes, network);
+    const classification = network
+      ? classifySegment(pathNodes, network)
+      : classifySegmentWorstCase(pathNodes);
     const segmentTunnels = findTunnelsOnPath(pathNodes);
 
     results.push({

@@ -70,7 +70,7 @@ export default function AccessibilityPage() {
       <p>
         If you find an accessibility problem with Train Signal, or if you
         cannot use any part of the app, please open an issue on our{" "}
-        <Link href="https://github.com" className="ts-inline-link">
+        <Link href="https://github.com/mhawip/train-signal/issues" className="ts-inline-link">
           GitHub repository
         </Link>
         . Describe what you were trying to do and what went wrong. We will

@@ -88,7 +88,7 @@ describe("JourneyForm progressive reveal", () => {
     render(<JourneyForm />);
 
     const toggle = screen.getByRole("button", {
-      name: /add a departure time/i,
+      name: /find a specific train journey/i,
     });
     expect(toggle).not.toHaveAttribute("hidden");
   });
@@ -97,7 +97,7 @@ describe("JourneyForm progressive reveal", () => {
     render(<JourneyForm />);
 
     const toggle = screen.getByRole("button", {
-      name: /add a departure time/i,
+      name: /find a specific train journey/i,
     });
     expect(toggle).toHaveAttribute("aria-expanded", "false");
     expect(toggle).toHaveAttribute("aria-controls", "datetime-fields");
@@ -108,7 +108,7 @@ describe("JourneyForm progressive reveal", () => {
     render(<JourneyForm />);
 
     const toggle = screen.getByRole("button", {
-      name: /add a departure time/i,
+      name: /find a specific train journey/i,
     });
 
     await user.click(toggle);
@@ -116,7 +116,6 @@ describe("JourneyForm progressive reveal", () => {
     const datetimeFields = document.getElementById("datetime-fields");
     expect(datetimeFields).not.toHaveAttribute("hidden");
     expect(toggle).toHaveAttribute("aria-expanded", "true");
-    expect(toggle).toHaveTextContent("Remove departure time");
   });
 
   it("collapses date/time fields when toggle is clicked again", async () => {
@@ -124,7 +123,7 @@ describe("JourneyForm progressive reveal", () => {
     render(<JourneyForm />);
 
     const toggle = screen.getByRole("button", {
-      name: /add a departure time/i,
+      name: /find a specific train journey/i,
     });
 
     // Reveal
@@ -135,13 +134,13 @@ describe("JourneyForm progressive reveal", () => {
 
     // Collapse
     await user.click(
-      screen.getByRole("button", { name: /remove departure time/i })
+      screen.getByRole("button", { name: /find a specific train journey/i })
     );
     expect(document.getElementById("datetime-fields")).toHaveAttribute(
       "hidden"
     );
     expect(
-      screen.getByRole("button", { name: /add a departure time/i })
+      screen.getByRole("button", { name: /find a specific train journey/i })
     ).toHaveAttribute("aria-expanded", "false");
   });
 
@@ -151,7 +150,7 @@ describe("JourneyForm progressive reveal", () => {
 
     // Reveal fields
     const toggle = screen.getByRole("button", {
-      name: /add a departure time/i,
+      name: /find a specific train journey/i,
     });
     await user.click(toggle);
 
@@ -165,7 +164,7 @@ describe("JourneyForm progressive reveal", () => {
 
     // Collapse -- errors should be cleared
     await user.click(
-      screen.getByRole("button", { name: /remove departure time/i })
+      screen.getByRole("button", { name: /find a specific train journey/i })
     );
 
     // Date and time errors should not be visible
@@ -186,10 +185,6 @@ describe("JourneyForm progressive reveal", () => {
     const toInput = screen.getByLabelText("Destination station");
     await user.type(fromInput, "LDS");
     await user.type(toInput, "KGX");
-
-    // Select a network
-    const eeRadio = screen.getByLabelText("EE");
-    await user.click(eeRadio);
 
     // Submit without revealing date/time
     const submitButton = screen.getByRole("button", { name: /find signal/i });
@@ -228,7 +223,7 @@ describe("JourneyForm progressive reveal", () => {
 
     // Reveal fields
     const toggle = screen.getByRole("button", {
-      name: /add a departure time/i,
+      name: /find a specific train journey/i,
     });
     await user.click(toggle);
 
@@ -253,7 +248,7 @@ describe("JourneyForm progressive reveal", () => {
     render(<JourneyForm />);
 
     const toggle = screen.getByRole("button", {
-      name: /add a departure time/i,
+      name: /find a specific train journey/i,
     });
     await user.click(toggle);
 
@@ -270,13 +265,13 @@ describe("JourneyForm progressive reveal", () => {
 
     // Reveal
     const toggle = screen.getByRole("button", {
-      name: /add a departure time/i,
+      name: /find a specific train journey/i,
     });
     await user.click(toggle);
 
     // Collapse
     await user.click(
-      screen.getByRole("button", { name: /remove departure time/i })
+      screen.getByRole("button", { name: /find a specific train journey/i })
     );
 
     const lastCall =
@@ -293,7 +288,7 @@ describe("JourneyForm progressive reveal", () => {
     expect(datetimeFields).not.toHaveAttribute("hidden");
 
     const toggle = screen.getByRole("button", {
-      name: /remove departure time/i,
+      name: /find a specific train journey/i,
     });
     expect(toggle).toHaveAttribute("aria-expanded", "true");
   });
@@ -304,9 +299,9 @@ describe("JourneyForm progressive reveal", () => {
 
     // Collapsed: downward triangle U+25BE
     const toggle = screen.getByRole("button", {
-      name: /add a departure time/i,
+      name: /find a specific train journey/i,
     });
-    const chevron = toggle.querySelector(".ts-disclosure-toggle__chevron");
+    const chevron = toggle.querySelector(".ts-accordion__chevron");
     expect(chevron?.textContent).toBe("\u25BE");
 
     // Expanded: upward triangle U+25B4

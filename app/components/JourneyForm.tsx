@@ -11,7 +11,6 @@ import {
   getTodayISO,
   getMaxDateISO,
   NETWORKS,
-  isValidNetwork,
 } from "@/app/lib/journey-params";
 
 interface FormErrors {
@@ -19,7 +18,6 @@ interface FormErrors {
   to?: string;
   date?: string;
   time?: string;
-  network?: string;
 }
 
 const NETWORK_OPTIONS = NETWORKS.map((n) => ({
@@ -72,14 +70,22 @@ export function JourneyForm() {
 
   const dateInputRef = useRef<HTMLInputElement>(null);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
+  const networkToggleButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Whether the network accordion is open. Mirrors isRevealed/isEnhanced pattern.
+  const [isNetworkRevealed, setIsNetworkRevealed] = useState(true);
 
   // Progressive enhancement setup: runs once after hydration.
-  // Collapses date/time fields unless mode=timed is in the URL.
+  // Collapses accordions unless the relevant URL params are present.
   useEffect(() => {
     setIsEnhanced(true);
     const hasTimed = searchParams.get("mode") === "timed";
     if (!hasTimed) {
       setIsRevealed(false);
+    }
+    const hasNetwork = !!searchParams.get("network");
+    if (!hasNetwork) {
+      setIsNetworkRevealed(false);
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -112,8 +118,29 @@ export function JourneyForm() {
 
   const handleNetworkChange = useCallback((value: string) => {
     setNetwork(value);
-    setErrors((prev) => ({ ...prev, network: undefined }));
   }, []);
+
+  const revealNetwork = useCallback(() => {
+    setIsNetworkRevealed(true);
+    requestAnimationFrame(() => {
+      document.getElementById(`network-${NETWORK_OPTIONS[0].value}`)?.focus();
+    });
+  }, []);
+
+  const collapseNetwork = useCallback(() => {
+    setIsNetworkRevealed(false);
+    requestAnimationFrame(() => {
+      networkToggleButtonRef.current?.focus();
+    });
+  }, []);
+
+  const handleNetworkToggle = useCallback(() => {
+    if (isNetworkRevealed) {
+      collapseNetwork();
+    } else {
+      revealNetwork();
+    }
+  }, [isNetworkRevealed, revealNetwork, collapseNetwork]);
 
   /**
    * Update the URL to reflect disclosure state via history.replaceState.
@@ -201,10 +228,6 @@ export function JourneyForm() {
       }
     }
 
-    if (!network || !isValidNetwork(network)) {
-      errs.network = "Choose your mobile network.";
-    }
-
     return errs;
   };
 
@@ -255,15 +278,16 @@ export function JourneyForm() {
     to: "to-station",
     date: "journey-date",
     time: "journey-time",
-    network: "network-ee",
   };
 
   // The hidden attribute controls visibility and tab order.
-  // When isEnhanced is false (server render / no-JS), the toggle button
-  // is hidden and date/time fields are visible. After JS enhances,
-  // the toggle button is shown and fields are controlled by isRevealed.
+  // When isEnhanced is false (server render / no-JS), the toggle buttons
+  // are hidden and all fields are visible. After JS enhances, toggle buttons
+  // are shown and fields are controlled by isRevealed / isNetworkRevealed.
   const datetimeHidden = isEnhanced ? !isRevealed : false;
   const toggleHidden = !isEnhanced;
+  const networkHidden = isEnhanced ? !isNetworkRevealed : false;
+  const networkToggleHidden = !isEnhanced;
 
   return (
     <form onSubmit={handleSubmit} noValidate>
@@ -310,33 +334,55 @@ export function JourneyForm() {
         hint="Type a station name or code"
       />
 
-      {/* 3. Mobile network radio group */}
-      <RadioGroup
-        legend="Mobile network"
-        name="network"
-        options={NETWORK_OPTIONS}
-        value={network}
-        onChange={handleNetworkChange}
-        error={errors.network}
-      />
+      {/* 3. Mobile network accordion -- same pattern as date/time.
+       * Hidden in server HTML; revealed by JS. When no network is
+       * selected, the results page uses worst-case across all operators. */}
+      <button
+        ref={networkToggleButtonRef}
+        type="button"
+        className="ts-accordion__header"
+        aria-expanded={isNetworkRevealed ? "true" : "false"}
+        aria-controls="network-fields"
+        hidden={networkToggleHidden}
+        onClick={handleNetworkToggle}
+      >
+        <span className="ts-accordion__title">
+          {!isNetworkRevealed && network
+            ? `Mobile network: ${network}`
+            : "Choose your mobile network"}
+        </span>
+        <span className="ts-accordion__chevron" aria-hidden="true">
+          {isNetworkRevealed ? "\u25B4" : "\u25BE"}
+        </span>
+      </button>
 
-      {/* 4. Disclosure toggle -- hidden in server HTML, revealed by JS.
+      <div id="network-fields" className="ts-accordion__panel" hidden={networkHidden}>
+        <RadioGroup
+          legend="Mobile network"
+          name="network"
+          options={NETWORK_OPTIONS}
+          value={network}
+          onChange={handleNetworkChange}
+        />
+      </div>
+
+      {/* 4. Accordion toggle -- hidden in server HTML, revealed by JS.
        * Uses aria-expanded + aria-controls per specs/accessibility.md 11.2.
        * The hidden attribute (not CSS display:none) removes it from
        * the tab order and accessibility tree when not enhanced. */}
       <button
         ref={toggleButtonRef}
         type="button"
-        className="ts-button ts-button--secondary ts-disclosure-toggle"
+        className="ts-accordion__header"
         aria-expanded={isRevealed ? "true" : "false"}
         aria-controls="datetime-fields"
         hidden={toggleHidden}
         onClick={handleToggle}
       >
-        <span className="ts-disclosure-toggle__text">
-          {isRevealed ? "Remove departure time" : "Add a departure time"}
+        <span className="ts-accordion__title">
+          Find a specific train journey
         </span>
-        <span className="ts-disclosure-toggle__chevron" aria-hidden="true">
+        <span className="ts-accordion__chevron" aria-hidden="true">
           {isRevealed ? "\u25B4" : "\u25BE"}
         </span>
       </button>
@@ -345,7 +391,7 @@ export function JourneyForm() {
        * by JS on load (progressive enhancement per 11.4).
        * The hidden attribute genuinely removes fields from tab order
        * and the accessibility tree (2.1.1). */}
-      <div id="datetime-fields" hidden={datetimeHidden}>
+      <div id="datetime-fields" className="ts-accordion__panel" hidden={datetimeHidden}>
         {/* Prompt: announced via aria-live when submit triggers
          * auto-reveal (11.9). Cleared when the user interacts
          * with the date field. */}

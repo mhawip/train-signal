@@ -116,7 +116,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
     params.to!,
     params.date || getTodayISO(),
     params.time || "00:00",
-    params.network || "EE",
+    params.network || "",
   );
 
   // No matching service found from either Darwin or SCHEDULE
@@ -151,8 +151,9 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   // Compute signal profile server-side
   const signalProfile = getJourneySignal(journey);
 
-  // Network name to show -- prefer URL param, fall back to journey data
-  const networkName = params.network || journey.network;
+  // Network name to show -- prefer URL param, fall back to journey data.
+  // Empty string means no network was selected (worst-case mode).
+  const networkName = params.network || journey.network || "";
 
   // Find the best window for a call on this journey
   const bestWindow = findBestWindow(journey, signalProfile);
@@ -165,11 +166,19 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
 
       <h1>{heading}</h1>
 
-      <BestWindow window={bestWindow} networkName={networkName} />
+      <BestWindow
+        window={bestWindow}
+        networkName={networkName || "all networks"}
+      />
 
-      <p>
-        Showing expected signal for {networkName} on this route.
-      </p>
+      {networkName ? (
+        <p>Showing expected signal for {networkName} on this route.</p>
+      ) : (
+        <p>
+          Showing expected signal across all networks. Results show the
+          worst expected coverage across EE, O2, Vodafone, and Three.
+        </p>
+      )}
 
       <p className="ts-notice ts-notice--vintage">
         Signal data is based on Ofcom rail measurements from 2018 and 2019.

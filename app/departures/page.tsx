@@ -207,7 +207,7 @@ export default async function DeparturesPage({
   const toCrs = params.to!;
   const date = params.date || getTodayISO();
   const time = params.time || "00:00";
-  const network = params.network || "EE";
+  const network = params.network || "";
 
   const departures = await fetchDepartures(fromCrs, toCrs, date, time);
 
