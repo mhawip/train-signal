@@ -2014,3 +2014,26 @@ the right next piece of work, and it is waiting on Matt, not on us.
 
 **Next:** PR #41 CI to green, then merge. After that: DW-04 when Matt downloads
 the RDM CSV (Q6 in QUESTIONS.md). The product is otherwise complete against v1.
+
+---
+
+## 2026-08-17T13:55:00Z — DW-14 — orchestrator/developer
+
+**Did:** Shipped DW-14: accordion form redesign, optional network, and worst-case signal mode. PR #41 (which had been opened for the accessibility statement link fix) was updated to include all DW-14 changes and merged to main. CI confirmed all 8 checks green (typecheck, lint, unit, a11y, Lighthouse, secret-scan, Vercel).
+
+Changes shipped:
+- Site header removed; footer kept and styled subtly
+- Network radio group moved into "Choose your mobile network" accordion — network is now optional; no selection means worst-case across all operators
+- Date/time fields moved into "Find a specific train journey" accordion — same pattern as network, same progressive-reveal logic
+- `signal.ts`: `classifySegmentWorstCase` added — iterates all 4 operators, returns worst band
+- Results/departures pages: `|| "EE"` fallback removed; "across all networks" notice shown when no network selected
+- Unit tests updated: button names and CSS class corrected for accordion structure (10 tests were failing; all 228 pass after fix)
+
+**Verify:** typecheck, lint, unit, build: all pass locally. a11y suite could not run locally (port 3000 occupied by an existing dev server that returns error responses — `reuseExistingServer: true` did not kick in). CI a11y: pass.
+
+**Learned:**
+- The `reuseExistingServer: true` playwright option does NOT reuse a server that returns non-2xx responses. A dev server for a different project (or a broken build's dev server) on port 3000 will prevent `npm run start` from binding, even though playwright theoretically shouldn't be trying to start when a server is already there. The safest workaround for local verify is to kill all processes on port 3000 before running `test:a11y`. This is a Windows-specific issue — on a clean CI runner it never occurs.
+- When a PR was opened for one small change and the branch later accumulates larger changes, `gh pr edit` is the right tool to update the title and body before CI runs. The PR history then honestly reflects what merged.
+- DW-14's unit tests failing was expected: when a component is redesigned from a disclosure toggle to an accordion pattern, every test that queries by the old button label breaks. The fix is mechanical but must be done before shipping.
+
+**Next:** DW-15 (designer — accessibility constraints and visual design for route overview results and no-network disclaimer). DW-15 depends on DW-14 (now done). DW-04 remains blocked on Q6 (Matt to download RDM CSV).

@@ -12,6 +12,28 @@ particular way, or its full original acceptance criteria).
 
 ## Discovered work
 
+### DW-14 — Ship design iteration: accordion form, optional network, worst-case signal
+- **owner:** developer
+- **status:** done
+- **depends:** —
+- **why:** Matt iterated on the landing page design in session. Changes were uncommitted on
+  `dev/DW-14-fix-a11y-statement-link`. Needed a commit, PR, and merge before downstream
+  work begins.
+- **what changed:**
+  - Removed site header (skip link + home link); footer kept and styled subtly
+  - Network radio group moved into a "Choose your mobile network" accordion (optional);
+    selecting a network is no longer required
+  - Date/time fields moved into a "Find a specific train journey" accordion (same pattern)
+  - `signal.ts`: added `classifySegmentWorstCase` — iterates all 4 operators and returns
+    the worst band; used when `journey.network` is empty
+  - Results and departures pages: removed `|| "EE"` fallback; results page shows an
+    "across all networks" notice when no network is selected
+  - JourneyForm unit tests updated: button name "add a departure time"/"remove departure time"
+    → "find a specific train journey"; `.ts-disclosure-toggle__chevron` → `.ts-accordion__chevron`
+- **acceptance:**
+  - [x] `npm run typecheck` and `npm run lint` pass
+  - [x] PR #41 merged, CI green (all 8 checks including a11y and Lighthouse)
+
 ### DW-13 — Accessibility review of DW-11 and DW-12
 - **owner:** designer
 - **status:** done

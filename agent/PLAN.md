@@ -63,6 +63,7 @@ and writes to it last.
 | DW-12 | Implement route search form progressive reveal | developer |
 | DW-13 | Accessibility review of DW-11 and DW-12 | designer |
 | DW-06 | Fix local Windows verify: Playwright hang and build failure | infra |
+| DW-14 | Ship design iteration: accordion form, optional network, worst-case signal | developer |
 
 ---
 
@@ -105,26 +106,6 @@ P3-04 is done — see the index above.
 ## Discovered work
 
 Bugs and follow-ups get filed here by whoever finds them.
-
-### DW-14 — Ship design iteration: accordion form, optional network, worst-case signal
-- **owner:** developer
-- **status:** in-progress
-- **depends:** —
-- **why:** Matt iterated on the landing page design in session. Changes are uncommitted on
-  `dev/DW-14-fix-a11y-statement-link`. Needs a commit, PR, and merge before downstream
-  work begins.
-- **what changed:**
-  - Removed site header (skip link + home link); footer kept and styled subtly
-  - Network radio group moved into a "Choose your mobile network" accordion (optional);
-    selecting a network is no longer required
-  - Date/time fields moved into a "Find a specific train journey" accordion (same pattern)
-  - `signal.ts`: added `classifySegmentWorstCase` — iterates all 4 operators and returns
-    the worst band; used when `journey.network` is empty
-  - Results and departures pages: removed `|| "EE"` fallback; results page shows an
-    "across all networks" notice when no network is selected
-- **acceptance:**
-  - [ ] `npm run typecheck` and `npm run lint` pass (already confirmed in session)
-  - [ ] PR opened from `dev/DW-14-fix-a11y-statement-link`, CI green, merged to `main`
 
 ### DW-15 — Design: route overview results and no-network disclaimer
 - **owner:** designer
