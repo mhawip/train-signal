@@ -12,6 +12,35 @@ particular way, or its full original acceptance criteria).
 
 ## Discovered work
 
+### DW-15 — Design: route overview results and no-network disclaimer
+- **owner:** designer
+- **status:** done
+- **depends:** DW-14
+- **why:** Two new results-page states need accessibility constraints and visual design
+  before implementation can begin.
+- **what changed:**
+  - `specs/accessibility.md`: added sections 12 (Route overview results page) and 13
+    (No-network disclaimer notice). Full WCAG 2.2 AAA constraints for both states,
+    including page title patterns, heading hierarchy, table column structure, copy
+    strings, contrast verification, focus ring verification, keyboard/screen reader
+    behaviour, forced colours, and self-certification checklists.
+  - `specs/design-system.md`: added sections 11 (Route overview state) and 12
+    (No-network disclaimer notice). HTML structure, CSS, design tokens, copy strings,
+    back-link URL pattern, and forced-colours overrides.
+  - New CSS tokens: `--color-notice-bg`, `--color-notice-border` (light and dark schemes).
+    Contrast verified: 16.02:1 light, 14.43:1 dark for text; border contrast ≥3:1.
+  - URL pattern for no-network back-link: `/?from=[CRS]&to=[CRS]&network=open` (plus
+    `date`, `time`, `mode=timed` if entering from a specific-train result).
+  - `network=open` sentinel: truthy so existing `hasNetwork` check opens the accordion;
+    does not match any real network name so no radio is pre-selected.
+- **known inconsistency (for developer):** `accessibility.md` section 12.5 lists 4
+  columns for the route-overview table (Station, Leg duration, Expected signal,
+  Confidence). `design-system.md` section 11 HTML example shows the 4th column as
+  "Journey time" instead. The accessibility spec is authoritative — use Confidence,
+  drop Journey time (meaningless without departure time). See DW-16 note.
+- **post-implementation review needed:** route-overview table column structure (DW-18)
+  and `role="note"` pattern (DW-19).
+
 ### DW-14 — Ship design iteration: accordion form, optional network, worst-case signal
 - **owner:** developer
 - **status:** done

@@ -1080,3 +1080,533 @@ actual component implementation is the developer's responsibility.
 | Progressive enhancement: server renders full form | Without JS the form is complete and functional; JS enhances by hiding optional fields behind a toggle |
 | `hidden` attribute, not CSS `display:none` | Semantic HTML attribute; removed from tab order and accessibility tree without relying on CSS cascade |
 | Submit-without-time auto-reveals fields with prompt | Until route-overview mode exists, the form cannot produce results without a time; the prompt is in response to user action (3.2.5) |
+| Route overview uses "Leg duration" column, not blank times | Empty cells are announced as "blank" by screen readers, giving no context; a duration column is self-explanatory (1.3.1) |
+| Route overview best-window shows stations and duration, not clock times | Clock times do not exist for a route overview; showing "14:35 -- 15:20" would be fabricating data |
+| "Typical" as the framing word | Grade 4 reading level; understood universally; "canonical" and "most frequent stopping pattern" fail 3.1.5 |
+| No-network notice uses `role="note"` | The content is supplementary, not urgent (not `alert`) and not a status update (not `status`) |
+| No-network notice background `#f0f0f0` / `#1e1e1e` | Provides luminance shift from page background visible in greyscale; text contrast exceeds 14:1 in both schemes |
+| `network=open` sentinel for pre-opening accordion | Reuses existing truthy-check logic in JourneyForm; does not match any real network name so no radio is pre-selected |
+| No-network link is block-level, not inline | Ensures 44x44 tap target without relying on line-height calculations (2.5.5) |
+
+---
+
+## 11. Route overview state
+
+### Design problem
+
+The user submits origin + destination without a departure time. The results page
+shows signal quality for the most common stopping pattern between those stations.
+There are no clock times. The design must make this clear without alarming the
+user or claiming false precision.
+
+The core principle: every element that would show a clock time in the
+specific-train view must either be replaced with a duration or omitted. Nothing is
+left blank.
+
+### Page title
+
+```
+[Origin] to [Destination] route signal -- Train Signal
+```
+
+Example: `Leeds to London route signal -- Train Signal`
+
+### Page heading and subtitle
+
+**HTML structure:**
+
+```html
+<h1>[Origin] to [Destination] signal</h1>
+<p class="ts-route-subtitle">
+  Typical stopping pattern. Times and signal may vary by train.
+</p>
+```
+
+**Tokens:**
+
+| Element | Token | Value |
+|---|---|---|
+| `<h1>` text | `--color-page-fg` on `--color-page-bg` | 17.40:1 light, 15.29:1 dark |
+| `<h1>` size | `--font-size-2xl` (32px) | Large text |
+| `<h1>` weight | `--font-weight-bold` | |
+| `<h1>` line-height | `--line-height-heading` (1.3) | |
+| `<h1>` margin-bottom | `--space-2` (8px) | Tight gap before subtitle |
+| Subtitle colour | `--color-muted` on `--color-page-bg` | 7.00:1 light, 7.16:1 dark |
+| Subtitle size | `--font-size-base` (16px) | Body text, needs 7:1 |
+| Subtitle margin-bottom | `--space-6` (24px) | Gap before best-window section |
+
+**CSS class:**
+
+```css
+.ts-route-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-muted);
+  line-height: var(--line-height-body);
+  margin-bottom: var(--space-6);
+}
+```
+
+Uses `--color-muted` on `--color-page-bg` -- already verified in the contrast
+matrix: 7.00:1 light, 7.16:1 dark.
+
+### Component: BestWindow (route-overview mode)
+
+The BestWindow component must detect the absence of clock times and render a
+station-and-duration description instead of a time range.
+
+**Detection:** If both `startTime` and `endTime` on the `BestWindow` data object
+are empty or absent, the component is in route-overview mode. The developer should
+add optional `startTime`/`endTime` fields to the `BestWindow` interface (they are
+currently required strings -- making them optional is a backward-compatible change).
+
+**HTML structure (good window found):**
+
+```html
+<section aria-labelledby="best-window-heading">
+  <h2 id="best-window-heading">Best window</h2>
+  <p>
+    45 minutes of expected voice and video signal on all networks,
+    York to Doncaster. Good enough for a video call.
+  </p>
+  <!-- optional low-confidence note -->
+</section>
+```
+
+**Exact copy patterns:**
+
+Good window, video quality:
+> "[duration] of expected voice and video signal on [networkName], [startStation]
+> to [endStation]. Good enough for a video call."
+
+Good window, voice quality:
+> "[duration] of expected voice signal on [networkName], [startStation] to
+> [endStation]. Good enough for a voice call."
+
+No good window:
+> (Unchanged from current component.)
+
+**Note:** The time-range paragraph (`<p class="ts-best-window__times">`) is not
+rendered in route-overview mode. The section has the heading and one or two body
+paragraphs only.
+
+**Tokens:** No new tokens. Uses `--color-page-fg` on `--color-page-bg` for all
+text. The heading uses `--font-size-xl` (24px). Body text uses `--font-size-base`
+(16px). All contrast ratios are already verified.
+
+### Component: JourneyTimeline (route-overview mode)
+
+The text-equivalent table changes its column structure when no clock times are
+available.
+
+**Detection:** If `journey.origin.scheduledDeparture` is `null`, the component is
+in route-overview mode. This is a reliable signal because a specific-train journey
+always has a departure time.
+
+**HTML structure:**
+
+```html
+<section id="journey-table" aria-labelledby="journey-table-heading">
+  <h2 id="journey-table-heading">Journey details</h2>
+  <div class="ts-table-wrapper" role="region"
+       aria-label="Scrollable table: Typical journey: Leeds to London"
+       tabindex="0">
+    <table class="ts-table">
+      <caption class="ts-table__caption">
+        Typical journey: Leeds to London
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Station</th>
+          <th scope="col">Leg duration</th>
+          <th scope="col">Expected signal</th>
+          <th scope="col">Journey time</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Leeds</th>
+          <td>&ndash;</td>
+          <td>&ndash;</td>
+          <td>&ndash;</td>
+        </tr>
+        <tr>
+          <th scope="row">Wakefield Westgate</th>
+          <td>12 min</td>
+          <td>
+            <span class="ts-signal-cell">
+              <!-- CheckIcon aria-hidden -->
+              <span class="ts-signal-cell__label">Voice and video</span>
+            </span>
+          </td>
+          <td>12 min</td>
+        </tr>
+        <!-- ... more rows ... -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <th scope="row" colspan="3">Total</th>
+          <td>2 hr 12 min</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</section>
+```
+
+**Column changes from specific-train mode:**
+
+| Specific-train column | Route-overview replacement |
+|---|---|
+| Arrives | Removed |
+| Departs | Removed |
+| (none) | "Leg duration" added -- shows the scheduled duration of the leg arriving at this station |
+
+The "Expected signal" and "Journey time" (cumulative) columns are unchanged. The
+"Station" column is unchanged.
+
+**Leg duration values:** Derived from the scheduled segment durations in the
+SCHEDULE data. For the origin station, the cell shows an en dash. For subsequent
+stations, the cell shows the duration of the leg from the previous station (e.g.
+"12 min", "45 min"). These use the existing `formatDuration` helper.
+
+**Caption pattern:** "Typical journey: [Origin] to [Destination]"
+
+The word "Typical" in the caption serves the same orientation purpose as the
+subtitle. A screen reader user who encounters the table without the surrounding
+page context will still understand this is not a specific service.
+
+**Footer `colspan`:** With 4 columns, the Total row spans 3 columns (all except
+the last).
+
+### Visual timeline (route-overview mode)
+
+The visual timeline is unchanged in structure. It is `aria-hidden="true"`. In
+route-overview mode, the proportional segment bars represent scheduled durations
+rather than clock times. The axis labels (if any) show station names, not times.
+No new design tokens or patterns are needed.
+
+### "Back to search" link
+
+The navigation link at the bottom of the results page must preserve the route
+overview parameters:
+
+```
+/?from=[CRS]&to=[CRS]
+```
+
+If a network was selected, add `&network=[Network]`. Do not add `mode=timed` (the
+user did not enter a time).
+
+### Full page layout (route-overview mode)
+
+**DOM order:**
+
+1. Skip link ("Skip to journey details")
+2. `<h1>` -- "[Origin] to [Destination] signal"
+3. `<p class="ts-route-subtitle">` -- "Typical stopping pattern..."
+4. BestWindow section (route-overview variant)
+5. Network notice (if no network selected -- see section 12) OR network statement
+6. Vintage disclaimer
+7. JourneyTimeline table (route-overview variant)
+8. VisualTimeline (aria-hidden)
+9. Navigation ("Back to search")
+
+This matches the specific-train layout exactly, with the subtitle inserted between
+the `<h1>` and the BestWindow section.
+
+### Responsive behaviour
+
+Identical to the specific-train results page. The route-overview table has fewer
+columns (4 vs 6), so it fits more comfortably at narrow viewports. No horizontal
+scroll is expected at 320px for the 4-column layout.
+
+### Dark scheme
+
+All tokens used are already defined and verified in the contrast matrix. No new
+colour pairings. The subtitle uses `--color-muted` which has dark-scheme values
+verified at 7.16:1.
+
+### Forced colours
+
+No new visual treatments. The subtitle is standard text. The table is standard
+HTML. Everything inherits system colours correctly.
+
+### Self-certification checklist
+
+| AAA criterion | Design element | Satisfied by |
+|---|---|---|
+| 1.3.1 Info and Relationships | Table structure, heading hierarchy | Existing table pattern (section 7); heading hierarchy follows section 3.22 |
+| 1.4.1 Use of Colour | Signal cells in table | Existing signal cell pattern with icon + text + pattern (section 6) |
+| 1.4.6 Contrast (Enhanced) | Subtitle text, table text, heading text | All use existing tokens verified in contrast matrix section 8 |
+| 1.4.8 Visual Presentation | Line length, spacing, no justified text | Existing 40rem container, 1.5 line height, no justify |
+| 1.4.10 Reflow | Table at 320px | 4-column table fits better than 6-column; same scrollable wrapper if needed |
+| 2.4.2 Page Titled | `<title>` includes "route" | New pattern, specified above |
+| 2.4.8 Location | Subtitle, table caption with "Typical" | New text, verified at Grade 4-6 reading level |
+| 2.4.9 Link Purpose | "Back to search" link | Existing self-descriptive link pattern |
+| 2.4.10 Section Headings | h1, h2 for sections | Same heading structure as specific-train page |
+| 3.1.5 Reading Level | All copy | Verified: subtitle at Grade 5, best-window copy at Grade 6 |
+| 3.3.6 Error Prevention | Search is reversible | Same pattern -- Back button works, form pre-fills |
+| 3.3.7 Redundant Entry | "Back to search" preserves params | URL encodes from/to/network |
+
+**New elements requiring independent review:** The route-overview table column
+structure (replacing Arrives/Departs with Leg duration) is a new pattern. An
+accessibility specialist should verify that the table reads correctly with NVDA
+or VoiceOver when DW-16 is implemented. All other elements reuse existing reviewed
+patterns.
+
+---
+
+## 12. No-network disclaimer notice
+
+### Design problem
+
+When no network is selected, results show worst-case signal across all four
+operators. The current implementation is a bare `<p>` element. This needs to be a
+styled notice component that clearly explains what "worst-case" means, and provides
+a convenient path back to the search with the network accordion open.
+
+### New colour tokens
+
+Two new tokens for the notice background and border:
+
+**Light scheme:**
+
+| Token | Hex | Purpose |
+|---|---|---|
+| `--color-notice-bg` | `#f0f0f0` | Notice background |
+| `--color-notice-border` | `#5c5c5c` | Notice left border (same as field border) |
+
+**Dark scheme:**
+
+| Token | Hex | Purpose |
+|---|---|---|
+| `--color-notice-bg` | `#1e1e1e` | Notice background (same as field-bg) |
+| `--color-notice-border` | `#999999` | Notice left border (same as field border) |
+
+### Contrast verification for new tokens
+
+**Light scheme -- text on notice background (need 7:1):**
+
+| Text | Background | Ratio | Passes? |
+|---|---|---|---|
+| `#1a1a1a` (page-fg) | `#f0f0f0` (notice-bg) | 16.02:1 | Yes |
+| `#595959` (muted) | `#f0f0f0` (notice-bg) | 6.44:1 | No -- do not use muted text in the notice |
+
+**Light scheme -- non-text (need 3:1):**
+
+| Element | Adjacent | Ratio | Passes? |
+|---|---|---|---|
+| `#5c5c5c` (notice border) | `#f0f0f0` (notice bg) | 3.65:1 | Yes |
+| `#5c5c5c` (notice border) | `#ffffff` (page bg) | 6.69:1 | Yes |
+| `#f0f0f0` (notice bg) | `#ffffff` (page bg) | 1.09:1 | Below 3:1 -- the border is the distinguishing non-text element, not the background edge |
+
+**Dark scheme -- text on notice background (need 7:1):**
+
+| Text | Background | Ratio | Passes? |
+|---|---|---|---|
+| `#e8e8e8` (page-fg) | `#1e1e1e` (notice-bg) | 14.43:1 | Yes |
+| `#a0a0a0` (muted) | `#1e1e1e` (notice-bg) | 5.58:1 | No -- do not use muted text in the notice |
+
+**Dark scheme -- non-text (need 3:1):**
+
+| Element | Adjacent | Ratio | Passes? |
+|---|---|---|---|
+| `#999999` (notice border) | `#1e1e1e` (notice bg) | 5.13:1 | Yes |
+| `#999999` (notice border) | `#121212` (page bg) | 6.58:1 | Yes |
+
+**Important finding:** `--color-muted` fails 7:1 on the notice background in both
+schemes. All text in the notice must use `--color-page-fg`.
+
+### Focus ring on notice background
+
+| Scheme | Focus colour | Notice bg | Ratio | Passes 3:1? |
+|---|---|---|---|---|
+| Light | `#0044cc` | `#f0f0f0` | 5.95:1 | Yes |
+| Dark | `#6699ff` | `#1e1e1e` | 5.26:1 | Yes |
+
+### Component: `ts-notice--network`
+
+**HTML structure:**
+
+```html
+<div class="ts-notice ts-notice--network" role="note"
+     aria-label="Network notice">
+  <p>
+    No mobile network selected. These results show the worst expected signal
+    across EE, O2, Vodafone, and Three. If you know your network, results
+    will be more accurate.
+  </p>
+  <p class="ts-notice__action">
+    <a class="ts-notice__link" href="/?from=LDS&to=KGX&network=open">
+      Search again with your network selected
+    </a>
+  </p>
+</div>
+```
+
+**CSS:**
+
+```css
+.ts-notice--network {
+  background-color: var(--color-notice-bg);
+  border-left: 4px solid var(--color-notice-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-6);
+  max-width: var(--max-width-text);
+}
+
+.ts-notice--network p {
+  font-size: var(--font-size-base);
+  color: var(--color-page-fg);
+  line-height: var(--line-height-body);
+  margin-bottom: var(--space-4);
+}
+
+.ts-notice--network p:last-child {
+  margin-bottom: 0;
+}
+
+.ts-notice__link {
+  display: inline-block;
+  min-height: var(--target-min);
+  padding: var(--space-2) 0;
+  color: var(--color-page-fg);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.ts-notice__link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+```
+
+**Layout description:**
+
+The notice is a block element with a 4px left border, light background fill,
+and standard padding. It contains two paragraphs: the explanation and the action
+link. The left border provides a structural cue visible in greyscale and forced
+colours. The background fill provides a subtle luminance shift.
+
+At 320px, the notice fills the available width minus page padding. At 1280px, it
+sits within the 40rem max-width container. The content reflows naturally.
+
+### Copy strings (exact wording)
+
+**Body text:**
+
+```
+No mobile network selected. These results show the worst expected signal
+across EE, O2, Vodafone, and Three. If you know your network, results
+will be more accurate.
+```
+
+**Link text:**
+
+```
+Search again with your network selected
+```
+
+### Back-link URL pattern
+
+**Without date/time (route overview):**
+
+```
+/?from=[CRS]&to=[CRS]&network=open
+```
+
+**With date/time (specific train):**
+
+```
+/?from=[CRS]&to=[CRS]&date=[YYYY-MM-DD]&time=[HH:MM]&mode=timed&network=open
+```
+
+**Parameters:**
+
+| Param | Value | Purpose |
+|---|---|---|
+| `from` | CRS code (e.g. `LDS`) | Pre-fill origin field |
+| `to` | CRS code (e.g. `KGX`) | Pre-fill destination field |
+| `date` | ISO date, only if the user entered one | Pre-fill date field |
+| `time` | HH:MM, only if the user entered one | Pre-fill time field |
+| `mode` | `timed`, only if date and time are present | Reveal date/time accordion |
+| `network` | `open` | Reveal network accordion without pre-selecting a network |
+
+**How `network=open` works with existing code:**
+
+The existing `JourneyForm.tsx` (line 86-89) checks:
+
+```js
+const hasNetwork = !!searchParams.get("network");
+if (!hasNetwork) {
+  setIsNetworkRevealed(false);
+}
+```
+
+`"open"` is truthy, so `hasNetwork` is `true`, and the network accordion remains
+revealed (its default server-render state). The `RadioGroup` receives `"open"` as
+its `value` prop. Since `"open"` does not match `"EE"`, `"O2"`, `"Vodafone"`, or
+`"Three"`, no radio button is checked. This is the correct UX: the accordion is
+open and the user sees all four options with none selected.
+
+**Guard needed in form submission:** When building the departures or results URL,
+the developer must treat `network === "open"` as equivalent to `network === ""`
+(no network selected). Add this check in `handleSubmit` or in `buildDeparturesUrl`.
+
+### Forced colours
+
+```css
+@media (forced-colors: active) {
+  .ts-notice--network {
+    border-left: 4px solid ButtonText;
+    background-color: Canvas;
+  }
+}
+```
+
+The background is suppressed to `Canvas` (the system background). The left border
+uses `ButtonText` to remain visible. All text uses system colours automatically.
+
+### Interaction with route-overview state
+
+The no-network notice appears on both the route-overview page (section 11) and the
+specific-train results page. Its position in the DOM is the same in both cases:
+after the BestWindow section and before the vintage disclaimer.
+
+When both states apply (route overview AND no network), the page shows:
+
+1. `<h1>` with heading
+2. Route subtitle ("Typical stopping pattern...")
+3. BestWindow (route-overview variant)
+4. No-network notice
+5. Vintage disclaimer
+6. JourneyTimeline table (route-overview variant)
+7. VisualTimeline
+8. Navigation
+
+### Self-certification checklist
+
+| AAA criterion | Design element | Satisfied by |
+|---|---|---|
+| 1.3.1 Info and Relationships | `role="note"`, `aria-label` | New pattern, specified in accessibility.md section 13.2 |
+| 1.4.1 Use of Colour | Left border + background + text content | Three redundant non-colour cues (section 13.11 of accessibility.md) |
+| 1.4.6 Contrast (Enhanced) | All text on notice background | Verified: 16.02:1 light, 14.43:1 dark. `--color-muted` excluded. |
+| 1.4.8 Visual Presentation | Line length, spacing | Within 40rem container, 1.5 line height |
+| 1.4.11 Non-text Contrast | Left border against backgrounds | Verified: 3.65:1+ in both schemes |
+| 2.4.9 Link Purpose | "Search again with your network selected" | Self-descriptive when read alone |
+| 2.4.13 Focus Appearance | Focus ring on notice background | Verified: 5.95:1 light, 5.26:1 dark |
+| 2.5.5 Target Size | Link has `min-height: var(--target-min)` | 44px minimum via inline-block + padding |
+| 3.1.5 Reading Level | All copy | Verified at Grade 4-8 |
+| 3.3.6 Error Prevention | Link action is reversible | User can press Back to return to results |
+| 3.3.7 Redundant Entry | Link preserves from/to/date/time params | URL encodes all journey parameters |
+
+**New elements requiring independent review:** The `role="note"` with
+`aria-label` pattern is new to this product. An accessibility specialist should
+verify with NVDA/VoiceOver that the notice is announced as expected (landmark-like
+announcement, not intrusive). The `ts-notice--network` visual treatment introduces
+new tokens (`--color-notice-bg`, `--color-notice-border`) whose contrast has been
+verified above but should be confirmed on real rendered backgrounds after
+implementation.
+
+---
