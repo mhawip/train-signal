@@ -110,7 +110,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-16 — Implement route overview results (no time → most common stopping pattern)
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-15
 - **why:** Currently the form forces time entry before submitting (reveals accordion and
   prompts). Route overview mode skips time entirely and shows signal for the most typical
