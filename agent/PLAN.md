@@ -106,7 +106,102 @@ P3-04 is done — see the index above.
 
 Bugs and follow-ups get filed here by whoever finds them.
 
+### DW-14 — Ship design iteration: accordion form, optional network, worst-case signal
+- **owner:** developer
+- **status:** in-progress
+- **depends:** —
+- **why:** Matt iterated on the landing page design in session. Changes are uncommitted on
+  `dev/DW-14-fix-a11y-statement-link`. Needs a commit, PR, and merge before downstream
+  work begins.
+- **what changed:**
+  - Removed site header (skip link + home link); footer kept and styled subtly
+  - Network radio group moved into a "Choose your mobile network" accordion (optional);
+    selecting a network is no longer required
+  - Date/time fields moved into a "Find a specific train journey" accordion (same pattern)
+  - `signal.ts`: added `classifySegmentWorstCase` — iterates all 4 operators and returns
+    the worst band; used when `journey.network` is empty
+  - Results and departures pages: removed `|| "EE"` fallback; results page shows an
+    "across all networks" notice when no network is selected
+- **acceptance:**
+  - [ ] `npm run typecheck` and `npm run lint` pass (already confirmed in session)
+  - [ ] PR opened from `dev/DW-14-fix-a11y-statement-link`, CI green, merged to `main`
 
+### DW-15 — Design: route overview results and no-network disclaimer
+- **owner:** designer
+- **status:** todo
+- **depends:** DW-14
+- **why:** Two new results-page states need accessibility constraints and visual design
+  before implementation can begin.
+- **state 1 — route overview (no time entered):**
+  The user enters only origin + destination (and optionally a network). The form submits
+  without a departure time. Results show signal for the *most common stopping pattern*
+  between those two stations (derived from SCHEDULE data — the stopping pattern that
+  appears most frequently across all scheduled services). Timeline shows stop-to-stop
+  segments proportionally by scheduled duration, with no clock times (since there is no
+  specific departure). Heading should make the "typical journey" framing clear.
+- **state 2 — no-network disclaimer:**
+  When no network is selected, results show worst-case signal across all four operators.
+  A small inline notice on the results page should explain this and offer a link back to
+  the search page (pre-filled with current from/to/date/time params, with the network
+  accordion open) so the user can refine by network without re-entering everything.
+- **acceptance:**
+  - [ ] Accessibility constraints written (WCAG 2.2 AAA) for both states before any
+        implementation begins — same rigour as DW-09
+  - [ ] Visual design specified for both states: component layout, copy, typography,
+        all interactive states
+  - [ ] Back-link URL pattern for the no-network disclaimer specified (params to include)
+  - [ ] Self-certification checklist completed
+  - [ ] No open accessibility questions at time of hand-off to developer
+
+### DW-16 — Implement route overview results (no time → most common stopping pattern)
+- **owner:** developer
+- **status:** todo
+- **depends:** DW-15
+- **why:** Currently the form forces time entry before submitting (reveals accordion and
+  prompts). Route overview mode skips time entirely and shows signal for the most typical
+  journey on the route.
+- **scope:**
+  - `JourneyForm`: allow submission without time — when date/time accordion is closed,
+    submit directly rather than forcing it open with a prompt
+  - New server function (e.g. `findTypicalJourney(from, to)` in `schedule.ts`): scans
+    SCHEDULE data to count stopping patterns between the two stations; returns the most
+    frequent one as a `Journey` object (without specific departure time — use sentinel
+    values or nullable times as the designer specifies)
+  - `results/page.tsx`: detect no `time` param → call `findTypicalJourney` instead of
+    `findScheduledJourney`/`fetchDepartures`; render route overview variant of the page
+  - Timeline component: handle null/absent clock times — show stop names and proportional
+    segment bars without the time column
+  - Heading, context text, and "typical journey" framing as designed in DW-15
+- **acceptance:**
+  - [ ] Submitting with only origin + destination (no time) reaches a results page
+  - [ ] Most common stopping pattern is selected (unit test: given a fixture with known
+        pattern counts, returns the correct one)
+  - [ ] Timeline renders correctly with no clock times
+  - [ ] Results page heading makes "typical journey" framing clear (per DW-15 design)
+  - [ ] Specific-train path (with time) still works as before
+  - [ ] `npm run verify` green
+
+### DW-17 — Implement no-network disclaimer with back-to-search link
+- **owner:** developer
+- **status:** todo
+- **depends:** DW-15
+- **why:** When no network is selected the results already show worst-case signal, but
+  the current notice is minimal. Needs the full treatment designed in DW-15: clear
+  explanation, accessible styling, and a link back to the search page pre-filled so
+  the user can add their network without re-entering the journey.
+- **scope:**
+  - Replace the current "across all networks" paragraph in `results/page.tsx` with the
+    designed component (notice/callout as specified in DW-15)
+  - Back-link URL: `/?from=...&to=...&date=...&time=...&network=open` (or whatever
+    param pattern DW-15 specifies to pre-open the network accordion)
+  - `JourneyForm`: if URL contains the network-open signal, reveal the network accordion
+    on load (currently only done if `network` param has a value)
+- **acceptance:**
+  - [ ] No-network notice matches DW-15 design
+  - [ ] Link returns user to search form with all current journey params pre-filled
+  - [ ] Network accordion is open when user arrives via the back-link
+  - [ ] Notice not shown when a network is selected
+  - [ ] `npm run verify` green
 
 ### DW-04 — Retarget signal pipeline at RDM product
 - **owner:** infra

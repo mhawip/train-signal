@@ -359,11 +359,13 @@ p {
 
 .ts-footer {
   max-width: var(--max-width-text);
-  margin: 0 auto;
-  padding: var(--space-4);
+  margin: var(--space-12) auto 0;
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  border-top: 1px solid color-mix(in srgb, var(--color-page-fg) 10%, transparent);
   font-size: var(--font-size-sm);
   color: var(--color-muted);
   line-height: var(--line-height-body);
+  text-align: center;
 }
 
 /* Footer paragraphs should not carry the large body paragraph margin */
@@ -655,26 +657,60 @@ legend.ts-field__label + * {
   font-size: var(--font-size-base);
 }
 
-/* --- Disclosure toggle (progressive reveal of date/time fields) ---
- * Uses the existing ts-button ts-button--secondary base styles.
- * The additional class adds the inline-flex gap for the chevron,
- * the margin below, and the target size.
- * See specs/design-system.md section 10. */
-.ts-disclosure-toggle {
-  display: inline-flex;
+/* --- Accordion (progressive reveal of date/time fields) ---
+ * Header button and panel sit directly adjacent with no wrapper div,
+ * so date/time fields remain visible in the no-JS case (progressive
+ * enhancement per specs/design-system.md section 10).
+ *
+ * WCAG: aria-expanded + aria-controls on the button (11.2).
+ * Focus styles from the global :focus-visible rule. */
+
+/* Full-width header button. Collapses bottom border and corner radius
+ * when expanded so header and panel read as one connected box. */
+.ts-accordion__header {
+  display: flex;
   align-items: center;
-  gap: var(--space-2);
+  justify-content: space-between;
+  width: 100%;
   min-height: var(--target-min);
   padding: var(--space-3) var(--space-4);
+  background-color: var(--color-page-bg);
+  border: 1px solid var(--color-field-border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
   font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-page-fg);
+  text-align: left;
+  cursor: pointer;
   margin-bottom: var(--space-4);
 }
 
-/* Chevron indicator: purely decorative (aria-hidden).
- * Downward triangle when collapsed, upward when expanded. */
-.ts-disclosure-toggle__chevron {
+.ts-accordion__header:hover {
+  background-color: color-mix(in srgb, var(--color-page-fg) 5%, transparent);
+}
+
+/* Expanded: remove bottom border and square off bottom corners so the
+ * header and panel merge into a single bordered container. */
+.ts-accordion__header[aria-expanded="true"] {
+  border-bottom: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  margin-bottom: 0;
+}
+
+/* Chevron: decorative, aria-hidden. Inherits colour from button. */
+.ts-accordion__chevron {
   font-size: var(--font-size-sm);
-  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Panel: continues the border from the header above it. */
+.ts-accordion__panel {
+  border: 1px solid var(--color-field-border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
 }
 
 /* Prompt text shown when submit auto-reveals the date/time fields.
@@ -1244,6 +1280,25 @@ legend.ts-field__label + * {
   .ts-skip-link {
     background-color: Highlight;
     color: HighlightText;
+  }
+
+  .ts-footer {
+    border-top-color: GrayText;
+  }
+
+  .ts-accordion__header {
+    border-color: ButtonText;
+    background-color: ButtonFace;
+    color: ButtonText;
+  }
+
+  .ts-accordion__header:hover {
+    background-color: Highlight;
+    color: HighlightText;
+  }
+
+  .ts-accordion__panel {
+    border-color: ButtonText;
   }
 
   .ts-footer__link,
