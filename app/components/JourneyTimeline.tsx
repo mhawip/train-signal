@@ -209,14 +209,36 @@ function SignalCell({ signal }: { signal: SegmentSignal }) {
   );
 }
 
+/**
+ * Map a confidence value to a display label.
+ * Plain English per WCAG 3.1.5.
+ */
+function confidenceLabel(signal: SegmentSignal): string {
+  switch (signal.confidence) {
+    case "high":
+      return "High";
+    case "low":
+      return "Low";
+    case "no-data":
+      return "No data";
+  }
+}
+
 export function JourneyTimeline({
   journey,
   signalProfile,
 }: JourneyTimelineProps) {
   const { callingPoints, origin, destination, date } = journey;
   const originDeparture = origin.scheduledDeparture;
-  const caption = `${origin.name} to ${destination.name}, ${formatDate(date)}`;
   const hasSignal = signalProfile && signalProfile.length > 0;
+
+  // Route-overview mode: no specific date means we show the typical
+  // stopping pattern with leg durations instead of clock times.
+  const isRouteOverview = date === "";
+
+  const caption = isRouteOverview
+    ? `Typical journey: ${origin.name} to ${destination.name}`
+    : `${origin.name} to ${destination.name}, ${formatDate(date)}`;
 
   // Calculate total journey duration
   const totalMinutes =
@@ -224,7 +246,90 @@ export function JourneyTimeline({
       ? elapsedMinutes(originDeparture, destination.scheduledArrival)
       : 0;
 
-  // The number of non-signal columns, used for colSpan in the footer
+  if (isRouteOverview) {
+    // Route-overview table: 4 columns per accessibility.md section 12.5
+    // Station | Leg duration | Expected signal | Confidence
+    const totalFooterSpan = hasSignal ? 3 : 1;
+
+    return (
+      <section id="journey-table" aria-labelledby="journey-table-heading">
+        <h2 id="journey-table-heading">Journey details</h2>
+        <div
+          className="ts-table-wrapper"
+          role="region"
+          aria-label={`Scrollable table: ${caption}`}
+          tabIndex={0}
+        >
+          <table className="ts-table">
+            <caption className="ts-table__caption">{caption}</caption>
+            <thead>
+              <tr>
+                <th scope="col">Station</th>
+                <th scope="col">Leg duration</th>
+                {hasSignal && <th scope="col">Expected signal</th>}
+                {hasSignal && <th scope="col">Confidence</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {callingPoints.map((point, index) => {
+                // Leg duration: time from the previous stop to this one.
+                // Origin (index 0) has no incoming leg, so it shows an en dash.
+                let legDuration: string | null = null;
+                if (index > 0) {
+                  const prevDeparture =
+                    callingPoints[index - 1].scheduledDeparture;
+                  const thisArrival = point.scheduledArrival;
+                  if (prevDeparture && thisArrival) {
+                    legDuration = formatDuration(
+                      elapsedMinutes(prevDeparture, thisArrival)
+                    );
+                  }
+                }
+
+                const segmentSignal =
+                  hasSignal && index > 0
+                    ? signalProfile[index - 1]
+                    : null;
+
+                return (
+                  <tr key={point.crs}>
+                    <th scope="row">{point.name}</th>
+                    <td>{index === 0 ? "\u2013" : legDuration ?? "\u2013"}</td>
+                    {hasSignal && (
+                      <td>
+                        {segmentSignal ? (
+                          <SignalCell signal={segmentSignal} />
+                        ) : (
+                          "\u2013"
+                        )}
+                      </td>
+                    )}
+                    {hasSignal && (
+                      <td>
+                        {segmentSignal
+                          ? confidenceLabel(segmentSignal)
+                          : "\u2013"}
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row" colSpan={totalFooterSpan}>
+                  Total
+                </th>
+                <td>{formatDuration(totalMinutes)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
+    );
+  }
+
+  // Specific-train table: original 5-column layout
   const baseColCount = 4;
   const totalColCount = hasSignal ? baseColCount + 1 : baseColCount;
 

@@ -98,6 +98,25 @@ export function buildDeparturesUrl(params: JourneyParams): string {
 }
 
 /**
+ * Encode origin, destination, and optional network as a URL for the
+ * route-overview results page (no date/time).
+ *
+ * @returns The URL string e.g. "/results?from=LDS&to=KGX"
+ */
+export function buildRouteOverviewUrl(params: {
+  from: string;
+  to: string;
+  network?: string;
+}): string {
+  const searchParams = new URLSearchParams();
+  if (params.from) searchParams.set("from", params.from);
+  if (params.to) searchParams.set("to", params.to);
+  if (params.network) searchParams.set("network", params.network);
+
+  return `/results?${searchParams.toString()}`;
+}
+
+/**
  * Check whether a network value is one of the valid options.
  */
 export function isValidNetwork(value: string): value is Network {

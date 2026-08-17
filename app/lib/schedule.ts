@@ -545,6 +545,106 @@ export function findScheduledDepartures(
 }
 
 // ---------------------------------------------------------------------------
+// Route overview: typical stopping pattern
+// ---------------------------------------------------------------------------
+
+/**
+ * Find the most common stopping pattern between two stations across
+ * all services in the SCHEDULE data.
+ *
+ * "Stopping pattern" means the ordered list of CRS codes between
+ * (and including) the origin and destination. The function counts how
+ * often each pattern appears across all valid schedules and returns a
+ * Journey built from the most frequent one. Times come from the first
+ * matching schedule for that pattern (they are illustrative -- the
+ * route-overview page uses leg durations, not clock times).
+ *
+ * The returned Journey has scheduledDeparture: null on the origin,
+ * signalling to the UI that this is a route overview, not a specific
+ * timetabled service.
+ *
+ * @returns Journey with null origin departure, or null if no route found
+ */
+export function findTypicalJourney(
+  fromCrs: string,
+  toCrs: string,
+  network: string,
+): Journey | null {
+  const data = getScheduleData();
+  if (!data) return null;
+
+  const fromUpper = fromCrs.toUpperCase();
+  const toUpper = toCrs.toUpperCase();
+
+  const indices = data.byOrigin[fromUpper];
+  if (!indices || indices.length === 0) return null;
+
+  // Count stopping patterns: key is the comma-joined CRS codes
+  // between origin and destination (inclusive). Track the first
+  // schedule that produced each pattern so we can build a Journey.
+  const patternCounts = new Map<string, number>();
+  const patternFirstMatch = new Map<
+    string,
+    { schedule: ScheduleEntry; fromIdx: number; toIdx: number }
+  >();
+
+  for (const idx of indices) {
+    const sched = decodeSchedule(data.schedules[idx], data.routes);
+
+    // Find fromCrs and toCrs in calling points
+    let fromIdx = -1;
+    let toIdx = -1;
+    for (let i = 0; i < sched.p.length; i++) {
+      if (sched.p[i].c === fromUpper && fromIdx === -1) {
+        fromIdx = i;
+      }
+      if (sched.p[i].c === toUpper && fromIdx !== -1) {
+        toIdx = i;
+        break;
+      }
+    }
+    if (fromIdx === -1 || toIdx === -1 || toIdx <= fromIdx) continue;
+
+    // Build the pattern key from the CRS codes between origin and destination
+    const patternCodes: string[] = [];
+    for (let i = fromIdx; i <= toIdx; i++) {
+      patternCodes.push(sched.p[i].c);
+    }
+    const key = patternCodes.join(",");
+
+    patternCounts.set(key, (patternCounts.get(key) ?? 0) + 1);
+    if (!patternFirstMatch.has(key)) {
+      patternFirstMatch.set(key, { schedule: sched, fromIdx, toIdx });
+    }
+  }
+
+  if (patternCounts.size === 0) return null;
+
+  // Find the most frequent pattern
+  let bestKey = "";
+  let bestCount = 0;
+  for (const [key, count] of patternCounts) {
+    if (count > bestCount) {
+      bestCount = count;
+      bestKey = key;
+    }
+  }
+
+  const match = patternFirstMatch.get(bestKey)!;
+  // Empty date signals route-overview mode to the UI. The calling
+  // points retain their illustrative times for duration computation
+  // (best-window algorithm, leg durations) but no clock times are
+  // shown to the user.
+  return buildJourney(
+    match.schedule,
+    match.fromIdx,
+    match.toIdx,
+    "",      // no specific date for route overview
+    network,
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Journey builder
 // ---------------------------------------------------------------------------
 

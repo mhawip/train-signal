@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   findScheduledJourney,
   findScheduledDepartures,
+  findTypicalJourney,
   _setScheduleData,
   _resetScheduleData,
   getDayIndex,
@@ -436,5 +437,79 @@ describe("findScheduledDepartures", () => {
     const result = findScheduledDepartures("lds", "kgx", "2026-08-12", "14:00");
     expect(result).toHaveLength(1);
     expect(result[0].departureTime).toBe("14:12");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// findTypicalJourney tests
+// ---------------------------------------------------------------------------
+
+describe("findTypicalJourney", () => {
+  beforeEach(() => {
+    _resetScheduleData();
+  });
+
+  it("returns null when schedule data is missing", () => {
+    _setScheduleData(null);
+    const result = findTypicalJourney("LDS", "KGX", "EE");
+    expect(result).toBeNull();
+  });
+
+  it("returns null when no services match the route", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A]));
+    const result = findTypicalJourney("LDS", "MAN", "EE");
+    expect(result).toBeNull();
+  });
+
+  it("returns the most frequent stopping pattern", () => {
+    // Pattern A (LDS -> WKF -> KGX, route 0) appears 10 times
+    // Pattern B (LDS -> DON -> KGX, route 1) appears 3 times
+    const patternAServices: string[] = [];
+    for (let i = 0; i < 10; i++) {
+      patternAServices.push(
+        enc(
+          `PA${i}`, "P", "2026-08-01", "2026-12-14", "1111100", 0,
+          [{ d: `${10 + i}:00` }, { a: `${10 + i}:15`, d: `${10 + i}:17` }, { a: `${12 + i}:00` }],
+        ),
+      );
+    }
+    const patternBServices: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      patternBServices.push(
+        enc(
+          `PB${i}`, "P", "2026-08-01", "2026-12-14", "1111100", 1,
+          [{ d: `${10 + i}:00` }, { a: `${10 + i}:30`, d: `${10 + i}:32` }, { a: `${12 + i}:00` }],
+        ),
+      );
+    }
+
+    _setScheduleData(makeIndex(ROUTES, [...patternAServices, ...patternBServices]));
+    const result = findTypicalJourney("LDS", "KGX", "EE");
+
+    expect(result).not.toBeNull();
+    expect(result!.callingPoints).toHaveLength(3);
+    expect(result!.callingPoints.map((cp) => cp.crs)).toEqual(["LDS", "WKF", "KGX"]);
+    expect(result!.network).toBe("EE");
+    // Route overview: empty date signals no specific date
+    expect(result!.date).toBe("");
+  });
+
+  it("handles case-insensitive CRS codes", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A]));
+    const result = findTypicalJourney("lds", "kgx", "Three");
+    expect(result).not.toBeNull();
+    expect(result!.origin.crs).toBe("LDS");
+    expect(result!.destination.crs).toBe("KGX");
+    expect(result!.network).toBe("Three");
+  });
+
+  it("retains illustrative times for duration computation", () => {
+    _setScheduleData(makeIndex(ROUTES, [SERVICE_A]));
+    const result = findTypicalJourney("LDS", "KGX", "EE");
+
+    expect(result).not.toBeNull();
+    // The origin still has its departure time for computation
+    expect(result!.origin.scheduledDeparture).toBe("14:12");
+    expect(result!.destination.scheduledArrival).toBe("16:27");
   });
 });

@@ -8,6 +8,7 @@ import { Button } from "./Button";
 import {
   parseJourneyParams,
   buildDeparturesUrl,
+  buildRouteOverviewUrl,
   getTodayISO,
   getMaxDateISO,
   NETWORKS,
@@ -64,10 +65,6 @@ export function JourneyForm() {
   // and hides the toggle button.
   const [isEnhanced, setIsEnhanced] = useState(false);
 
-  // Prompt shown when submit is pressed without date/time revealed.
-  // Announced via aria-live="polite" (4.1.3).
-  const [showPrompt, setShowPrompt] = useState(false);
-
   const dateInputRef = useRef<HTMLInputElement>(null);
   const toggleButtonRef = useRef<HTMLButtonElement>(null);
   const networkToggleButtonRef = useRef<HTMLButtonElement>(null);
@@ -103,7 +100,6 @@ export function JourneyForm() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setDate(e.target.value);
       setErrors((prev) => ({ ...prev, date: undefined }));
-      setShowPrompt(false);
     },
     []
   );
@@ -180,7 +176,6 @@ export function JourneyForm() {
    */
   const collapse = useCallback(() => {
     setIsRevealed(false);
-    setShowPrompt(false);
     setErrors((prev) => ({ ...prev, date: undefined, time: undefined }));
     updateUrlMode(false);
     // Return focus to the toggle button
@@ -235,15 +230,6 @@ export function JourneyForm() {
     e.preventDefault();
     setSubmitted(true);
 
-    // If date/time fields are not yet revealed, reveal them and prompt
-    // the user rather than navigating (11.9). Until route-overview mode
-    // is built, the form cannot produce results without a time.
-    if (!isRevealed) {
-      setShowPrompt(true);
-      reveal();
-      return;
-    }
-
     const errs = validate();
     setErrors(errs);
 
@@ -254,6 +240,18 @@ export function JourneyForm() {
       if (summary) {
         summary.focus();
       }
+      return;
+    }
+
+    // When date/time fields are not revealed, navigate to route
+    // overview (signal for the typical stopping pattern, no clock times).
+    if (!isRevealed) {
+      const url = buildRouteOverviewUrl({
+        from: fromCRS,
+        to: toCRS,
+        network,
+      });
+      router.push(url);
       return;
     }
 
@@ -392,15 +390,6 @@ export function JourneyForm() {
        * The hidden attribute genuinely removes fields from tab order
        * and the accessibility tree (2.1.1). */}
       <div id="datetime-fields" className="ts-accordion__panel" hidden={datetimeHidden}>
-        {/* Prompt: announced via aria-live when submit triggers
-         * auto-reveal (11.9). Cleared when the user interacts
-         * with the date field. */}
-        <p
-          className="ts-disclosure-prompt"
-          aria-live="polite"
-        >
-          {showPrompt ? "Enter a date and time to search for trains." : ""}
-        </p>
         <fieldset className="ts-field ts-datetime">
           <legend className="ts-field__label">Date and time</legend>
           <div className="ts-datetime__inputs">

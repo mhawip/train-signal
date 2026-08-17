@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { JourneyForm } from "./JourneyForm";
 
@@ -176,7 +176,7 @@ describe("JourneyForm progressive reveal", () => {
     expect(timeError?.textContent).toBe("");
   });
 
-  it("submitting without revealed date/time triggers reveal and prompt", async () => {
+  it("submitting without revealed date/time navigates to route overview", async () => {
     const user = userEvent.setup();
     render(<JourneyForm />);
 
@@ -190,17 +190,12 @@ describe("JourneyForm progressive reveal", () => {
     const submitButton = screen.getByRole("button", { name: /find signal/i });
     await user.click(submitButton);
 
-    // Should NOT navigate
-    expect(mockPush).not.toHaveBeenCalled();
+    // Should navigate to route-overview results (no date/time params)
+    expect(mockPush).toHaveBeenCalledWith("/results?from=LDS&to=KGX");
 
-    // Fields should now be revealed
+    // Fields should remain hidden (no auto-reveal)
     const datetimeFields = document.getElementById("datetime-fields");
-    expect(datetimeFields).not.toHaveAttribute("hidden");
-
-    // Prompt should be shown
-    expect(
-      screen.getByText("Enter a date and time to search for trains.")
-    ).toBeInTheDocument();
+    expect(datetimeFields).toHaveAttribute("hidden");
   });
 
   it("does not validate date/time when fields are not revealed", async () => {
@@ -309,27 +304,29 @@ describe("JourneyForm progressive reveal", () => {
     expect(chevron?.textContent).toBe("\u25B4");
   });
 
-  it("prompt is cleared when user interacts with date field", async () => {
+  it("submitting without revealed date/time includes network param when selected", async () => {
     const user = userEvent.setup();
     render(<JourneyForm />);
 
-    // Trigger auto-reveal via submit
+    // Fill in origin and destination
+    const fromInput = screen.getByLabelText("Origin station");
+    const toInput = screen.getByLabelText("Destination station");
+    await user.type(fromInput, "LDS");
+    await user.type(toInput, "KGX");
+
+    // Open network accordion and select a network
+    const networkToggle = screen.getByRole("button", {
+      name: /choose your mobile network/i,
+    });
+    await user.click(networkToggle);
+    const eeRadio = screen.getByLabelText("EE");
+    await user.click(eeRadio);
+
+    // Submit without revealing date/time
     const submitButton = screen.getByRole("button", { name: /find signal/i });
     await user.click(submitButton);
 
-    // Prompt should be visible
-    expect(
-      screen.getByText("Enter a date and time to search for trains.")
-    ).toBeInTheDocument();
-
-    // Interact with the date field -- use fireEvent.change because
-    // userEvent.type on date inputs does not reliably fire onChange in jsdom
-    const dateInput = screen.getByLabelText("Date");
-    fireEvent.change(dateInput, { target: { value: "2026-09-01" } });
-
-    // Prompt should be cleared
-    expect(
-      screen.queryByText("Enter a date and time to search for trains.")
-    ).not.toBeInTheDocument();
+    // Should navigate to route-overview with network param
+    expect(mockPush).toHaveBeenCalledWith("/results?from=LDS&to=KGX&network=EE");
   });
 });

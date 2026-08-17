@@ -7,7 +7,7 @@ import { getJourneySignal } from "@/app/lib/signal";
 import { findBestWindow } from "@/app/lib/best-window";
 import type { Journey } from "@/app/lib/journey-types";
 import { fetchDepartures } from "@/app/lib/darwin";
-import { findScheduledJourney } from "@/app/lib/schedule";
+import { findScheduledJourney, findTypicalJourney } from "@/app/lib/schedule";
 import { getTodayISO } from "@/app/lib/journey-params";
 
 interface ResultsPageProps {
@@ -57,6 +57,14 @@ export async function generateMetadata({
 
   const from = params.from.toUpperCase();
   const to = params.to.toUpperCase();
+
+  // Route-overview mode: no date/time params
+  if (!params.date && !params.time) {
+    return {
+      title: `${from} to ${to} route signal — Train Signal`,
+    };
+  }
+
   const dateStr = params.date ? formatDate(params.date) : "";
   const datePart = dateStr ? `, ${dateStr}` : "";
 
@@ -89,6 +97,24 @@ async function fetchJourney(
   return findScheduledJourney(from, to, date, time, network);
 }
 
+/**
+ * Build the back-to-search URL, preserving origin, destination, and
+ * optionally network so the form is pre-filled when the user returns.
+ */
+function buildBackLink(params: {
+  from?: string;
+  to?: string;
+  network?: string;
+  isRouteOverview: boolean;
+}): string {
+  const url = new URLSearchParams();
+  if (params.from) url.set("from", params.from);
+  if (params.to) url.set("to", params.to);
+  if (params.network) url.set("network", params.network);
+  const qs = url.toString();
+  return qs ? `/?${qs}` : "/";
+}
+
 export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   const params = await searchParams;
 
@@ -111,18 +137,56 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
     );
   }
 
-  const journey = await fetchJourney(
-    params.from!,
-    params.to!,
-    params.date || getTodayISO(),
-    params.time || "00:00",
-    params.network || "",
-  );
+  // Route-overview mode: no date or time params
+  const isRouteOverview = !params.date && !params.time;
 
-  // No matching service found from either Darwin or SCHEDULE
+  let journey: Journey | null;
+
+  if (isRouteOverview) {
+    journey = findTypicalJourney(
+      params.from!,
+      params.to!,
+      params.network || "",
+    );
+  } else {
+    journey = await fetchJourney(
+      params.from!,
+      params.to!,
+      params.date || getTodayISO(),
+      params.time || "00:00",
+      params.network || "",
+    );
+  }
+
+  const backLink = buildBackLink({
+    from: params.from,
+    to: params.to,
+    network: params.network,
+    isRouteOverview,
+  });
+
+  // No matching service or route found
   if (!journey) {
     const fromCode = params.from!.toUpperCase();
     const toCode = params.to!.toUpperCase();
+
+    if (isRouteOverview) {
+      return (
+        <main id="main-content">
+          <h1>No route found</h1>
+          <p>
+            We could not find a route from {fromCode} to {toCode} in
+            the timetable. Check the station names and try again.
+          </p>
+          <nav aria-label="Page navigation" className="ts-results-nav">
+            <Link href={backLink} className="ts-back-link">
+              Back to search
+            </Link>
+          </nav>
+        </main>
+      );
+    }
+
     const dateDisplay = params.date ? formatDate(params.date) : "the selected date";
     const timeDisplay = params.time || "any time";
 
@@ -138,7 +202,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
           Check the station names and date, then try again.
         </p>
         <nav aria-label="Page navigation" className="ts-results-nav">
-          <Link href="/" className="ts-back-link">
+          <Link href={backLink} className="ts-back-link">
             Back to search
           </Link>
         </nav>
@@ -146,7 +210,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
     );
   }
 
-  const heading = `${journey.origin.name} to ${journey.destination.name}`;
+  const heading = `${journey.origin.name} to ${journey.destination.name} signal`;
 
   // Compute signal profile server-side
   const signalProfile = getJourneySignal(journey);
@@ -165,6 +229,12 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
       </a>
 
       <h1>{heading}</h1>
+
+      {isRouteOverview && (
+        <p className="ts-route-subtitle">
+          Typical stopping pattern. Times and signal may vary by train.
+        </p>
+      )}
 
       <BestWindow
         window={bestWindow}
@@ -191,7 +261,7 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
       <VisualTimeline journey={journey} signalProfile={signalProfile} />
 
       <nav aria-label="Page navigation" className="ts-results-nav">
-        <Link href="/" className="ts-back-link">
+        <Link href={backLink} className="ts-back-link">
           Back to search
         </Link>
       </nav>
