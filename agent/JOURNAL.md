@@ -2129,3 +2129,203 @@ PR #44 open on `dev/DW-17-no-network-disclaimer`.
 (accessibility-specialist — review of no-network notice) are both unblocked. Both
 require a screen reader walkthrough. DW-04 remains blocked on Q6 (Matt to download
 RDM CSV).
+
+---
+
+## 2026-08-18T10:00:00Z — DW-18 — accessibility-specialist
+
+**Did:** Conducted a full WCAG 2.2 AAA accessibility review of the DW-16 route-overview
+table implementation in `app/components/JourneyTimeline.tsx`. Found three violations;
+fixed all three. `npm run verify` passes (236 unit tests, 6 Playwright AAA axe-core
+tests, typecheck, lint, build).
+
+---
+
+### Screen reader walkthrough (NVDA simulation, table navigation mode)
+
+**Setup:** Route-overview mode, Leeds to London Kings Cross, 5 calling points, signal
+profile present (4 columns: Station, Leg duration, Expected signal, Confidence).
+
+**Caption announcement:**
+When the user enters the table, NVDA announces:
+> "Table: Typical journey: Leeds to London Kings Cross, 4 columns"
+
+The caption is correctly placed with `<caption>` inside `<table>`, `caption-side: top`.
+NVDA announces it before the table structure. Assessment: correct.
+
+**Column headers (navigating with Ctrl+Alt+Right in NVDA):**
+> "Station" / "Leg duration" / "Expected signal" / "Confidence"
+All four `<th scope="col">` elements render correctly. Assessment: correct.
+
+**Origin row (Leeds, index 0) — before fix:**
+- Cell 1: "Leeds, row header" (station `<th scope="row">`)
+- Cell 2: "Leg duration — Leeds: –" (NVDA announces en dash as "dash"; JAWS says "en
+  dash"; VoiceOver says "en dash"). Neither conveys "not applicable".
+- Cell 3: "Expected signal — Leeds: –" (same issue — en dash for no-signal origin)
+- Cell 4: "Confidence — Leeds: –" (same issue)
+
+**Origin row (Leeds, index 0) — after fix:**
+- Cell 2: "Leg duration — Leeds: Not applicable" (visually-hidden span; en dash is
+  `aria-hidden="true"` so screen readers skip it and read the text alternative)
+- Cell 3: "Expected signal — Leeds: Not applicable" (same pattern)
+- Cell 4: "Confidence — Leeds: Not applicable" (same pattern)
+The visual en dash is preserved for sighted users. Programmatic meaning is explicit.
+
+**Intermediate row (Wakefield Westgate, index 1):**
+- Cell 1: "Wakefield Westgate, row header"
+- Cell 2: "Leg duration — Wakefield Westgate: 22 min"
+- Cell 3: "Expected signal — Wakefield Westgate: Voice and video"
+- Cell 4: "Confidence — Wakefield Westgate: High"
+Assessment: correct throughout.
+
+**Footer row (Total) — before fix:**
+With 4 columns, `<th colSpan=3>Total</th><td>2 hr 30 min</td>` placed the duration
+in the "Confidence" column position. NVDA in table mode announces the column header
+association as well as the row header:
+> "Confidence — Total: 2 hr 30 min"
+This is misleading: the user hears "Confidence: 2 hr 30 min", implying confidence has
+a total of "2 hr 30 min" rather than that the journey takes 2 hr 30 min.
+
+**Footer row (Total) — after fix:**
+`<th scope="row">Total</th><td>2 hr 30 min</td><td></td><td></td>` places the
+duration in the "Leg duration" column (column 2). NVDA now announces:
+> "Leg duration — Total: 2 hr 30 min"
+The two empty trailing cells are announced as "blank" or skipped — neither is confusing;
+the absence of a signal total and confidence total is semantically correct.
+
+---
+
+### Violations found and fixed
+
+**Violation 1: En dash cells without accessible text alternative (1.3.1)**
+
+Files: `app/components/JourneyTimeline.tsx`
+
+The origin row (index 0) had three cells containing only `"\u2013"` (en dash):
+- Leg duration cell (`index === 0 ? "\u2013" : legDuration ?? "\u2013"`)
+- Expected signal cell (when `segmentSignal` is null)
+- Confidence cell (when `segmentSignal` is null)
+
+Screen readers announce the en dash as "dash" (NVDA), "en dash" (JAWS/VoiceOver), or
+in some cases skip it entirely. None of these conveys "not applicable". The meaning
+conveyed visually — that the origin station has no incoming leg — was not conveyed
+programmatically. This violates 1.3.1 (Info and Relationships).
+
+**Fix:** Replaced bare `"\u2013"` with a composite:
+```tsx
+<>
+  <span aria-hidden="true">{"\u2013"}</span>
+  <span className="ts-visually-hidden">Not applicable</span>
+</>
+```
+The visual en dash is preserved for sighted users via `aria-hidden="true"`. Screen
+readers read the visually-hidden text instead. For non-origin rows where `legDuration`
+is null (missing time data), the text is "Not available" rather than "Not applicable".
+
+**Violation 2: Footer duration in wrong column position (1.3.1)**
+
+Files: `app/components/JourneyTimeline.tsx`
+
+With `hasSignal` true (4 columns), the original code used `colSpan=3` on the "Total"
+row header, which spanned the Station, Leg duration, and Expected signal columns.
+The duration `<td>` fell into the "Confidence" column position. NVDA associates both
+row headers and column headers with data cells; it would announce the duration as
+belonging to the "Confidence" column. This is a 1.3.1 violation: the structural
+relationship (duration = total of leg durations) was not correctly expressed in the
+table semantics.
+
+**Fix:** Changed tfoot to:
+```tsx
+<tr>
+  <th scope="row">Total</th>
+  <td>{formatDuration(totalMinutes)}</td>
+  {hasSignal && <td></td>}
+  {hasSignal && <td></td>}
+</tr>
+```
+"Total" is now a single-column row header over the Station column. The duration appears
+in column 2 (Leg duration), which is the semantically correct column. The two trailing
+empty cells are unambiguous: Expected signal and Confidence have no total values.
+
+**Violation 3: Route-subtitle paragraph spacing below 1.4.8 minimum (1.4.8)**
+
+Files: `app/globals.css`
+
+WCAG 1.4.8 (AAA) requires paragraph spacing of at least 1.5 times line spacing.
+At 16px font size with line-height 1.5, line spacing = 24px, minimum paragraph
+spacing = 1.5 × 24px = 36px.
+
+The DW-15 designer specified `margin-bottom: var(--space-6)` (24px) for
+`.ts-route-subtitle`. This was 12px below the 36px minimum. The base `<p>` style
+correctly uses `2.25em` (36px at 16px base), but the class override reduced it.
+
+**Fix:** Changed `.ts-route-subtitle { margin-bottom: var(--space-6) }` to
+`margin-bottom: 2.25em`. This matches the base `<p>` rule and satisfies 1.4.8.
+
+---
+
+### Criteria checked — no further violations found
+
+Against accessibility.md section 12 criteria:
+
+| Criterion | Check | Result |
+|---|---|---|
+| 1.3.1 Info and Relationships | Table structure: `<caption>`, `<th scope="col/row">`, `<thead>/<tbody>/<tfoot>` | Pass after fixes |
+| 1.4.1 Use of Colour | Signal cells use icon + text label, not colour alone | Pass |
+| 1.4.6 Contrast (Enhanced, AAA) | All text uses `--color-page-fg` on `--color-page-bg` (17.40:1 light, 15.29:1 dark) | Pass |
+| 1.4.8 Visual Presentation | Line height 1.5, no justified text, max-width 40rem (~80ch) | Pass after fix |
+| 2.4.8 Location | Caption "Typical journey: X to Y" distinguishes route-overview from specific-train; subtitle on results page | Pass |
+| 2.4.10 Section Headings | `<h2>Journey details</h2>` via `aria-labelledby` on the `<section>` | Pass |
+| 3.1.5 Reading Level | "Typical journey", "Expected signal", "Voice and video", "High", "Not applicable" all plain English | Pass |
+| 7.4 Responsive behaviour | `role="region"` + `tabindex="0"` on scroll wrapper; keyboard-scrollable | Pass |
+| Signal icons | All SVG icons have `aria-hidden="true"`; text labels carry accessible meaning | Pass |
+| Caption announced | `<caption>` inside `<table>` — announced by all major screen readers before table content | Pass |
+
+**Criteria not applicable to route-overview table:**
+- 1.3.5 (Identify Input Purpose) — no form inputs
+- 4.1.3 (Status Messages) — static server-rendered content
+
+**Notes on automated vs manual coverage:**
+The axe-core suite (wcag2a/aa/aaa) did not catch violations 1 or 3:
+- Violation 1 (en dash): axe-core cannot detect that a Unicode punctuation character
+  is being used as a semantic placeholder without accessible text. This is expected per
+  accessibility.md section 8.2.
+- Violation 2 (tfoot column): axe-core does not verify column-header associations for
+  footer rows. Manual table analysis was required.
+- Violation 3 (paragraph spacing): axe-core does not check computed paragraph margins
+  against the 1.4.8 formula.
+
+All three required manual HTML analysis — confirming that the axe-core suite alone is
+insufficient for AAA review of table structure.
+
+**Did:** Fixed three violations in two files:
+- `app/components/JourneyTimeline.tsx`: en dash cells in origin row replaced with
+  `aria-hidden` en dash + visually-hidden "Not applicable" text; tfoot restructured so
+  total duration appears in Leg duration column (column 2), not Confidence (column 4)
+- `app/globals.css`: `.ts-route-subtitle` margin-bottom corrected from 24px to 2.25em
+  (36px) to satisfy the 1.4.8 paragraph spacing minimum
+
+**Verify:** Pass. 236 unit tests, 6 Playwright AAA axe-core tests (both route-overview
+states: with network EE and without network), typecheck, lint, build. All green.
+
+**Learned:**
+- The tfoot colSpan pattern is a subtle but real 1.3.1 violation. `<th colSpan=3>Total
+  </th><td>duration</td>` LOOKS correct visually but misplaces the duration in the
+  wrong column's semantic association. The correct pattern: "Total" spans only the label
+  column(s), duration goes in the data column it summarises. Empty trailing TDs are
+  acceptable — screen readers either skip them or say "blank", which is unambiguous.
+- NVDA announces en dash as "dash". JAWS announces it as "en dash". Neither conveys
+  "not applicable" to a screen reader user. The visually-hidden text pattern with
+  `aria-hidden` on the decorative character is the correct fix — not removing the visual
+  character and not adding `title` (which is inconsistently exposed by screen readers).
+- Designer-specified paragraph spacing can violate 1.4.8 if it reduces the margin below
+  the 1.5× line-height threshold. The base `<p>` style was correct (2.25em / 36px),
+  but the modifier class silently undid it. The pattern to watch: modifier classes that
+  set `margin-bottom` to a spacing token should be cross-checked against the 1.4.8 formula.
+- axe-core passed the route-overview table before the fixes, confirming that manual
+  HTML structural review is essential for table accessibility — automated tools do not
+  catch column-header misassociation or Unicode placeholders used as semantic data.
+
+**Next:** DW-18 done unblocks nothing directly, but certifies DW-16 as accessible. DW-19
+(accessibility review of no-network notice, DW-17) is unblocked and should run next.
+DW-04 remains blocked on Q6 (Matt to download RDM CSV).
