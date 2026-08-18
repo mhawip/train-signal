@@ -68,6 +68,7 @@ and writes to it last.
 | DW-16 | Implement route overview results (no time → most common stopping pattern) | developer |
 | DW-17 | Implement no-network disclaimer with back-to-search link | developer |
 | DW-18 | Accessibility review of DW-16 (route overview) | accessibility-specialist |
+| DW-19 | Accessibility review of DW-17 (no-network notice) | accessibility-specialist |
 
 ---
 
@@ -112,27 +113,6 @@ P3-04 is done — see the index above.
 Bugs and follow-ups get filed here by whoever finds them.
 
 
-### DW-19 — Accessibility review of DW-17 (no-network notice)
-- **owner:** accessibility-specialist
-- **status:** in-progress
-- **depends:** DW-17
-- **why:** The `role="note"` + `aria-label="Network notice"` pattern is new to this
-  product. The DW-15 self-cert flagged it for independent verification that the notice
-  is announced as expected and not intrusive.
-- **scope:** Verify with NVDA or VoiceOver that:
-  - The notice is announced as a note landmark (or equivalent) when the user navigates
-    to it by landmark or by Tab
-  - The `aria-label` ("Network notice") is announced
-  - The link text "Search again with your network selected" is self-descriptive in
-    isolation (2.4.9)
-  - The link target size meets 44px (2.5.5) in the rendered implementation
-  - The notice background tokens (`--color-notice-bg`, `--color-notice-border`) render
-    correctly in both light and dark schemes, and in forced-colors mode
-  - No criterion in accessibility.md section 13 is violated by the implementation
-- **acceptance:**
-  - [ ] Screen reader walkthrough documented
-  - [ ] Any violations filed as new tasks or fixed in-place
-  - [ ] `npm run verify` green (no regression)
 
 ### DW-04 — Retarget signal pipeline at RDM product
 - **owner:** infra

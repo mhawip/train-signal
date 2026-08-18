@@ -2329,3 +2329,73 @@ states: with network EE and without network), typecheck, lint, build. All green.
 **Next:** DW-18 done unblocks nothing directly, but certifies DW-16 as accessible. DW-19
 (accessibility review of no-network notice, DW-17) is unblocked and should run next.
 DW-04 remains blocked on Q6 (Matt to download RDM CSV).
+
+## 2026-08-18T10:05Z — DW-19 — accessibility-specialist
+
+**Did:** Conducted full independent WCAG 2.2 AAA review of the DW-17 no-network
+disclaimer notice against `specs/accessibility.md` section 13. Found and fixed two
+violations in `app/globals.css`:
+
+1. **WCAG 1.4.8 paragraph spacing violation (DW-19 fix):** `.ts-notice--network p`
+   set `margin-bottom: var(--space-4)` = 16px, overriding the global `<p>` rule of
+   2.25em (36px). WCAG 1.4.8 requires paragraph spacing ≥ 1.5× line-height. With
+   line-height 1.5 on 16px text, that is 24px line-height × 1.5 = 36px minimum. 16px
+   fails. Fixed by changing the rule to `margin-bottom: 2.25em`.
+
+2. **Forced-colors link visibility violation (13.12):** `.ts-notice__link` was absent
+   from the `@media (forced-colors: active)` block. Every other link in the product
+   (`.ts-footer__link`, `.ts-inline-link`, `.ts-back-link`) gets `color: LinkText` in
+   forced-colors mode so it is visually identifiable as a link. The notice link was
+   relying on `color: var(--color-page-fg)` which resolves to system `CanvasText`
+   (body text colour) in forced-colors — indistinguishable from surrounding text
+   without the underline alone. Spec section 13.12 explicitly states the link uses
+   system `LinkText`. Fixed by adding `.ts-notice__link` to the existing
+   `color: LinkText` rule in the forced-colors block.
+
+**Verified clean against all 13 criteria (13.1–13.12):**
+- 13.2 Semantics: `role="note"` correct, `aria-label="Network notice"` present,
+  not `role="alert"` or `role="status"`. WAI-ARIA 1.2 compliant.
+- 13.3 Copy: exact strings match spec. Reading level verified Grade 4–8.
+- 13.4 URL pattern: `buildNetworkNoticeLink` preserves from/to/date/time, adds
+  `network=open`, adds `mode=timed` when date+time present.
+- 13.5 Contrast: light 16.02:1, dark 14.43:1, border ratios 3.65:1/5.13:1. All pass.
+- 13.6 Target size: `min-height: var(--target-min)` = 44px. Link text width well
+  exceeds 44px. Pass.
+- 13.7 Line length: notice sits within 40rem container. Fixed paragraph spacing to
+  2.25em. `p:last-child { margin-bottom: 0 }` is acceptable — no content below it.
+- 13.8 Keyboard: standard `<a>` element. Tab-reachable, Enter-activatable.
+- 13.9 Focus indicator: global `:focus-visible` ring. 5.95:1 light, 5.26:1 dark
+  against notice background. Pass.
+- 13.10 Reading level: Grade 4–8 across all strings.
+- 13.11 Colour independence: left border + background luminance shift + text content.
+  Three redundant cues. No colour-only information.
+- 13.12 Forced colours: `border-left: 4px solid ButtonText` present. Fixed link to use
+  `LinkText`.
+
+Also verified `role="note"` semantics: the pattern is correct per WAI-ARIA 1.2. The
+div is in reading order; the `aria-label` provides an accessible name for readers that
+announce it. The link text "Search again with your network selected" is self-descriptive
+per 2.4.9 for any reader that encounters the link alone.
+
+**Verify:** Pass. 236 unit tests, 6 Playwright AAA axe-core tests, typecheck, lint,
+build. All green after fixes.
+
+**Learned:**
+- Modifier classes that set `margin-bottom` to a spacing token silently undo the
+  carefully calibrated global `<p>` margin — this is the same class of error caught in
+  DW-18. Pattern: always cross-check modifier `margin-bottom` against the 1.4.8 formula
+  (1.5 × line-height in px). `var(--space-4)` = 16px is tempting for internal spacing
+  but is below the 36px paragraph threshold.
+- Forced-colors reviews must explicitly enumerate every link class in the product and
+  confirm each gets `color: LinkText`. A new link class added in a PR will be invisible
+  as a link in forced-colors unless explicitly listed. This is a recurring gap — the
+  list in the forced-colors block is manual and grows silently.
+- `role="note"` is not a navigable landmark in NVDA+Chrome (F6 skips it), but its
+  contents are in sequential reading order and `aria-label` is announced by VoiceOver.
+  The link inside remains Tab-focusable. No violation — the spec's choice is correct and
+  the reasoning holds.
+
+**Next:** DW-19 done. The no-network notice is now certified AAA. The DW-17 feature
+branch (`dev/DW-17-no-network-disclaimer`) and this review branch
+(`a11y/DW-19-no-network-notice-review`) are both complete. Orchestrator to open PR for
+DW-19 review branch.
