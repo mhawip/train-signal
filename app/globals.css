@@ -1268,7 +1268,13 @@ legend.ts-field__label + * {
   font-size: var(--font-size-base);
   color: var(--color-page-fg);
   line-height: var(--line-height-body);
-  margin-bottom: var(--space-4);
+  /*
+   * WCAG 1.4.8: paragraph spacing must be >= 1.5x line spacing.
+   * Line height = 1.5 * 16px = 24px; minimum = 1.5 * 24px = 36px = 2.25em.
+   * The global <p> rule uses 2.25em, but .ts-notice--network p was previously
+   * overriding it with var(--space-4) = 16px (DW-19 fix).
+   */
+  margin-bottom: 2.25em;
 }
 
 .ts-notice--network p:last-child {
@@ -1379,7 +1385,8 @@ legend.ts-field__label + * {
 
   .ts-footer__link,
   .ts-inline-link,
-  .ts-back-link {
+  .ts-back-link,
+  .ts-notice__link {
     color: LinkText;
   }
 

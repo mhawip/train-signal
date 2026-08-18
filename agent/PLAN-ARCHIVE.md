@@ -12,6 +12,24 @@ particular way, or its full original acceptance criteria).
 
 ## Discovered work
 
+### DW-19 — Accessibility review of DW-17 (no-network notice)
+- **owner:** accessibility-specialist
+- **status:** done
+- **depends:** DW-17
+- **why:** The `role="note"` + `aria-label="Network notice"` pattern is new to this
+  product. Independent specialist verification required.
+- **what changed:**
+  - `app/globals.css`: `.ts-notice--network p` paragraph spacing corrected from
+    `var(--space-4)` (16px) to `2.25em` (36px) to satisfy 1.4.8 (same class of error
+    as DW-18). `.ts-notice__link` added to `color: LinkText` group in
+    `@media (forced-colors: active)` block — it was missing, making the link
+    indistinguishable from body text in Windows High Contrast Mode.
+- **violations fixed:** Two (1.4.8 paragraph spacing; forced-colors link colour).
+  All other section 13 criteria pass without changes: `role="note"` semantics correct,
+  copy exact, URL pattern correct, contrast ratios pass, 44px target size present,
+  keyboard access OK, focus ring OK.
+- **verify:** Pass. 236 unit tests, 6 Playwright AAA axe-core tests, typecheck, lint.
+
 ### DW-18 — Accessibility review of DW-16 (route overview)
 - **owner:** accessibility-specialist
 - **status:** done
