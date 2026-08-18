@@ -10,6 +10,24 @@ particular way, or its full original acceptance criteria).
 
 ---
 
+## Phase 4 — Resilience, data upgrade, and link previews
+
+### P4-00 — Plan the next phase from the brief
+- **owner:** product-manager
+- **status:** done
+- **depends:** —
+- **why:** v1 is complete against the brief. The backlog is empty except for DW-04
+  (blocked on Q6). The product needs a next-phase plan: what to build after the RDM
+  data upgrade, based on the brief's out-of-scope v1 items and the competitive analysis.
+- **acceptance:**
+  - [x] New phase tasks filed in PLAN.md with owners, dependencies, and acceptance criteria
+  - [x] Tasks ordered by value — most valuable first, accessibility constraints before
+        design before implementation
+  - [x] No tasks filed that contradict the brief's explicit non-goals
+  - [x] `npm run verify` green (no application code changed)
+
+---
+
 ## Discovered work
 
 ### DW-19 — Accessibility review of DW-17 (no-network notice)
