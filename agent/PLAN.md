@@ -118,6 +118,24 @@ P3-04 is done — see the index above.
 
 ---
 
+## Phase 4 — Next phase planning
+
+### P4-00 — Plan the next phase from the brief
+- **owner:** product-manager
+- **status:** in-progress
+- **depends:** —
+- **why:** v1 is complete against the brief. The backlog is empty except for DW-04
+  (blocked on Q6). The product needs a next-phase plan: what to build after the RDM
+  data upgrade, based on the brief's out-of-scope v1 items and the competitive analysis.
+- **acceptance:**
+  - [ ] New phase tasks filed in PLAN.md with owners, dependencies, and acceptance criteria
+  - [ ] Tasks ordered by value — most valuable first, accessibility constraints before
+        design before implementation
+  - [ ] No tasks filed that contradict the brief's explicit non-goals
+  - [ ] `npm run verify` green (no application code changed)
+
+---
+
 ## Discovered work
 
 Bugs and follow-ups get filed here by whoever finds them.
