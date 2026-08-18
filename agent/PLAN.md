@@ -114,7 +114,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-19 — Accessibility review of DW-17 (no-network notice)
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-17
 - **why:** The `role="note"` + `aria-label="Network notice"` pattern is new to this
   product. The DW-15 self-cert flagged it for independent verification that the notice
