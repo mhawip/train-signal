@@ -854,3 +854,29 @@ particular way, or its full original acceptance criteria).
   - [x] Specific-train path (with time) still works as before
   - [x] `npm run verify` green (233 unit tests, 6 Playwright a11y tests)
 - **PR:** #43 (dev/DW-16-route-overview → main)
+
+### DW-17 — Implement no-network disclaimer with back-to-search link
+- **owner:** developer
+- **status:** done
+- **depends:** DW-15
+- **why:** When no network is selected the results already show worst-case signal, but
+  the current notice is minimal. Needed the full treatment designed in DW-15: clear
+  explanation, accessible styling, and a link back to the search page pre-filled so
+  the user can add their network without re-entering the journey.
+- **what changed:**
+  - `app/globals.css`: added `--color-notice-bg` and `--color-notice-border` tokens
+    (light and dark); added `.ts-notice--network`, `.ts-notice__link`, and forced-colors
+    overrides
+  - `app/results/page.tsx`: added `buildNetworkNoticeLink()` helper (adds `network=open`,
+    adds `mode=timed` when date+time present); replaced bare no-network paragraph with
+    `<div role="note" aria-label="Network notice">` component
+  - `app/components/JourneyForm.tsx`: `network === "open"` treated as `""` in both URL
+    builders on form submit; accordion label excludes `"open"` from display
+  - `app/components/JourneyForm.test.tsx`: 3 new tests for `network=open` sentinel behaviour
+- **acceptance:**
+  - [x] No-network notice matches DW-15 design
+  - [x] Link returns user to search form with all current journey params pre-filled
+  - [x] Network accordion is open when user arrives via the back-link
+  - [x] Notice not shown when a network is selected
+  - [x] `npm run verify` green (236 unit tests, 6 Playwright a11y tests)
+- **PR:** #44 (dev/DW-17-no-network-disclaimer → main)

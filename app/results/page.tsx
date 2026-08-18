@@ -115,6 +115,28 @@ function buildBackLink(params: {
   return qs ? `/?${qs}` : "/";
 }
 
+/**
+ * Build the URL for the "Search again with your network selected" link.
+ * Always adds network=open to pre-open the network accordion (without
+ * pre-selecting any radio button). Adds mode=timed if date/time present
+ * so the date/time accordion also opens.
+ */
+function buildNetworkNoticeLink(params: {
+  from?: string;
+  to?: string;
+  date?: string;
+  time?: string;
+}): string {
+  const url = new URLSearchParams();
+  if (params.from) url.set("from", params.from);
+  if (params.to) url.set("to", params.to);
+  if (params.date) url.set("date", params.date);
+  if (params.time) url.set("time", params.time);
+  if (params.date && params.time) url.set("mode", "timed");
+  url.set("network", "open");
+  return `/?${url.toString()}`;
+}
+
 export default async function ResultsPage({ searchParams }: ResultsPageProps) {
   const params = await searchParams;
 
@@ -244,10 +266,30 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
       {networkName ? (
         <p>Showing expected signal for {networkName} on this route.</p>
       ) : (
-        <p>
-          Showing expected signal across all networks. Results show the
-          worst expected coverage across EE, O2, Vodafone, and Three.
-        </p>
+        <div
+          className="ts-notice ts-notice--network"
+          role="note"
+          aria-label="Network notice"
+        >
+          <p>
+            No mobile network selected. These results show the worst expected signal
+            across EE, O2, Vodafone, and Three. If you know your network, results
+            will be more accurate.
+          </p>
+          <p className="ts-notice__action">
+            <a
+              className="ts-notice__link"
+              href={buildNetworkNoticeLink({
+                from: params.from,
+                to: params.to,
+                date: params.date,
+                time: params.time,
+              })}
+            >
+              Search again with your network selected
+            </a>
+          </p>
+        </div>
       )}
 
       <p className="ts-notice ts-notice--vintage">

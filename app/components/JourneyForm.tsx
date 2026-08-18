@@ -249,7 +249,7 @@ export function JourneyForm() {
       const url = buildRouteOverviewUrl({
         from: fromCRS,
         to: toCRS,
-        network,
+        network: network === "open" ? "" : network,
       });
       router.push(url);
       return;
@@ -260,7 +260,7 @@ export function JourneyForm() {
       to: toCRS,
       date,
       time,
-      network,
+      network: network === "open" ? "" : network,
     });
     router.push(url);
   };
@@ -345,7 +345,7 @@ export function JourneyForm() {
         onClick={handleNetworkToggle}
       >
         <span className="ts-accordion__title">
-          {!isNetworkRevealed && network
+          {!isNetworkRevealed && network && network !== "open"
             ? `Mobile network: ${network}`
             : "Choose your mobile network"}
         </span>

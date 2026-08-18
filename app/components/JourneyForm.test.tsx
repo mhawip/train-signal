@@ -304,6 +304,72 @@ describe("JourneyForm progressive reveal", () => {
     expect(chevron?.textContent).toBe("\u25B4");
   });
 
+  it("treats network=open as no network selected on route-overview submit", async () => {
+    // Simulate arriving via the no-network notice link
+    mockSearchParams.set("network", "open");
+
+    const user = userEvent.setup();
+    render(<JourneyForm />);
+
+    // Fill in origin and destination
+    const fromInput = screen.getByLabelText("Origin station");
+    const toInput = screen.getByLabelText("Destination station");
+    await user.type(fromInput, "LDS");
+    await user.type(toInput, "KGX");
+
+    // Submit without selecting a real network
+    const submitButton = screen.getByRole("button", { name: /find signal/i });
+    await user.click(submitButton);
+
+    // Should navigate to route-overview WITHOUT network=open
+    expect(mockPush).toHaveBeenCalledWith("/results?from=LDS&to=KGX");
+  });
+
+  it("does not show 'open' as a network name in the accordion label", () => {
+    mockSearchParams.set("network", "open");
+
+    render(<JourneyForm />);
+
+    // The network accordion should show the generic label, not "Mobile network: open"
+    const networkToggle = screen.getByRole("button", {
+      name: /choose your mobile network/i,
+    });
+    expect(networkToggle).toBeTruthy();
+    // Ensure it does NOT say "Mobile network: open"
+    expect(networkToggle.textContent).not.toContain("Mobile network: open");
+  });
+
+  it("treats network=open as no network selected on timed submit", async () => {
+    // Simulate arriving via the no-network notice link with date/time
+    mockSearchParams.set("network", "open");
+    mockSearchParams.set("mode", "timed");
+    mockSearchParams.set("from", "LDS");
+    mockSearchParams.set("to", "KGX");
+
+    const user = userEvent.setup();
+    render(<JourneyForm />);
+
+    // The date/time fields should be revealed (mode=timed)
+    const datetimeFields = document.getElementById("datetime-fields");
+    expect(datetimeFields).not.toHaveAttribute("hidden");
+
+    // Fill in the time field (date has a default)
+    const timeInput = screen.getByLabelText("Time");
+    await user.clear(timeInput);
+    await user.type(timeInput, "10:00");
+
+    // Submit
+    const submitButton = screen.getByRole("button", { name: /find signal/i });
+    await user.click(submitButton);
+
+    // Should navigate to departures WITHOUT network=open
+    expect(mockPush).toHaveBeenCalled();
+    const calledUrl = mockPush.mock.calls[0][0] as string;
+    expect(calledUrl).not.toContain("network=open");
+    expect(calledUrl).toContain("from=LDS");
+    expect(calledUrl).toContain("to=KGX");
+  });
+
   it("submitting without revealed date/time includes network param when selected", async () => {
     const user = userEvent.setup();
     render(<JourneyForm />);

@@ -2088,3 +2088,44 @@ Changes shipped:
 - `findTypicalJourney` does not apply date/day-of-week/cancellation filtering — it counts patterns across all scheduled services regardless of when they run. This is intentional: the typical pattern is structural, not temporal. The function is called from a server component with no date context.
 
 **Next:** DW-17 (developer — no-network disclaimer with back-to-search link) and DW-18 (accessibility-specialist review of DW-16 route overview) are both unblocked. DW-18 requires a screen reader walkthrough; DW-17 is a pure developer task. Either can run next. DW-04 remains blocked on Q6.
+
+---
+
+## 2026-08-18T00:00:00Z — DW-17 — orchestrator/developer
+
+**Did:** Merged PR #43 (DW-16) which was open and all-green. Then picked DW-17 as the
+highest-priority unblocked todo. Dispatched developer agent. Changes shipped:
+
+- `app/globals.css`: `--color-notice-bg` / `--color-notice-border` tokens (light:
+  `#f0f0f0` / `#5c5c5c`, dark: `#1e1e1e` / `#999999`); `.ts-notice--network`,
+  `.ts-notice__link`, forced-colors override
+- `app/results/page.tsx`: `buildNetworkNoticeLink()` helper builds `/?...&network=open`
+  (adding `mode=timed` when date+time present); no-network paragraph replaced with
+  `<div role="note" aria-label="Network notice">` containing the notice text and the
+  "Search again with your network selected" link
+- `app/components/JourneyForm.tsx`: `network === "open"` guard in `handleSubmit` for
+  both `buildRouteOverviewUrl` and `buildDeparturesUrl` calls; accordion label condition
+  updated to exclude `"open"` from display
+- `app/components/JourneyForm.test.tsx`: 3 new tests for `network=open` sentinel
+
+PR #44 open on `dev/DW-17-no-network-disclaimer`.
+
+**Verify:** Pass. 236 unit tests, 6 Playwright axe-core a11y tests, typecheck, lint, build.
+
+**Learned:**
+- The `network=open` sentinel is a clean solution: it's truthy (keeps accordion open)
+  but matches no real network (no radio pre-selected). The only risk is accidentally
+  passing it through form submission — the guard in `handleSubmit` is the correct fix,
+  not filtering it in `parseJourneyParams` (which would break the accordion-reveal logic).
+- The notice link needs its own URL builder separate from `buildBackLink`, because it
+  always adds `network=open` regardless of whether a network was originally selected,
+  and always adds `mode=timed` when date+time are present. `buildBackLink` (the "Back
+  to search" footer link) has different semantics: it preserves what the user had.
+- DW-19 (accessibility review of no-network notice) is now unblocked and should run next.
+  DW-18 (accessibility review of route overview) is also unblocked and can run in
+  parallel or sequence.
+
+**Next:** DW-18 (accessibility-specialist — review of route-overview table) and DW-19
+(accessibility-specialist — review of no-network notice) are both unblocked. Both
+require a screen reader walkthrough. DW-04 remains blocked on Q6 (Matt to download
+RDM CSV).
