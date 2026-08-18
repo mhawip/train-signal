@@ -111,7 +111,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-17 — Implement no-network disclaimer with back-to-search link
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-15
 - **why:** When no network is selected the results already show worst-case signal, but
   the current notice is minimal. Needs the full treatment designed in DW-15: clear
