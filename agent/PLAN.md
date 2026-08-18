@@ -79,6 +79,7 @@ and writes to it last.
 | DW-17 | Implement no-network disclaimer with back-to-search link | developer |
 | DW-18 | Accessibility review of DW-16 (route overview) | accessibility-specialist |
 | DW-19 | Accessibility review of DW-17 (no-network notice) | accessibility-specialist |
+| P4-00 | Plan the next phase from the brief | product-manager |
 
 ---
 
@@ -118,21 +119,134 @@ P3-04 is done — see the index above.
 
 ---
 
-## Phase 4 — Next phase planning
+## Phase 4 — Resilience, data upgrade, and link previews
 
-### P4-00 — Plan the next phase from the brief
-- **owner:** product-manager
-- **status:** in-progress
+Three goals, in priority order: (1) make the product survive bad connections — the
+exact conditions it is used in; (2) land the RDM data upgrade when Matt unblocks it;
+(3) make result URLs preview well when pasted in Teams/Slack/email, since that is
+the natural end of the "booking a meeting in another tab" workflow.
+
+**Explicitly not in this phase** (each reviewed and rejected):
+- Saved journeys / accounts / social share buttons — brief says v2, requires accounts
+- Live disruption or delay adjustment — different use case, different data, brief says v2
+- Live in-journey tracking — in-journey not planning, brief says out of scope
+- Map view — competitive analysis confirms timeline-first is correct for our use case
+- Onboard wifi quality — different problem, different data, brief says later
+- Non-GB journeys — data not available
+- Structured data / JSON-LD — nice to have, not in success criteria, low user impact
+
+P4-00 is done — see the index above.
+
+### P4-01 — Error and loading boundaries for bad connections
+- **owner:** developer
+- **status:** todo
 - **depends:** —
-- **why:** v1 is complete against the brief. The backlog is empty except for DW-04
-  (blocked on Q6). The product needs a next-phase plan: what to build after the RDM
-  data upgrade, based on the brief's out-of-scope v1 items and the competitive analysis.
+- **why:** The product is used on trains with bad connections. Success criterion 4 says
+  "it works on a phone, on a train, on a bad connection." Today there are no `error.tsx`
+  or `loading.tsx` boundaries. A failed Darwin API call on the results page produces an
+  unhandled server error. A slow SCHEDULE lookup shows a blank screen with no feedback.
+  Users on flaky 3G connections will see these states regularly.
 - **acceptance:**
-  - [ ] New phase tasks filed in PLAN.md with owners, dependencies, and acceptance criteria
-  - [ ] Tasks ordered by value — most valuable first, accessibility constraints before
-        design before implementation
-  - [ ] No tasks filed that contradict the brief's explicit non-goals
-  - [ ] `npm run verify` green (no application code changed)
+  - [ ] `app/results/error.tsx` exists: catches server errors, shows a plain-English
+        message ("Something went wrong. Try again.") with a retry link and a back-to-search
+        link, passes axe AAA
+  - [ ] `app/departures/error.tsx` exists: same pattern
+  - [ ] `app/results/loading.tsx` exists: shows a text-based loading indicator
+        ("Checking signal for your journey..."), no spinner animation, passes axe AAA.
+        Uses `aria-live="polite"` or equivalent for screen reader announcement
+  - [ ] `app/departures/loading.tsx` exists: same pattern
+  - [ ] Error boundary tested: simulate a Darwin API failure and confirm the error page
+        renders (unit test with thrown error)
+  - [ ] Loading state tested: Playwright test confirms loading text appears before
+        results (or at minimum, that the loading page renders in isolation)
+  - [ ] No horizontal scroll at 320px viewport width on error and loading states
+  - [ ] Self-certified AAA per developer checklist (reuses existing patterns only)
+  - [ ] `npm run verify` green
+
+### P4-02 — Accessibility constraints: Open Graph metadata on results pages
+- **owner:** accessibility-specialist
+- **status:** todo
+- **depends:** —
+- **why:** Adding `<meta>` tags has no visual impact, but the OG description will be
+  read by screen readers in some contexts (social media embeds, link previews in
+  messaging apps). The copy must meet WCAG 3.1.5 reading level and the honesty rules
+  (never "you will have signal"). This task sets the constraints before implementation.
+- **acceptance:**
+  - [ ] Copy templates for OG title and description documented in `specs/accessibility.md`
+        (new section): reading level verified, hedged language confirmed, no jargon
+  - [ ] OG description template uses "expected" or "likely", never promises signal
+  - [ ] Guidance on what to do when no best window exists (the description must not
+        invent a positive framing)
+  - [ ] Character limits documented (OG title 60 chars, OG description 155 chars)
+
+### P4-03 — Open Graph metadata on results and departures pages
+- **owner:** developer
+- **status:** todo
+- **depends:** P4-02
+- **why:** When a user finds their best window and pastes the results URL into a Teams
+  chat, calendar invite, or email, the link currently previews as a bare URL with no
+  context. Adding Open Graph title and description makes these links immediately useful:
+  "Leeds to London signal -- Best window likely 14:35-15:20 (video call)". This is the
+  natural end of the "booking a meeting in another tab" workflow the brief describes.
+- **acceptance:**
+  - [ ] Results page `generateMetadata` returns `openGraph.title` and
+        `openGraph.description` following the templates from P4-02
+  - [ ] Route-overview results page returns appropriate OG metadata (no clock times,
+        station-to-station framing)
+  - [ ] Departures page `generateMetadata` returns appropriate OG metadata
+  - [ ] OG description includes the best-window summary when one exists
+  - [ ] OG description handles no-best-window case honestly (per P4-02 constraints)
+  - [ ] No OG image (avoid committing binary assets; text preview is sufficient)
+  - [ ] Verified: pasting a results URL into a markdown-capable tool (or inspecting
+        the HTML `<head>`) shows the expected title and description
+  - [ ] Self-certified AAA per developer checklist (meta tags only, no visual change)
+  - [ ] `npm run verify` green
+
+### P4-04 — Update vintage notice and attribution when RDM data lands
+- **owner:** developer
+- **status:** blocked
+- **depends:** DW-04
+- **why:** When DW-04 ships, the signal data will be from July 2026, not 2018-19. The
+  results page vintage notice ("Signal data is based on Ofcom rail measurements from
+  2018 and 2019") and the footer attribution ("Ofcom yellow-train mobile signal
+  measurements, 2018-19") will become inaccurate. Showing stale vintage text next to
+  current data is a credibility problem -- the honest direction.
+- **acceptance:**
+  - [ ] Results page vintage notice updated to reflect the RDM data date (e.g. "2026")
+  - [ ] Footer attribution updated to name the RDM source and its date
+  - [ ] If the RDM data includes 5G, the vintage notice mentions this (e.g. "including
+        4G and 5G measurements")
+  - [ ] Language remains hedged ("expected", "likely") -- newer data does not justify
+        stronger claims
+  - [ ] Accessibility statement updated if the data-source description changes
+  - [ ] `npm run verify` green
+- **blocked because:** DW-04 has not yet shipped; the exact RDM data vintage and
+  coverage details are not known until the pipeline runs.
+
+### P4-05 — Re-validate signal output against known notspots after RDM data
+- **owner:** qa
+- **status:** blocked
+- **depends:** DW-04
+- **why:** The P3-01 cross-validation ran against 2018-19 Ofcom data. The RDM data is
+  from 2026 and includes 5G. Signal verdicts will change. The validation must re-run to
+  confirm the new data still skews conservative and does not introduce false positives
+  (optimistic verdicts where signal is actually poor). A false positive -- telling
+  someone they will have signal when they will not -- is the highest-severity failure
+  this product can have.
+- **acceptance:**
+  - [ ] `pipeline/p3-01-validate-notspots.ts` re-run against the regenerated
+        `data/signal-segments.json`
+  - [ ] All 5 major routes re-checked (ECML, Transpennine, GWR, CrossCountry,
+        Edinburgh-Glasgow)
+  - [ ] Any new false positives (known notspot now showing "voice" or "video")
+        investigated and filed as high-severity bugs
+  - [ ] Direction of error confirmed: still conservative (under-promise, not
+        over-promise)
+  - [ ] Findings appended to `specs/signal-model.md` under a new "P4-05 RDM
+        re-validation" section
+  - [ ] If false positives are found, signal thresholds in `specs/signal-model.md`
+        reviewed and adjusted before the data ships
+- **blocked because:** DW-04 has not yet shipped; the new signal data does not exist yet.
 
 ---
 

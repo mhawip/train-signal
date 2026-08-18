@@ -2476,3 +2476,79 @@ no journey planning. The product does one thing.
 ship as v1 with 2018-19 data, and upgrade to fresher data when the RDM CSV arrives. If
 Matt wants to plan v2 features (onboard wifi, live disruption, saved journeys), those
 should be scoped as a separate phase after DW-04 lands.
+
+---
+
+## 2026-08-18T15:00:00Z — P4-00 — product-manager
+
+**Did:** Planned Phase 4 ("Resilience, data upgrade, and link previews"). Filed 5 new
+tasks in `agent/PLAN.md`:
+
+- **P4-01** (developer, todo): Error and loading boundaries for bad connections. No
+  `error.tsx` or `loading.tsx` exist anywhere in the app. A failed Darwin API call on
+  the results page produces an unhandled server error. This directly violates success
+  criterion 4 ("works on a phone, on a train, on a bad connection"). No dependencies.
+- **P4-02** (accessibility-specialist, todo): Accessibility constraints for OG metadata
+  copy. The OG description will appear in link previews and must meet reading level and
+  honesty requirements. No dependencies.
+- **P4-03** (developer, todo, depends P4-02): Open Graph metadata on results and
+  departures pages. When a user pastes a results URL into Teams or email, the link
+  should preview with the best-window summary. This is the natural end of the "booking a
+  meeting in another tab" workflow.
+- **P4-04** (developer, blocked on DW-04): Update vintage notice and attribution when
+  RDM data lands. The current copy says "2018 and 2019" -- when the data changes, the
+  copy must change too.
+- **P4-05** (qa, blocked on DW-04): Re-validate signal output against known notspots
+  after RDM data upgrade. The highest-risk moment: new data could introduce false
+  positives (optimistic verdicts on known dead zones).
+
+Explicitly decided NOT to include in this phase (each reviewed):
+- Saved journeys / accounts / social share buttons (brief says v2, needs accounts)
+- Live disruption (different use case, brief says v2)
+- Live in-journey tracking (in-journey not planning, brief says out of scope)
+- Map view (competitive analysis confirms timeline-first is right)
+- Onboard wifi (different problem, brief says later)
+- Non-GB journeys (no data)
+- Structured data / JSON-LD (nice-to-have, low user impact, not in success criteria)
+
+P4-01 and P4-02 are immediately actionable with no dependencies.
+
+**Verify:** `npm run verify` green (no application code changed).
+
+**Learned:**
+- The product has no error or loading boundaries at all. This is the most consequential
+  gap in a product used on trains with bad connections. It should have been caught in
+  Phase 3 (truth and polish) but was not, because the Playwright tests and manual
+  reviews all ran on fast local connections.
+- OG metadata is a low-effort, high-impact addition because the URL structure already
+  encodes the full journey. The data needed for a good preview (origin, destination,
+  best window) is already computed server-side in `generateMetadata` and the page
+  component. The work is wiring it into the metadata return value.
+- The RDM data upgrade (DW-04) is still the single highest-value item, but it remains
+  blocked on Matt. P4-04 and P4-05 are filed to capture the work that must happen
+  immediately after DW-04 ships -- the vintage notice update and the re-validation.
+
+**Next:** P4-01 (error/loading boundaries) and P4-02 (OG copy constraints) are both
+unblocked and can proceed in parallel. P4-01 is higher priority because it addresses a
+real failure mode users will hit. DW-04 remains blocked on Q6.
+
+---
+
+## 2026-08-18T15:30:00Z — P4-00 — orchestrator
+
+**Did:** Pushed local main commit (v1 assessment) to origin. Found backlog empty except
+DW-04 (blocked on Q6). Created P4-00 task and dispatched to product agent to plan the
+next phase. Product agent filed 5 tasks in Phase 4 ("Resilience, data upgrade, and link
+previews") and archived P4-00. Cleaned up P4-00 archive entry and opened PR.
+
+**Verify:** Pass. `npm run verify` confirmed green by product agent (236 unit tests,
+typecheck, lint, build, 6 Playwright AAA a11y tests).
+
+**Learned:** The product has no error or loading boundaries — this was the most
+consequential gap the product agent identified. It is entirely reproducible in the
+product's intended environment (trains with bad connections) and was missed because all
+reviews ran on fast local connections.
+
+**Next:** P4-01 (developer — error and loading boundaries) is the highest-priority
+unblocked todo. P4-02 (accessibility-specialist — OG copy constraints) has no
+dependencies and can run in parallel. DW-04 remains blocked on Q6.
