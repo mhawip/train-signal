@@ -1216,12 +1216,18 @@ legend.ts-field__label + * {
 
 /* Route overview subtitle (accessibility.md 12.3, design-system.md 11).
  * Communicates that results are for a typical stopping pattern.
- * Uses --color-muted (7:1 verified) for secondary emphasis. */
+ * Uses --color-muted (7:1 verified) for secondary emphasis.
+ *
+ * DW-18 fix: margin-bottom changed from --space-6 (24px) to 2.25em (36px).
+ * WCAG 1.4.8 (AAA) requires paragraph spacing >= 1.5x line spacing.
+ * Line height = 1.5 * 16px = 24px; minimum spacing = 1.5 * 24px = 36px.
+ * The base <p> rule already uses 2.25em (36px); this class must not
+ * reduce it below that threshold. */
 .ts-route-subtitle {
   font-size: var(--font-size-base);
   color: var(--color-muted);
   line-height: var(--line-height-body);
-  margin-bottom: var(--space-6);
+  margin-bottom: 2.25em;
 }
 
 /* At 320px viewport, the timeline must still fit without

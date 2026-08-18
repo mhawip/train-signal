@@ -67,6 +67,7 @@ and writes to it last.
 | DW-15 | Design: route overview results and no-network disclaimer | designer |
 | DW-16 | Implement route overview results (no time → most common stopping pattern) | developer |
 | DW-17 | Implement no-network disclaimer with back-to-search link | developer |
+| DW-18 | Accessibility review of DW-16 (route overview) | accessibility-specialist |
 
 ---
 
@@ -110,26 +111,6 @@ P3-04 is done — see the index above.
 
 Bugs and follow-ups get filed here by whoever finds them.
 
-
-### DW-18 — Accessibility review of DW-16 (route overview)
-- **owner:** accessibility-specialist
-- **status:** todo
-- **depends:** DW-16
-- **why:** The route overview table replaces Arrives/Departs with a "Leg duration" column
-  — a new table structure not yet reviewed with a screen reader. The DW-15 self-cert
-  flagged this for independent verification.
-- **scope:** Verify with NVDA (Windows) or VoiceOver (macOS) that:
-  - The 4-column route-overview table (Station, Leg duration, Expected signal, Confidence)
-    reads correctly row by row
-  - The caption "Typical journey: [Origin] to [Destination]" is announced
-  - The origin row's en dash in Leg duration is announced meaningfully (or at minimum,
-    not confusingly)
-  - The `<tfoot>` total row makes sense in reading order
-  - No criterion in accessibility.md section 12 is violated by the implementation
-- **acceptance:**
-  - [ ] Screen reader walkthrough documented (reader, OS, findings)
-  - [ ] Any violations filed as new tasks or fixed in-place
-  - [ ] `npm run verify` green (no regression)
 
 ### DW-19 — Accessibility review of DW-17 (no-network notice)
 - **owner:** accessibility-specialist

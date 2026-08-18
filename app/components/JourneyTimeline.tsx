@@ -249,7 +249,12 @@ export function JourneyTimeline({
   if (isRouteOverview) {
     // Route-overview table: 4 columns per accessibility.md section 12.5
     // Station | Leg duration | Expected signal | Confidence
-    const totalFooterSpan = hasSignal ? 3 : 1;
+    //
+    // Accessibility notes (DW-18 review):
+    // - En dash cells carry visually-hidden "Not applicable" text so screen
+    //   readers announce meaning rather than "dash" or "en dash" (1.3.1).
+    // - tfoot: Total header spans Station column only; duration appears in the
+    //   Leg duration column so column-header association is unambiguous (1.3.1).
 
     return (
       <section id="journey-table" aria-labelledby="journey-table-heading">
@@ -273,7 +278,7 @@ export function JourneyTimeline({
             <tbody>
               {callingPoints.map((point, index) => {
                 // Leg duration: time from the previous stop to this one.
-                // Origin (index 0) has no incoming leg, so it shows an en dash.
+                // Origin (index 0) has no incoming leg.
                 let legDuration: string | null = null;
                 if (index > 0) {
                   const prevDeparture =
@@ -291,24 +296,55 @@ export function JourneyTimeline({
                     ? signalProfile[index - 1]
                     : null;
 
+                // Cells where there is no value show an en dash for sighted
+                // users and visually-hidden text for screen readers (1.3.1).
+                // "Not applicable" for the origin row (no incoming leg).
+                // "Not available" for intermediate rows with missing time data.
+                const legDurationCell =
+                  index === 0 ? (
+                    <>
+                      <span aria-hidden="true">{"\u2013"}</span>
+                      <span className="ts-visually-hidden">Not applicable</span>
+                    </>
+                  ) : legDuration !== null ? (
+                    legDuration
+                  ) : (
+                    <>
+                      <span aria-hidden="true">{"\u2013"}</span>
+                      <span className="ts-visually-hidden">Not available</span>
+                    </>
+                  );
+
                 return (
                   <tr key={point.crs}>
                     <th scope="row">{point.name}</th>
-                    <td>{index === 0 ? "\u2013" : legDuration ?? "\u2013"}</td>
+                    <td>{legDurationCell}</td>
                     {hasSignal && (
                       <td>
                         {segmentSignal ? (
                           <SignalCell signal={segmentSignal} />
                         ) : (
-                          "\u2013"
+                          <>
+                            <span aria-hidden="true">{"\u2013"}</span>
+                            <span className="ts-visually-hidden">
+                              Not applicable
+                            </span>
+                          </>
                         )}
                       </td>
                     )}
                     {hasSignal && (
                       <td>
-                        {segmentSignal
-                          ? confidenceLabel(segmentSignal)
-                          : "\u2013"}
+                        {segmentSignal ? (
+                          confidenceLabel(segmentSignal)
+                        ) : (
+                          <>
+                            <span aria-hidden="true">{"\u2013"}</span>
+                            <span className="ts-visually-hidden">
+                              Not applicable
+                            </span>
+                          </>
+                        )}
                       </td>
                     )}
                   </tr>
@@ -316,11 +352,21 @@ export function JourneyTimeline({
               })}
             </tbody>
             <tfoot>
+              {/*
+               * Total row: Station column carries the "Total" row header;
+               * Leg duration column carries the total journey time.
+               * Remaining columns (Expected signal, Confidence) are left
+               * empty — they have no meaningful total. Screen readers either
+               * skip empty cells or announce "blank", which is unambiguous.
+               * This structure keeps the duration associated with the correct
+               * column header ("Leg duration") rather than the last column
+               * ("Confidence"), which a colSpan=3 approach would misplace.
+               */}
               <tr>
-                <th scope="row" colSpan={totalFooterSpan}>
-                  Total
-                </th>
+                <th scope="row">Total</th>
                 <td>{formatDuration(totalMinutes)}</td>
+                {hasSignal && <td></td>}
+                {hasSignal && <td></td>}
               </tr>
             </tfoot>
           </table>
