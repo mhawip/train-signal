@@ -12,6 +12,24 @@ particular way, or its full original acceptance criteria).
 
 ## Discovered work
 
+### DW-18 — Accessibility review of DW-16 (route overview)
+- **owner:** accessibility-specialist
+- **status:** done
+- **depends:** DW-16
+- **why:** The route overview table replaces Arrives/Departs with a "Leg duration" column
+  — a new table structure not yet reviewed with a screen reader. The DW-15 self-cert
+  flagged this for independent verification.
+- **what changed:**
+  - `app/components/JourneyTimeline.tsx`: En dash cells in the origin row (Leg duration,
+    Expected signal, Confidence) replaced with `aria-hidden` en dash + `.ts-visually-hidden`
+    "Not applicable" text. `<tfoot>` restructured so Total spans only the Station column
+    and duration appears in the Leg duration column (not the Confidence column as before).
+  - `app/globals.css`: `.ts-route-subtitle` margin-bottom corrected from 24px to 2.25em
+    (36px) to satisfy the 1.4.8 paragraph-spacing minimum (1.5 × 24px line-height = 36px).
+- **violations fixed:** Three WCAG 2.2 AAA violations (all 1.3.1 or 1.4.8), none caught
+  by axe-core — confirming manual table analysis is required.
+- **verify:** Pass. 236 unit tests, 6 Playwright AAA axe-core tests, typecheck, lint.
+
 ### DW-15 — Design: route overview results and no-network disclaimer
 - **owner:** designer
 - **status:** done
