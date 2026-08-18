@@ -1,3 +1,13 @@
+## Current state
+
+**v1 is complete.** All scope items from `specs/brief.md` section 5 are implemented,
+tested, and accessibility-reviewed (72 tasks, 46 PRs). The only open item is DW-04
+(RDM data upgrade), which is blocked on Matt downloading the CSV (Q6). The product
+ships with 2018-19 Ofcom data; the UI states the vintage and errs conservative. See
+journal entry 2026-08-18T14:30Z for the full assessment.
+
+---
+
 # Backlog
 
 The single source of truth for what happens next. Every loop iteration reads this first

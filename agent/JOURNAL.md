@@ -2399,3 +2399,80 @@ build. All green after fixes.
 branch (`dev/DW-17-no-network-disclaimer`) and this review branch
 (`a11y/DW-19-no-network-notice-review`) are both complete. Orchestrator to open PR for
 DW-19 review branch.
+
+## 2026-08-18T14:30Z — v1-assessment — product-manager
+
+**Did:** Assessed the product against every item in `specs/brief.md` section 5 (v1 scope)
+to determine whether v1 is complete. Reviewed all 46 merged PRs, the full completed-task
+index in PLAN.md (72 tasks across 4 phases plus discovered work), the signal model
+documentation, cross-validation results, and the application code on main.
+
+**v1 scope verdict: COMPLETE.** Every in-scope item from the brief is implemented, tested,
+and accessibility-reviewed:
+
+1. **GB National Rail journeys (origin, destination, date, time):** Station autocomplete
+   with 2,608 stations. Darwin LDBWS for today's live departures, NR SCHEDULE for the
+   8-week planning horizon. Route overview mode when date/time omitted.
+2. **Per-network results (EE, O2, Vodafone, Three):** Network selector in the accordion
+   form. Signal data split by operator. Worst-case mode with disclaimer when no network
+   selected.
+3. **Three-band signal verdict:** Video (voice+video) / voice only / no signal, with
+   no-data for uncovered segments. Confidence tiers (high/low/no-data) shown.
+4. **Journey timeline with calling points and times:** Text-equivalent table (primary
+   accessible representation) plus visual timeline. Clock times for specific trains,
+   station-to-station for route overview.
+5. **"Best window to book":** Longest contiguous good-signal stretch, with clock times
+   (specific train) or station names (route overview). Displayed as the headline answer
+   above the timeline, exactly as the brief specifies.
+6. **Tunnels called out explicitly by name:** OSM tunnel data extracted (3,537 tunnels),
+   displayed in the timeline per segment.
+7. **WCAG 2.2 AAA:** 6 automated axe-core AAA tests in CI, 5 independent specialist
+   reviews (P1-07, DW-05, DW-13, DW-18, DW-19), manual audit (P3-03), all violations
+   found and fixed.
+
+**Out-of-scope items confirmed not built (correct):** No accounts, no saved journeys,
+no sharing, no underground/metro/tram, no live disruption adjustment, no onboard wifi,
+no journey planning. The product does one thing.
+
+**Remaining gap -- DW-04 (RDM data retargeting):**
+- Status: blocked on Q6 (Matt to download the RDM CSV to data/raw/).
+- Impact: The signal data is from 2018-19 Ofcom measurements. The RDM product (dated
+  July 2026) contains fresher measurements including 5G. Upgrading would materially
+  improve accuracy.
+- Mitigation already in place: The UI states the data vintage ("Signal data is based on
+  Ofcom rail measurements from 2018 and 2019"). The brief explicitly anticipated this
+  weakness (section 6.1) and specified conservative failure mode, which the product
+  delivers -- cross-validation (P3-01) confirmed no false positives across 5 routes.
+- Can it be advanced without the file? No. The pipeline update requires the exact CSV
+  column names, which can only be determined by inspecting the file header. The acceptance
+  criteria in DW-04 already document what the update should do. Writing the code
+  speculatively would be guesswork that wastes time when the actual column names arrive.
+- This is a v1.1 data improvement, not a v1 blocker. The product is honest about its
+  data vintage and errs conservative. It ships.
+
+**Signal accuracy assessment:**
+- P3-01 cross-validated against 5 major routes (ECML, Transpennine, GWR, CrossCountry,
+  Edinburgh-Glasgow) using mastdatabase notspots, Ofcom 2026 train study, and common
+  experience. 11 of 13 known notspots confirmed, 1 partially confirmed, 1 not detected
+  in tunnel data (but signal data correctly shows poor coverage). No false positives
+  found -- the model never said "good signal" where there is a known notspot.
+- Error direction is conservative: under-promises rather than over-promises. This is the
+  correct failure mode per the brief.
+- P3-02 (confidence and honesty pass) verified all user-facing language uses hedging
+  ("expected", "likely"), never certainty.
+
+**Verify:** n/a (planning/assessment task)
+
+**Learned:**
+- The product is genuinely complete against its stated scope. 72 tasks across 4 phases,
+  zero open items except the blocked data upgrade. The autonomous development loop worked.
+- DW-04 is the single highest-value next step. When Matt downloads the RDM CSV, the
+  pipeline update is well-specified and can proceed unattended. The data vintage is the
+  product's biggest honest weakness.
+- The branch list has 42 feature branches that could be cleaned up. Not urgent, but
+  housekeeping worth doing.
+
+**Next:** DW-04 remains blocked on Q6. No other v1 work exists. The product is ready to
+ship as v1 with 2018-19 data, and upgrade to fresher data when the RDM CSV arrives. If
+Matt wants to plan v2 features (onboard wifi, live disruption, saved journeys), those
+should be scoped as a separate phase after DW-04 lands.
