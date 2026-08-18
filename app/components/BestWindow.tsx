@@ -40,18 +40,29 @@ export function BestWindow({ window, networkName }: BestWindowProps) {
     );
   }
 
+  // Route-overview mode: no clock times available (startTime/endTime null).
+  // Show station-to-station description with duration and call quality.
+  const isRouteOverview = window.startTime === null || window.endTime === null;
+
   const qualityLabel =
-    window.quality === "video" ? "voice and video" : "voice call";
+    window.quality === "video" ? "voice and video" : "voice";
+  const callTypeLabel =
+    window.quality === "video" ? "a video call" : "a voice call";
 
   return (
     <section aria-labelledby="best-window-heading">
       <h2 id="best-window-heading">Best window</h2>
-      <p className="ts-best-window__times">
-        {window.startTime} – {window.endTime}
-      </p>
+      {!isRouteOverview && (
+        <p className="ts-best-window__times">
+          {window.startTime} – {window.endTime}
+        </p>
+      )}
       <p>
         {formatDuration(window.durationMinutes)} of expected {qualityLabel}{" "}
         signal on {networkName}, {window.startStation} to {window.endStation}.
+        {isRouteOverview
+          ? ` Good enough for ${callTypeLabel}.`
+          : ""}
       </p>
       {window.confidence === "low" && (
         <p className="ts-muted">Based on limited data for this route.</p>

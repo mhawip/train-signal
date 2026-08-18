@@ -65,6 +65,7 @@ and writes to it last.
 | DW-06 | Fix local Windows verify: Playwright hang and build failure | infra |
 | DW-14 | Ship design iteration: accordion form, optional network, worst-case signal | developer |
 | DW-15 | Design: route overview results and no-network disclaimer | designer |
+| DW-16 | Implement route overview results (no time → most common stopping pattern) | developer |
 
 ---
 
@@ -107,40 +108,6 @@ P3-04 is done — see the index above.
 ## Discovered work
 
 Bugs and follow-ups get filed here by whoever finds them.
-
-### DW-16 — Implement route overview results (no time → most common stopping pattern)
-- **owner:** developer
-- **status:** todo
-- **depends:** DW-15
-- **why:** Currently the form forces time entry before submitting (reveals accordion and
-  prompts). Route overview mode skips time entirely and shows signal for the most typical
-  journey on the route.
-- **scope:**
-  - `JourneyForm`: allow submission without time — when date/time accordion is closed,
-    submit directly rather than forcing it open with a prompt
-  - New server function (e.g. `findTypicalJourney(from, to)` in `schedule.ts`): scans
-    SCHEDULE data to count stopping patterns between the two stations; returns the most
-    frequent one as a `Journey` object (without specific departure time — use sentinel
-    values or nullable times as the designer specifies)
-  - `results/page.tsx`: detect no `time` param → call `findTypicalJourney` instead of
-    `findScheduledJourney`/`fetchDepartures`; render route overview variant of the page
-  - Timeline component: handle null/absent clock times — show stop names and proportional
-    segment bars without the time column
-  - Heading, context text, and "typical journey" framing as designed in DW-15
-- **note:** There is a minor inconsistency between the two DW-15 specs. `specs/accessibility.md`
-  section 12.5 lists 4 columns: Station, Leg duration, Expected signal, **Confidence**.
-  `specs/design-system.md` section 11 HTML example shows 4 columns: Station, Leg duration,
-  Expected signal, **Journey time**. The accessibility spec is authoritative. Use the
-  accessibility spec column set (Station, Leg duration, Expected signal, Confidence) and
-  drop the Journey time column — it is meaningless without a departure time.
-- **acceptance:**
-  - [ ] Submitting with only origin + destination (no time) reaches a results page
-  - [ ] Most common stopping pattern is selected (unit test: given a fixture with known
-        pattern counts, returns the correct one)
-  - [ ] Timeline renders correctly with no clock times — 4 columns per accessibility.md 12.5
-  - [ ] Results page heading makes "typical journey" framing clear (per DW-15 design)
-  - [ ] Specific-train path (with time) still works as before
-  - [ ] `npm run verify` green
 
 ### DW-17 — Implement no-network disclaimer with back-to-search link
 - **owner:** developer

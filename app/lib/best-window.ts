@@ -16,10 +16,10 @@ import type { SegmentSignal } from "@/app/lib/signal";
 import { elapsedMinutes } from "@/app/components/JourneyTimeline";
 
 export interface BestWindow {
-  /** Clock time "HH:MM" when the window starts */
-  startTime: string;
-  /** Clock time "HH:MM" when the window ends */
-  endTime: string;
+  /** Clock time "HH:MM" when the window starts, or null in route-overview mode */
+  startTime: string | null;
+  /** Clock time "HH:MM" when the window ends, or null in route-overview mode */
+  endTime: string | null;
   /** Duration in minutes */
   durationMinutes: number;
   /** "video" if the whole window is video-capable; "voice" if any segment is voice-only */
@@ -46,12 +46,17 @@ function isUsable(signal: SegmentSignal): boolean {
  *
  * Returns null if no usable run exists, or if every candidate run
  * has missing times (scheduledDeparture/scheduledArrival is null).
+ *
+ * In route-overview mode (journey.date is empty), the algorithm uses
+ * the illustrative schedule times for duration calculation but outputs
+ * null for startTime/endTime since no specific departure exists.
  */
 export function findBestWindow(
   journey: Journey,
   signalProfile: SegmentSignal[]
 ): BestWindow | null {
   const { callingPoints } = journey;
+  const isRouteOverview = journey.date === "";
 
   if (signalProfile.length === 0 || callingPoints.length < 2) {
     return null;
@@ -125,8 +130,10 @@ export function findBestWindow(
     }
 
     const candidate: BestWindow = {
-      startTime,
-      endTime,
+      // Route overview: times are illustrative only, so we output null.
+      // Specific-train mode: output the actual clock times.
+      startTime: isRouteOverview ? null : startTime,
+      endTime: isRouteOverview ? null : endTime,
       durationMinutes: duration,
       quality: allVideo ? "video" : "voice",
       confidence: hasLowConfidence ? "low" : "high",

@@ -807,3 +807,50 @@ particular way, or its full original acceptance criteria).
   - [x] typecheck, lint, and unit tests pass (214 tests)
   - [x] Playwright a11y suite: not run locally (pre-existing DW-06 Windows hang);
         CI will confirm on PR #36. Same precedent as DW-07.
+
+### DW-16 — Implement route overview results (no time → most common stopping pattern)
+- **owner:** developer
+- **status:** done
+- **depends:** DW-15
+- **why:** Route overview mode skips time entirely and shows signal for the most typical
+  journey on the route. Previously the form forced time entry before submitting.
+- **what changed:**
+  - `app/lib/journey-params.ts`: `buildRouteOverviewUrl` helper added — encodes origin,
+    destination, optional network as `/results?from=X&to=Y` (no date/time).
+  - `app/components/JourneyForm.tsx`: submitting with date/time accordion closed navigates
+    to route-overview URL instead of forcing the accordion open.
+  - `app/lib/schedule.ts`: `findTypicalJourney(fromCrs, toCrs, network)` — scans all
+    schedules between the two stations, counts stopping patterns, returns the most-frequent
+    one as a `Journey` with `date: ""` (route-overview sentinel). Times retained for
+    duration computation; clock times not shown to user.
+  - `app/results/page.tsx`: detects missing `date`/`time` params → route-overview branch.
+    Calls `findTypicalJourney`; renders "Typical stopping pattern" subtitle and separate
+    "No route found" error state. `generateMetadata` updated for route-overview title.
+    `buildBackLink` updated for route-overview (omits date/time params).
+  - `app/components/JourneyTimeline.tsx`: route-overview branch renders 4 columns per
+    `specs/accessibility.md §12.5` — Station, Leg duration, Expected signal, Confidence.
+    Caption is "Typical journey: X to Y". Leg durations computed from illustrative schedule
+    times. tfoot Total row spans correctly in both layouts.
+  - `app/components/BestWindow.tsx`: route-overview mode (startTime/endTime null) shows
+    station-to-station description with duration and call quality, no clock times.
+  - `app/lib/best-window.ts`: `BestWindow` interface adds `startTime`/`endTime` as
+    `string | null`; set null when `journey.date === ""`.
+  - `app/globals.css`: `.ts-route-subtitle` style (muted, base font, 1.5 line height).
+  - `app/lib/schedule.test.ts`: `findTypicalJourney` unit tests — most-frequent-pattern
+    selection (fixture with 10×PatternA vs 3×PatternB), null-when-no-route, case-
+    insensitive CRS, illustrative-times retained.
+  - `app/components/JourneyForm.test.tsx`: route-overview navigation path, network param
+    included, validates-only-when-revealed behaviour.
+  - `e2e/results.spec.ts`: two new axe-core a11y tests — route overview with network,
+    route overview without network. All 6 Playwright tests pass.
+- **note:** Column inconsistency in DW-15 specs resolved: accessibility.md §12.5
+  (Station, Leg duration, Expected signal, Confidence) wins over design-system.md §11
+  HTML example (which had Journey time). Accessibility spec is authoritative.
+- **acceptance (all met):**
+  - [x] Submitting with only origin + destination (no time) reaches a results page
+  - [x] Most common stopping pattern is selected (unit test with fixture)
+  - [x] Timeline renders correctly with no clock times — 4 columns per accessibility.md 12.5
+  - [x] Results page heading makes "typical journey" framing clear (per DW-15 design)
+  - [x] Specific-train path (with time) still works as before
+  - [x] `npm run verify` green (233 unit tests, 6 Playwright a11y tests)
+- **PR:** #43 (dev/DW-16-route-overview → main)

@@ -1203,6 +1203,16 @@ legend.ts-field__label + * {
   font-size: var(--font-size-sm);
 }
 
+/* Route overview subtitle (accessibility.md 12.3, design-system.md 11).
+ * Communicates that results are for a typical stopping pattern.
+ * Uses --color-muted (7:1 verified) for secondary emphasis. */
+.ts-route-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--color-muted);
+  line-height: var(--line-height-body);
+  margin-bottom: var(--space-6);
+}
+
 /* At 320px viewport, the timeline must still fit without
  * horizontal scroll (1.4.10). Station names wrap naturally
  * because the label uses flex-wrap. */
