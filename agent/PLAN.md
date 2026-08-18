@@ -113,7 +113,7 @@ Bugs and follow-ups get filed here by whoever finds them.
 
 ### DW-18 — Accessibility review of DW-16 (route overview)
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-16
 - **why:** The route overview table replaces Arrives/Departs with a "Leg duration" column
   — a new table structure not yet reviewed with a screen reader. The DW-15 self-cert
