@@ -38,6 +38,12 @@
   /* #5c5c5c on #ffffff = 6.69:1 (non-text, need 3:1) */
   --color-field-border: #5c5c5c;
 
+  /* --- Notice background tokens --- */
+  /* #1a1a1a on #f0f0f0 = 16.02:1 (need 7:1) */
+  --color-notice-bg: #f0f0f0;
+  /* #5c5c5c on #f0f0f0 = 3.65:1 (non-text, need 3:1) */
+  --color-notice-border: #5c5c5c;
+
   /* --- Focus indicator --- */
   /* #0044cc on #ffffff = 7.78:1 (need 3:1 for focus) */
   --color-focus: #0044cc;
@@ -132,6 +138,11 @@
     --color-field-bg: #1e1e1e;
     /* #999999 on #121212 = 6.58:1 (non-text, need 3:1) */
     --color-field-border: #999999;
+
+    /* #e8e8e8 on #1e1e1e = 14.43:1 (need 7:1) */
+    --color-notice-bg: #1e1e1e;
+    /* #999999 on #1e1e1e = 5.13:1 (non-text, need 3:1) */
+    --color-notice-border: #999999;
 
     /* #6699ff on #121212 = 6.75:1 (focus ring: need 3:1, passes) */
     --color-focus: #6699ff;
@@ -1224,6 +1235,55 @@ legend.ts-field__label + * {
 }
 
 /* ================================================================
+ * NO-NETWORK NOTICE
+ *
+ * Displayed on the results page when no mobile network is selected.
+ * Explains worst-case signal and links back to search with the
+ * network accordion pre-opened.
+ *
+ * WCAG requirements:
+ * - 1.3.1: role="note" with aria-label (section 13.2)
+ * - 1.4.6: Text uses --color-page-fg on --color-notice-bg (16.02:1 light, 14.43:1 dark)
+ * - 1.4.11: Border 3:1 against adjacent backgrounds
+ * - 2.4.9: Link text "Search again with your network selected" is self-descriptive
+ * - 2.5.5: Link has min-height: var(--target-min) (44px)
+ * ================================================================ */
+
+.ts-notice--network {
+  background-color: var(--color-notice-bg);
+  border-left: 4px solid var(--color-notice-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-4) var(--space-6);
+  margin-bottom: var(--space-6);
+  max-width: var(--max-width-text);
+}
+
+.ts-notice--network p {
+  font-size: var(--font-size-base);
+  color: var(--color-page-fg);
+  line-height: var(--line-height-body);
+  margin-bottom: var(--space-4);
+}
+
+.ts-notice--network p:last-child {
+  margin-bottom: 0;
+}
+
+.ts-notice__link {
+  display: inline-block;
+  min-height: var(--target-min);
+  padding: var(--space-2) 0;
+  color: var(--color-page-fg);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.ts-notice__link:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+/* ================================================================
  * FORCED COLOURS (Windows High Contrast Mode)
  *
  * In forced-colors mode, background colours and images are suppressed.
@@ -1360,5 +1420,10 @@ legend.ts-field__label + * {
     background-color: Highlight;
     color: HighlightText;
     forced-color-adjust: none;
+  }
+
+  .ts-notice--network {
+    border-left: 4px solid ButtonText;
+    background-color: Canvas;
   }
 }
