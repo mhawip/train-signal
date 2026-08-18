@@ -66,6 +66,7 @@ and writes to it last.
 | DW-14 | Ship design iteration: accordion form, optional network, worst-case signal | developer |
 | DW-15 | Design: route overview results and no-network disclaimer | designer |
 | DW-16 | Implement route overview results (no time → most common stopping pattern) | developer |
+| DW-17 | Implement no-network disclaimer with back-to-search link | developer |
 
 ---
 
@@ -109,27 +110,6 @@ P3-04 is done — see the index above.
 
 Bugs and follow-ups get filed here by whoever finds them.
 
-### DW-17 — Implement no-network disclaimer with back-to-search link
-- **owner:** developer
-- **status:** in-progress
-- **depends:** DW-15
-- **why:** When no network is selected the results already show worst-case signal, but
-  the current notice is minimal. Needs the full treatment designed in DW-15: clear
-  explanation, accessible styling, and a link back to the search page pre-filled so
-  the user can add their network without re-entering the journey.
-- **scope:**
-  - Replace the current "across all networks" paragraph in `results/page.tsx` with the
-    designed component (notice/callout as specified in DW-15)
-  - Back-link URL: `/?from=...&to=...&date=...&time=...&network=open` (or whatever
-    param pattern DW-15 specifies to pre-open the network accordion)
-  - `JourneyForm`: if URL contains the network-open signal, reveal the network accordion
-    on load (currently only done if `network` param has a value)
-- **acceptance:**
-  - [ ] No-network notice matches DW-15 design
-  - [ ] Link returns user to search form with all current journey params pre-filled
-  - [ ] Network accordion is open when user arrives via the back-link
-  - [ ] Notice not shown when a network is selected
-  - [ ] `npm run verify` green
 
 ### DW-18 — Accessibility review of DW-16 (route overview)
 - **owner:** accessibility-specialist
