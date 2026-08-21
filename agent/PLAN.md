@@ -81,6 +81,7 @@ and writes to it last.
 | DW-19 | Accessibility review of DW-17 (no-network notice) | accessibility-specialist |
 | P4-00 | Plan the next phase from the brief | product-manager |
 | P4-01 | Error and loading boundaries for bad connections | developer |
+| P4-02 | Accessibility constraints: Open Graph metadata on results pages | accessibility-specialist |
 
 ---
 
@@ -140,21 +141,7 @@ P4-00 is done — see the index above.
 
 P4-01 is done — see the index above.
 
-### P4-02 — Accessibility constraints: Open Graph metadata on results pages
-- **owner:** accessibility-specialist
-- **status:** in-progress
-- **depends:** —
-- **why:** Adding `<meta>` tags has no visual impact, but the OG description will be
-  read by screen readers in some contexts (social media embeds, link previews in
-  messaging apps). The copy must meet WCAG 3.1.5 reading level and the honesty rules
-  (never "you will have signal"). This task sets the constraints before implementation.
-- **acceptance:**
-  - [ ] Copy templates for OG title and description documented in `specs/accessibility.md`
-        (new section): reading level verified, hedged language confirmed, no jargon
-  - [ ] OG description template uses "expected" or "likely", never promises signal
-  - [ ] Guidance on what to do when no best window exists (the description must not
-        invent a positive framing)
-  - [ ] Character limits documented (OG title 60 chars, OG description 155 chars)
+P4-02 is done — see the index above.
 
 ### P4-03 — Open Graph metadata on results and departures pages
 - **owner:** developer

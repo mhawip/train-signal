@@ -12,6 +12,30 @@ particular way, or its full original acceptance criteria).
 
 ## Phase 4 — Resilience, data upgrade, and link previews
 
+### P4-02 — Accessibility constraints: Open Graph metadata on results pages
+- **owner:** accessibility-specialist
+- **status:** done
+- **depends:** —
+- **why:** Adding `<meta>` tags has no visual impact, but the OG description will be
+  read by screen readers in some contexts (social media embeds, link previews in
+  messaging apps). The copy must meet WCAG 3.1.5 reading level and the honesty rules
+  (never "you will have signal"). This task sets the constraints before implementation.
+- **acceptance:**
+  - [x] Copy templates for OG title and description documented in `specs/accessibility.md`
+        (section 14): reading level verified, hedged language confirmed, no jargon
+  - [x] OG description template uses "expected" or "likely", never promises signal
+  - [x] Guidance on what to do when no best window exists (the description must not
+        invent a positive framing)
+  - [x] Character limits documented (OG title 60 chars, OG description 155 chars)
+- **what changed:** Added section 14 "Open Graph metadata (P4-02)" to
+  `specs/accessibility.md` (314 lines). Covers WCAG criteria, honesty rules, no-best-
+  window guidance, character limits, four copy templates with worked examples and
+  reading-level assessments, and a developer self-certification checklist for P4-03.
+- **verify:** Pass. Documentation-only change; `npm run verify` green (236 unit tests,
+  6 Playwright AAA tests, typecheck, lint, build).
+
+---
+
 ### P4-00 — Plan the next phase from the brief
 - **owner:** product-manager
 - **status:** done

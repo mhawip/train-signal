@@ -2589,3 +2589,29 @@ Minor implementation decisions:
 **Learned:** The developer correctly handled the ESLint unused-variable issue on the `error` prop (destructure rename). The `page.setContent()` approach for Playwright axe testing of transient states is the right call — records it here for future tasks involving error/loading states.
 
 **Next:** P4-02 (accessibility-specialist — OG metadata copy constraints) is the highest-priority unblocked todo. It has no dependencies and can start immediately.
+
+---
+
+## 2026-08-21T01:00:00Z — P4-02 — accessibility-specialist
+
+**Did:** Added section 14 "Open Graph metadata (P4-02)" to `specs/accessibility.md` (314 lines). The section covers:
+- WCAG criteria in scope: 3.1.5 Reading Level (Grade 6–8), 1.3.3 Sensory Characteristics (no colour/visual references), project honesty rules
+- Honesty rules: allowed hedges ("expected", "likely") and a table of explicitly forbidden phrases ("you will have signal", "guaranteed", colour references)
+- No-best-window guidance: description must not invent a positive framing; exact prescribed framing given
+- Character limits: `og:title` 60 chars, `og:description` 155 chars, with truncation-safety rule (hedge word must appear well before the cut-off)
+- Four copy templates with title/description, worked examples with character counts, Flesch-Kincaid reading-level assessments, and "works without the visual timeline" checks:
+  - Template A: Results page, best window exists
+  - Template B: Results page, no best window
+  - Template C: Route overview (no departure time)
+  - Template D: Departures page
+- Developer self-certification checklist for P4-03 (12 items)
+
+**Verify:** Pass. Documentation-only change — no application code modified. `npm run verify` green: 236 unit tests, 6 Playwright AAA axe-core tests, typecheck, lint, build. PR #50 (a11y/P4-02-og-metadata-constraints → main).
+
+**Learned:**
+- The no-best-window case is the trickiest copy constraint. "No clear window for a video call on this journey. Signal varies between [origin] and [destination]." is the prescribed framing — it is accurate without being falsely negative (signal may exist at voice-only quality) and without being falsely positive (inventing a window).
+- Route-overview mode (no departure time) must not claim a specific best window because none is computed in that mode. The description must direct the user to open the page rather than summarise content that isn't there.
+- Template A character count with long station names ("Leeds to London Kings Cross signal — Train Signal" = 49 chars title; description example = 119 chars) — both well within limits on typical GB station names.
+- The self-certification checklist in P4-02 section 14.7 means P4-03 does not need a separate accessibility-specialist review task — the developer can self-certify against the documented templates. This is the right call: the templates are already reviewed here; a second fresh-context agent would only re-read the same spec.
+
+**Next:** P4-03 (developer — OG metadata implementation) is now unblocked. Its dependency on P4-02 is met. DW-04, P4-04, P4-05 remain blocked on Q6.
