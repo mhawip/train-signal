@@ -145,7 +145,7 @@ P4-02 is done — see the index above.
 
 ### P4-03 — Open Graph metadata on results and departures pages
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P4-02
 - **why:** When a user finds their best window and pastes the results URL into a Teams
   chat, calendar invite, or email, the link currently previews as a bare URL with no
