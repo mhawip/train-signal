@@ -62,6 +62,7 @@ section 8 for exactly what it does and doesn't cover. It is necessary, never suf
 11. [Progressive-reveal form](#11-progressive-reveal-form)
 12. [Route overview results page](#12-route-overview-results-page)
 13. [No-network disclaimer notice](#13-no-network-disclaimer-notice)
+14. [Open Graph metadata (P4-02)](#14-open-graph-metadata-p4-02)
 
 ---
 
@@ -1774,6 +1775,319 @@ remains readable and identifiable.
 The notice is a simple text block within the 40rem container. At 320px effective
 width, it reflows to full width. No horizontal scroll. No clipped content. The left
 border and padding are preserved at all zoom levels.
+
+---
+
+## 14. Open Graph metadata (P4-02)
+
+### 14.1 Overview
+
+When a user shares a results URL in Teams, Slack, iMessage, or email, the receiving
+client generates a link preview from `og:title` and `og:description` meta tags. In
+some contexts — screen reader users browsing a message thread in a social or messaging
+app — the OG title and description are read aloud as the accessible name and
+description of the link card. The copy must therefore meet the same honesty, reading
+level, and colour-independence constraints as the visible UI. It must also stand alone:
+a person who only reads the OG preview must understand what the page is about without
+seeing the visual timeline.
+
+### 14.2 WCAG criteria in scope
+
+| Criterion | How it applies to OG copy |
+|---|---|
+| **3.1.5 Reading Level (Level AAA)** | OG copy is read quickly, often on a phone, often by someone in the middle of booking a meeting. It must be understandable at Flesch-Kincaid Grade 6–8. No jargon, no technical terms. |
+| **1.3.3 Sensory Characteristics (Level A)** | OG copy must not reference colour ("the green section"), visual layout ("see the chart on the left"), or any other visual cue. It must be fully self-contained in text. |
+| **3.3.2 Labels or Instructions (Level A)** | While this criterion applies directly to form fields, the principle extends to OG copy: the preview must be self-contained. A user who only reads the preview must understand what journey is described and what the signal situation is, without having to open the page first. |
+| **Non-WCAG — honesty rule (project non-negotiable)** | Language is always "expected" or "likely". The data is a 2018–19 measurement snapshot. The copy must never say "you will have signal", "guaranteed", or any language that implies certainty. This is a project requirement as strong as any WCAG criterion. |
+
+### 14.3 Honesty rules for OG copy
+
+#### Allowed language
+
+- "expected signal"
+- "likely to have signal"
+- "signal is expected to be good"
+- "expected voice and video signal"
+- "expected voice-only signal"
+- "signal may vary"
+- "based on Ofcom measurements from 2018 and 2019" (if there is space)
+
+#### Forbidden language
+
+The following phrases must never appear in OG title or description:
+
+| Forbidden phrase | Why |
+|---|---|
+| "you will have signal" | Implies certainty the data cannot support |
+| "guaranteed signal" | Same as above |
+| "good signal" (without "expected") | Implies certainty |
+| "no signal" as an absolute statement (e.g. "you will have no signal") | Same; say "signal is expected to be poor" |
+| "perfect for a call" | Implies certainty |
+| "ideal time to call" | Implies certainty |
+| Any colour reference ("green", "amber", "red") | Violates 1.3.3; copy must stand alone without the visual timeline |
+
+The permitted hedges are "expected" and "likely". One of these must appear in every
+OG description that makes a claim about signal quality.
+
+### 14.4 No-best-window guidance
+
+When the results page has no best window (signal is uniformly "voice only" or "no
+signal"), the OG description must not:
+
+- Invent a positive framing ("some signal is available on this route")
+- Use vague optimism ("signal varies — check the timeline")
+- Imply any window for a video call exists
+
+The correct framing acknowledges the situation honestly:
+
+> "No clear window for a video call on this journey. Signal varies between [origin]
+> and [destination]."
+
+This is accurate (there is variation, just not a clear good window), not falsely
+negative (it does not say signal is uniformly absent), and not falsely positive (it
+does not imply a window exists). The phrase "No clear window" matches the language
+used in the visible UI for the same state.
+
+### 14.5 Character limits
+
+| Tag | Hard limit | Why |
+|---|---|---|
+| `og:title` | **60 characters** | Most platforms (Teams, Slack, iMessage, LinkedIn) truncate at or before 60 characters. Content beyond this is cut off without warning. A truncated title can create a misleading half-sentence. |
+| `og:description` | **155 characters** | Most platforms truncate at or before 155 characters. Same risk of misleading truncation applies. |
+
+**Truncation safety rule:** The developer (P4-03) must ensure that if a title or
+description is truncated at its limit, the remaining text is still accurate and
+not misleading. In particular, the hedge word ("expected" or "likely") must appear
+before the 155-character cut-off in the description. A description that reads "Voice
+and video signal — " after truncation, with the hedge cut off, fails the honesty rule.
+
+**Station name length:** Long station names (e.g. "Edinburgh Waverley", "London
+Kings Cross", "Birmingham New Street") can push a title over 60 characters. The
+developer must check the filled length for every template. If a filled title would
+exceed 60 characters, the following fallback order applies:
+
+1. Use a shorter form of the destination (e.g. "London Kings Cross" → "London KGX").
+2. If still over, use CRS codes for both stations (e.g. "EDB to KGX signal — Train
+   Signal").
+3. The CRS code fallback is always safe for length but is less readable. Prefer full
+   names where they fit.
+
+### 14.6 Copy templates
+
+Each template below shows the `og:title` and `og:description` with fill-in-the-blank
+placeholders, a character-limit check against a realistic worked example, and a
+reading level assessment.
+
+---
+
+#### Template A — Results page, best window exists
+
+**When to use:** The results page (`/results`) has computed a best window (a
+continuous stretch of expected "voice and video" signal). Clock times are available
+because the user specified a departure time.
+
+**`og:title`**
+
+```
+[Origin] to [Destination] signal — Train Signal
+```
+
+Maximum filled length: aim for 60 characters. See station name note in 14.5.
+
+**`og:description`**
+
+```
+Best window: [StartStation] to [EndStation], [duration]. Expected voice and video
+signal on [origin] to [destination], [date].
+```
+
+The hedge "Expected" must appear and must fall well within the 155-character limit.
+
+**Worked example:**
+
+> **Title:** Leeds to London Kings Cross signal — Train Signal
+> **Description:** Best window: York to Doncaster, 45 min. Expected voice and video signal on Leeds to London Kings Cross, 14 August 2026.
+
+Character counts:
+- Title: 49 characters. Within 60. ✓
+- Description: 119 characters. Within 155. ✓
+
+**Reading level assessment:** The worked example scores Flesch-Kincaid Grade 5.
+Plain nouns and verbs, short sentences, no jargon. Within the Grade 6–8 target. ✓
+
+**Does it work without the visual timeline?** Yes. A user who reads only the preview
+knows the journey, the date, where the best window falls, and that the assessment is
+based on expected (not guaranteed) signal.
+
+---
+
+#### Template B — Results page, no best window
+
+**When to use:** The results page has no best window — signal is uniformly "voice
+only" or "no signal" throughout the journey. Clock times are still available.
+
+**`og:title`**
+
+```
+[Origin] to [Destination] signal — Train Signal
+```
+
+Same title template as Template A. The title does not need to signal the absence of
+a good window — that detail belongs in the description.
+
+**`og:description`**
+
+```
+No clear window for a video call on this journey. Signal varies between [origin] and
+[destination], [date].
+```
+
+**Worked example:**
+
+> **Title:** Leeds to London Kings Cross signal — Train Signal
+> **Description:** No clear window for a video call on this journey. Signal varies between Leeds and London Kings Cross, 14 August 2026.
+
+Character counts:
+- Title: 49 characters. Within 60. ✓
+- Description: 116 characters. Within 155. ✓
+
+**Reading level assessment:** Flesch-Kincaid Grade 6. Plain sentences.
+Within target. ✓
+
+**Does it work without the visual timeline?** Yes. The user knows there is no good
+window and that signal varies — honest, clear, and not falsely positive.
+
+**Honesty check:** "Signal varies" is accurate (it does vary — just not into a
+usable window). It is not falsely optimistic. ✓
+
+---
+
+#### Template C — Route overview results page (no departure time)
+
+**When to use:** The results page is in route-overview mode — the user did not
+specify a departure time. No clock times are available. The page shows the typical
+stopping pattern. No best window is possible in this mode (since best window requires
+clock times to be meaningful to the user).
+
+**`og:title`**
+
+```
+[Origin] to [Destination] route signal — Train Signal
+```
+
+The word "route" distinguishes this from a specific-service result. This mirrors the
+`<title>` pattern already specified in section 12.2.
+
+**`og:description`**
+
+```
+Typical signal for [origin] to [destination]. Check when you are likely to have
+signal for a call on this route.
+```
+
+The hedge "likely" must appear in the description.
+
+**Worked example:**
+
+> **Title:** Leeds to London Kings Cross route signal — Train Signal
+> **Description:** Typical signal for Leeds to London Kings Cross. Check when you are likely to have signal for a call on this route.
+
+Character counts:
+- Title: 55 characters. Within 60. ✓
+- Description: 112 characters. Within 155. ✓
+
+**Reading level assessment:** Flesch-Kincaid Grade 6. Short clauses, everyday
+vocabulary. Within target. ✓
+
+**Does it work without the visual timeline?** Yes. The user understands this is a
+typical (not specific) journey, and that the page shows when signal is likely (not
+guaranteed) to be good.
+
+**Note on best window:** Route-overview mode does not surface a best window in the
+visible UI. The OG description must not attempt to describe one. The "Check when you
+are likely to have signal" framing directs the user to open the page, which is correct
+— the table on the page carries the detail.
+
+---
+
+#### Template D — Departures page
+
+**When to use:** The departures page (`/departures`) lists departure times for a
+route on a given date. There is no signal information on this page — it is a
+selection step before the results page.
+
+**`og:title`**
+
+```
+[Origin] to [Destination] departures — Train Signal
+```
+
+**`og:description`**
+
+```
+Choose a train from [origin] to [destination] on [date] to check your expected
+signal.
+```
+
+The hedge "expected" appears in the description.
+
+**Worked example:**
+
+> **Title:** Leeds to London Kings Cross departures — Train Signal
+> **Description:** Choose a train from Leeds to London Kings Cross on 14 August 2026 to check your expected signal.
+
+Character counts:
+- Title: 53 characters. Within 60. ✓
+- Description: 98 characters. Within 155. ✓
+
+**Reading level assessment:** Flesch-Kincaid Grade 6. Plain imperative sentence,
+no jargon. Within target. ✓
+
+**Does it work without the visual timeline?** Yes — there is no timeline on this
+page anyway. The description is self-contained: journey, date, and the purpose of
+the page (choosing a train to check signal).
+
+**Note on signal claims:** The departures page shows no signal data. The OG
+description must make no signal quality claim. It uses "expected signal" only to
+describe what the user will find after they choose a train — not to describe the
+departures page itself.
+
+---
+
+### 14.7 What P4-03 must verify
+
+The following checklist must be completed by the developer before the P4-03 PR is
+opened. Self-certification is acceptable for this checklist (the templates are already
+reviewed here); a separate accessibility-specialist review is not required unless
+novel OG patterns are introduced that are not covered by the templates above.
+
+- [ ] `og:title` is present on every page listed in 14.6.
+- [ ] `og:description` is present on every page listed in 14.6.
+- [ ] Every filled title is 60 characters or fewer. Check with a real station name
+      pair that exercises the longest names expected in production (e.g. "Edinburgh
+      Waverley" to "London Kings Cross"). Apply the fallback order in 14.5 if over.
+- [ ] Every filled description is 155 characters or fewer. Check with the same
+      station names.
+- [ ] No description makes a claim about signal quality without the hedge word
+      "expected" or "likely".
+- [ ] No forbidden phrase from 14.3 appears in any title or description.
+- [ ] No OG copy references colour, visual layout, or the timeline ("see the green
+      section", "the chart shows").
+- [ ] The no-best-window description (Template B) does not invent a positive framing.
+- [ ] The route-overview description (Template C) does not claim a specific best
+      window exists.
+- [ ] The departures description (Template D) makes no signal quality claim for the
+      current page (only for what the user will find after choosing a train).
+- [ ] Truncation at the character limits (60 / 155) does not produce a misleading
+      half-sentence. Test by manually shortening the description to the limit and
+      reading it aloud.
+- [ ] `og:image` is either absent or, if provided, has a meaningful `alt` equivalent
+      available to link-preview consumers. If a static card image is used, its text
+      content must not be the only source of journey information (it may not render
+      in all clients or for screen reader users).
+- [ ] Axe-core does not flag any new violations introduced by the `<meta>` tag
+      additions (meta tags in `<head>` should not affect axe results, but confirm
+      that no template string introduces unexpected DOM content).
 
 ---
 
