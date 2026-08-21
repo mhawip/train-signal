@@ -18,7 +18,7 @@ a one-line pointer in the index below.
 ### Q6 — Download RDM yellow-train CSV to data/raw/
 
 **Asked:** 2026-08-13
-**Status:** open
+**Status:** answered
 
 DW-04 (retarget signal pipeline at RDM product) is blocked until the Rail Data
 Marketplace CSV is available locally. The pipeline cannot be updated or re-run without
@@ -33,7 +33,8 @@ committed.
 
 Once downloaded, DW-04 can proceed unattended.
 
-**Answer:** *(Matt to fill in)*
+**Answer:**
+I have now downloaded the 3 files, 1 for 2G, one for 4G, and one for 5G into the data/raw folder. Please update the question and mark as resolved on the next loop run. 
 
 ---
 
