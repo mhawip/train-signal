@@ -142,7 +142,7 @@ P4-01 is done — see the index above.
 
 ### P4-02 — Accessibility constraints: Open Graph metadata on results pages
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** Adding `<meta>` tags has no visual impact, but the OG description will be
   read by screen readers in some contexts (social media embeds, link previews in
