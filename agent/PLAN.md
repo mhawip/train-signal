@@ -139,7 +139,7 @@ P4-00 is done — see the index above.
 
 ### P4-01 — Error and loading boundaries for bad connections
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** The product is used on trains with bad connections. Success criterion 4 says
   "it works on a phone, on a train, on a bad connection." Today there are no `error.tsx`
