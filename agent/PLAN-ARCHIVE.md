@@ -934,3 +934,30 @@ particular way, or its full original acceptance criteria).
   - [x] Notice not shown when a network is selected
   - [x] `npm run verify` green (236 unit tests, 6 Playwright a11y tests)
 - **PR:** #44 (dev/DW-17-no-network-disclaimer → main)
+
+### P4-01 — Error and loading boundaries for bad connections
+- **owner:** developer
+- **status:** done
+- **depends:** —
+- **why:** The product is used on trains with bad connections. Success criterion 4 says
+  "it works on a phone, on a train, on a bad connection." Today there are no `error.tsx`
+  or `loading.tsx` boundaries. A failed Darwin API call on the results page produces an
+  unhandled server error. A slow SCHEDULE lookup shows a blank screen with no feedback.
+  Users on flaky 3G connections will see these states regularly.
+- **acceptance:**
+  - [x] `app/results/error.tsx` exists: catches server errors, shows a plain-English
+        message ("Something went wrong. Try again.") with a retry link and a back-to-search
+        link, passes axe AAA
+  - [x] `app/departures/error.tsx` exists: same pattern
+  - [x] `app/results/loading.tsx` exists: shows a text-based loading indicator
+        ("Checking signal for your journey..."), no spinner animation, passes axe AAA.
+        Uses `aria-live="polite"` or equivalent for screen reader announcement
+  - [x] `app/departures/loading.tsx` exists: same pattern
+  - [x] Error boundary tested: simulate a Darwin API failure and confirm the error page
+        renders (unit test with thrown error)
+  - [x] Loading state tested: Playwright test confirms loading text appears before
+        results (or at minimum, that the loading page renders in isolation)
+  - [x] No horizontal scroll at 320px viewport width on error and loading states
+  - [x] Self-certified AAA per developer checklist (reuses existing patterns only)
+  - [x] `npm run verify` green (254 unit tests, 14 Playwright tests)
+- **PR:** #49 (dev/P4-01-error-loading-boundaries → main)

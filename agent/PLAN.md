@@ -80,6 +80,7 @@ and writes to it last.
 | DW-18 | Accessibility review of DW-16 (route overview) | accessibility-specialist |
 | DW-19 | Accessibility review of DW-17 (no-network notice) | accessibility-specialist |
 | P4-00 | Plan the next phase from the brief | product-manager |
+| P4-01 | Error and loading boundaries for bad connections | developer |
 
 ---
 
@@ -137,31 +138,7 @@ the natural end of the "booking a meeting in another tab" workflow.
 
 P4-00 is done — see the index above.
 
-### P4-01 — Error and loading boundaries for bad connections
-- **owner:** developer
-- **status:** in-progress
-- **depends:** —
-- **why:** The product is used on trains with bad connections. Success criterion 4 says
-  "it works on a phone, on a train, on a bad connection." Today there are no `error.tsx`
-  or `loading.tsx` boundaries. A failed Darwin API call on the results page produces an
-  unhandled server error. A slow SCHEDULE lookup shows a blank screen with no feedback.
-  Users on flaky 3G connections will see these states regularly.
-- **acceptance:**
-  - [ ] `app/results/error.tsx` exists: catches server errors, shows a plain-English
-        message ("Something went wrong. Try again.") with a retry link and a back-to-search
-        link, passes axe AAA
-  - [ ] `app/departures/error.tsx` exists: same pattern
-  - [ ] `app/results/loading.tsx` exists: shows a text-based loading indicator
-        ("Checking signal for your journey..."), no spinner animation, passes axe AAA.
-        Uses `aria-live="polite"` or equivalent for screen reader announcement
-  - [ ] `app/departures/loading.tsx` exists: same pattern
-  - [ ] Error boundary tested: simulate a Darwin API failure and confirm the error page
-        renders (unit test with thrown error)
-  - [ ] Loading state tested: Playwright test confirms loading text appears before
-        results (or at minimum, that the loading page renders in isolation)
-  - [ ] No horizontal scroll at 320px viewport width on error and loading states
-  - [ ] Self-certified AAA per developer checklist (reuses existing patterns only)
-  - [ ] `npm run verify` green
+P4-01 is done — see the index above.
 
 ### P4-02 — Accessibility constraints: Open Graph metadata on results pages
 - **owner:** accessibility-specialist

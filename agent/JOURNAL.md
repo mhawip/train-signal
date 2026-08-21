@@ -2552,3 +2552,40 @@ reviews ran on fast local connections.
 **Next:** P4-01 (developer — error and loading boundaries) is the highest-priority
 unblocked todo. P4-02 (accessibility-specialist — OG copy constraints) has no
 dependencies and can run in parallel. DW-04 remains blocked on Q6.
+
+---
+
+## 2026-08-21T00:00:00Z — P4-01 — developer
+
+**Did:** Added error and loading boundaries to the results and departures pages — the two pages that make async calls to Darwin and the NR SCHEDULE timetable.
+
+New files:
+- `app/results/error.tsx` and `app/departures/error.tsx` — Next.js App Router error boundaries (Client Components with `error` and `reset` props). Show "Something went wrong" with a "Try again" button (calls `reset()`) and a "Back to search" Link to `/`. Use existing `ts-back-link` and `ts-results-nav` CSS classes.
+- `app/results/loading.tsx` and `app/departures/loading.tsx` — Server Components with text-only loading indicators (`role="status"`, `aria-live="polite"`). No spinner. Text: "Checking signal for your journey..." / "Finding trains for your journey...".
+- Unit tests (Vitest): `error.test.tsx` and `loading.test.tsx` for both routes (18 tests covering heading, message text, retry button, back link, `role="status"`).
+- Playwright tests: `e2e/error-loading.spec.ts` — axe AAA checks and 320px horizontal-scroll checks on all four states using `page.setContent()`.
+
+Minor implementation decisions:
+- Unused `error` prop renamed via destructuring `{ error: _error }` to satisfy the ESLint no-unused-vars rule while keeping the required Next.js prop interface.
+- A `<h1>Loading</h1>` heading added to loading pages to satisfy axe `page-has-heading-one` (best-practice tag included in the test suite).
+
+**Verify:** Pass. 254 unit tests, 14 Playwright tests, typecheck, lint, build all green.
+
+**Learned:**
+- Next.js App Router error boundaries require `"use client"` and exactly the `{ error, reset }` prop signature — these are not optional.
+- The `page.setContent()` approach in Playwright is the right way to axe-test transient states (loading, error) without having to race or mock the real server. It tests the HTML structure, not the CSS, which is what axe needs.
+- The `<h1>` in loading pages feels surprising but axe requires one per page when the `best-practice` tag is in scope — which our test suite includes. This is the right call, not a hack.
+
+**Next:** P4-02 (accessibility-specialist — OG copy constraints) and P4-03 (developer — OG metadata) are the next unblocked todos. P4-02 has no dependencies and must complete before P4-03 can start. DW-04, P4-04, and P4-05 remain blocked on Q6.
+
+---
+
+## 2026-08-21T00:30:00Z — P4-01 — orchestrator
+
+**Did:** Dispatched developer agent for P4-01 (error and loading boundaries). Agent created 4 component files, 4 unit test files, and 1 Playwright test file. Ran `npm run verify` (green). Pushed branch `dev/P4-01-error-loading-boundaries`, opened PR #49. Marked P4-01 done in PLAN.md, archived full task to PLAN-ARCHIVE.md.
+
+**Verify:** Pass. 254 unit tests, 14 Playwright tests, typecheck, lint, build green.
+
+**Learned:** The developer correctly handled the ESLint unused-variable issue on the `error` prop (destructure rename). The `page.setContent()` approach for Playwright axe testing of transient states is the right call — records it here for future tasks involving error/loading states.
+
+**Next:** P4-02 (accessibility-specialist — OG metadata copy constraints) is the highest-priority unblocked todo. It has no dependencies and can start immediately.
