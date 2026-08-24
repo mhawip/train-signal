@@ -1051,3 +1051,23 @@ particular way, or its full original acceptance criteria).
   - [x] Self-certified AAA per developer checklist (meta tags only, no visual change)
   - [x] `npm run verify` green (259 unit tests, 9 Playwright tests)
 - **PR:** #51 (dev/P4-03-og-metadata → main)
+
+### P4-04 — Update vintage notice and attribution when RDM data lands
+- **owner:** developer
+- **status:** done
+- **depends:** DW-04
+- **why:** When DW-04 ships, the signal data will be from July 2026, not 2018-19. The
+  results page vintage notice ("Signal data is based on Ofcom rail measurements from
+  2018 and 2019") and the footer attribution ("Ofcom yellow-train mobile signal
+  measurements, 2018-19") will become inaccurate. Showing stale vintage text next to
+  current data is a credibility problem -- the honest direction.
+- **acceptance:**
+  - [x] Results page vintage notice updated to reflect the RDM data date (e.g. "2026")
+  - [x] Footer attribution updated to name the RDM source and its date
+  - [x] If the RDM data includes 5G, the vintage notice mentions this (e.g. "including
+        4G and 5G measurements")
+  - [x] Language remains hedged ("expected", "likely") -- newer data does not justify
+        stronger claims
+  - [x] Accessibility statement updated if the data-source description changes
+  - [x] `npm run verify` green
+- **PR:** #53 (dev/P4-04-vintage-notice → main)

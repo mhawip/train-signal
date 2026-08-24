@@ -2691,3 +2691,22 @@ Ran `npm run verify`: 286 unit tests (all pass), 17 Playwright e2e/a11y tests (a
 - The "none" rate is high (86%) in the RDM data, primarily due to: (1) raw RSRP (no calibration offset, ~3–6 dB more conservative), (2) 5G SS-RSRQ mismatch with LTE-tuned thresholds, (3) fewer covered nodes (10,270 vs 14,753 with Ofcom data). This is documented in signal-model.md and is the correct conservative direction.
 
 **Next:** P4-04 (developer — update vintage notice to reflect RDM 2026 data) and P4-05 (qa — re-validate signal output against known notspots) are now unblocked. P4-04 should run first; it is lower-risk (text changes) and its output does not affect P4-05. P4-05 runs the validation script against the new data to confirm the model still skews conservative.
+
+## 2026-08-24T14:15:00Z — P4-04 — developer
+
+**Did:** Updated three user-visible strings to reflect that signal data is now from the Rail Data Marketplace (RDM) 2026 yellow-train measurements (4G + 5G) rather than Ofcom 2018-19 data. Three files changed:
+
+- `app/results/page.tsx` — vintage notice: "Signal data is based on Network Rail yellow-train measurements from 2026, including 4G and 5G. Results show expected signal, not a guarantee." (removed "Coverage may have improved since then" — data is now current)
+- `app/layout.tsx` — footer attribution: "Signal data: RDM NWR Yellow Train Mobile Network Measurements, 2026 (4G + 5G)." (was: "Ofcom yellow-train mobile signal measurements, 2018–19")
+- `app/accessibility/page.tsx` — data-source paragraph: "...measurements taken in 2026, including 4G and 5G..." (removed "Mobile coverage may have changed since then" — data is current)
+
+Self-certified WCAG AAA: text-only changes in existing reviewed components; no new visual treatment, interaction, or colour. Criteria touched: 3.1.5 (Reading Level) — all text at lower-secondary level, no jargon in user-facing copy (footer uses official dataset name as attribution, acceptable; results page and accessibility statement use plain "Network Rail yellow-train measurements"); 1.4.6 (Contrast) — no colour changes; 2.4.2 (Page Titled) — no page title changes.
+
+**Verify:** Pass. 286 unit tests, 17 Playwright AAA tests, typecheck, lint, build green. PR #53.
+
+**Learned:**
+- The "coverage may have improved since then" caveat was specific to the data being old. With 2026 data it reads as a non-sequitur and should be dropped. Similarly for "mobile coverage may have changed" in the accessibility statement.
+- Footer attribution uses the official dataset name verbatim — this is correct for attribution (like crediting a copyright holder), not a 3.1.5 violation. The results page and accessibility statement use plain language for user comprehension.
+- P4-05 (re-validation of signal output against known notspots) is now the only remaining open task and is unblocked.
+
+**Next:** P4-05 (qa — re-run validation script against new RDM signal data, check direction of error is still conservative).

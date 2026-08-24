@@ -84,6 +84,7 @@ and writes to it last.
 | P4-02 | Accessibility constraints: Open Graph metadata on results pages | accessibility-specialist |
 | P4-03 | Open Graph metadata on results and departures pages | developer |
 | DW-04 | Retarget signal pipeline at RDM product | infra |
+| P4-04 | Update vintage notice and attribution when RDM data lands | developer |
 
 ---
 
@@ -146,28 +147,6 @@ P4-01 is done — see the index above.
 P4-02 is done — see the index above.
 
 P4-03 is done — see the index above.
-
-### P4-04 — Update vintage notice and attribution when RDM data lands
-- **owner:** developer
-- **status:** in-progress
-- **depends:** DW-04
-- **why:** When DW-04 ships, the signal data will be from July 2026, not 2018-19. The
-  results page vintage notice ("Signal data is based on Ofcom rail measurements from
-  2018 and 2019") and the footer attribution ("Ofcom yellow-train mobile signal
-  measurements, 2018-19") will become inaccurate. Showing stale vintage text next to
-  current data is a credibility problem -- the honest direction.
-- **acceptance:**
-  - [ ] Results page vintage notice updated to reflect the RDM data date (e.g. "2026")
-  - [ ] Footer attribution updated to name the RDM source and its date
-  - [ ] If the RDM data includes 5G, the vintage notice mentions this (e.g. "including
-        4G and 5G measurements")
-  - [ ] Language remains hedged ("expected", "likely") -- newer data does not justify
-        stronger claims
-  - [ ] Accessibility statement updated if the data-source description changes
-  - [ ] `npm run verify` green
-- **unblocked:** DW-04 shipped 2026-08-24. RDM data is dated March-May 2026. Source
-  description: "RDM NWR Yellow Train Mobile Network Measurements, 2026 (4G + 5G)".
-  Includes 5G measurements. See `specs/signal-model.md` DW-04 section for full details.
 
 ### P4-05 — Re-validate signal output against known notspots after RDM data
 - **owner:** qa
