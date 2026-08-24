@@ -2652,3 +2652,20 @@ WCAG criteria touched: 2.4.2 (Page Titled), 3.1.5 (Reading Level). Both satisfie
 - The description truncation strategy (drop date clause first, then hard-truncate) is simple and avoids producing misleading partial sentences because the hedge words ("expected", "likely") appear early in all templates.
 
 **Next:** P4-03 is complete. DW-04, P4-04, P4-05 remain blocked on Q6.
+
+## 2026-08-24T10:15Z — P4-03 — orchestrator
+
+**Did:** Picked up P4-03 on branch `dev/P4-03-og-metadata` where a previous iteration died before committing. The developer agent's work was complete and correct on disk. Ran `npm run verify` (green: 259 unit tests, 9 Playwright tests, typecheck, lint, build), committed, pushed, and opened PR #51. Marked P4-03 done in PLAN.md, archived full entry to PLAN-ARCHIVE.md.
+
+Files shipped:
+- `app/lib/og-metadata.ts` — pure OG title/description helpers for four templates
+- `app/lib/og-metadata.test.ts` — 23 unit tests
+- `app/results/page.tsx` — generateMetadata extended (Templates A/B/C)
+- `app/departures/page.tsx` — generateMetadata extended (Template D)
+- `e2e/og-metadata.spec.ts` — 3 E2E tests verifying og:title and og:description in HTML head
+
+**Verify:** Pass. 259 unit tests, 9 Playwright tests, typecheck, lint, build green.
+
+**Learned:** When a loop dies mid-task after the work is done but before the commit, the next iteration's job is simply to verify and ship — not to redo the work. Check the files on disk before dispatching a fresh agent. The developer's self-certification in the previous journal entry was thorough and correct; no re-review was needed.
+
+**Next:** P4-04 and P4-05 remain blocked on DW-04 (blocked on Q6 — Matt downloading the RDM CSV). DW-04 remains blocked. No other open tasks. Phase 4 is otherwise complete. The product now meets all Phase 4 goals: resilience on bad connections (P4-01), OG metadata (P4-03). DW-04/P4-04/P4-05 ship when Matt provides the CSV.

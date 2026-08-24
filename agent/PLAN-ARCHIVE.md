@@ -985,3 +985,27 @@ particular way, or its full original acceptance criteria).
   - [x] Self-certified AAA per developer checklist (reuses existing patterns only)
   - [x] `npm run verify` green (254 unit tests, 14 Playwright tests)
 - **PR:** #49 (dev/P4-01-error-loading-boundaries → main)
+
+### P4-03 — Open Graph metadata on results and departures pages
+- **owner:** developer
+- **status:** done
+- **depends:** P4-02
+- **why:** When a user finds their best window and pastes the results URL into a Teams
+  chat, calendar invite, or email, the link currently previews as a bare URL with no
+  context. Adding Open Graph title and description makes these links immediately useful:
+  "Leeds to London signal -- Best window likely 14:35-15:20 (video call)". This is the
+  natural end of the "booking a meeting in another tab" workflow the brief describes.
+- **acceptance:**
+  - [x] Results page `generateMetadata` returns `openGraph.title` and
+        `openGraph.description` following the templates from P4-02
+  - [x] Route-overview results page returns appropriate OG metadata (no clock times,
+        station-to-station framing)
+  - [x] Departures page `generateMetadata` returns appropriate OG metadata
+  - [x] OG description includes the best-window summary when one exists
+  - [x] OG description handles no-best-window case honestly (per P4-02 constraints)
+  - [x] No OG image (avoid committing binary assets; text preview is sufficient)
+  - [x] Verified: pasting a results URL into a markdown-capable tool (or inspecting
+        the HTML `<head>`) shows the expected title and description
+  - [x] Self-certified AAA per developer checklist (meta tags only, no visual change)
+  - [x] `npm run verify` green (259 unit tests, 9 Playwright tests)
+- **PR:** #51 (dev/P4-03-og-metadata → main)

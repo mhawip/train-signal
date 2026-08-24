@@ -82,6 +82,7 @@ and writes to it last.
 | P4-00 | Plan the next phase from the brief | product-manager |
 | P4-01 | Error and loading boundaries for bad connections | developer |
 | P4-02 | Accessibility constraints: Open Graph metadata on results pages | accessibility-specialist |
+| P4-03 | Open Graph metadata on results and departures pages | developer |
 
 ---
 
@@ -143,28 +144,6 @@ P4-01 is done — see the index above.
 
 P4-02 is done — see the index above.
 
-### P4-03 — Open Graph metadata on results and departures pages
-- **owner:** developer
-- **status:** in-progress
-- **depends:** P4-02
-- **why:** When a user finds their best window and pastes the results URL into a Teams
-  chat, calendar invite, or email, the link currently previews as a bare URL with no
-  context. Adding Open Graph title and description makes these links immediately useful:
-  "Leeds to London signal -- Best window likely 14:35-15:20 (video call)". This is the
-  natural end of the "booking a meeting in another tab" workflow the brief describes.
-- **acceptance:**
-  - [ ] Results page `generateMetadata` returns `openGraph.title` and
-        `openGraph.description` following the templates from P4-02
-  - [ ] Route-overview results page returns appropriate OG metadata (no clock times,
-        station-to-station framing)
-  - [ ] Departures page `generateMetadata` returns appropriate OG metadata
-  - [ ] OG description includes the best-window summary when one exists
-  - [ ] OG description handles no-best-window case honestly (per P4-02 constraints)
-  - [ ] No OG image (avoid committing binary assets; text preview is sufficient)
-  - [ ] Verified: pasting a results URL into a markdown-capable tool (or inspecting
-        the HTML `<head>`) shows the expected title and description
-  - [ ] Self-certified AAA per developer checklist (meta tags only, no visual change)
-  - [ ] `npm run verify` green
 
 ### P4-04 — Update vintage notice and attribution when RDM data lands
 - **owner:** developer
