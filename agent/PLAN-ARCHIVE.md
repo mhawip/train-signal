@@ -10,6 +10,48 @@ particular way, or its full original acceptance criteria).
 
 ---
 
+## Discovered work
+
+### DW-04 — Retarget signal pipeline at RDM product
+- **owner:** infra
+- **status:** done
+- **depends:** —
+- **why:** Matt verified the RDM "NWR Yellow Train Mobile Network Measurements" product
+  (Rail Data Marketplace) on 2026-08-09. It is dated July 2026, contains 5G measurements
+  from this year, has all required fields (RSRP/RSRQ/SINR, MCC/MNC, operator), and is
+  smaller than the Ofcom CSVs. Matt explicitly recommends using the RDM product. The
+  current `data/signal-segments.json` was built from the 2018–19 Ofcom data. The RDM
+  data is materially newer and includes 5G — it is the better source.
+- **acceptance:**
+  - [x] `pipeline/p2-03-build-signal.ts` updated to accept the RDM CSV format; any
+        column-name or schema differences from the Ofcom format handled
+  - [x] RDM data downloaded to `data/raw/` (gitignored) and pipeline re-run
+  - [x] `data/signal-segments.json` regenerated from RDM data and committed (7.0 MB,
+        under 10 MB limit)
+  - [x] `specs/signal-model.md` updated with RDM schema, column names, and row counts
+  - [x] Row counts logged at each stage (same as P2-03)
+  - [x] Re-runnable to byte-identical output (deterministically sorted by nodeId then
+        operator name)
+  - [x] `npm run verify` green
+- **what changed:**
+  - `pipeline/p2-03-build-signal.ts` — added RDM ZIP streaming mode (unzipper library);
+    RDM header/row parsing (`parseRdmHeader`, `parseRdmRow`); `normaliseOperator` for RDM
+    operator name mapping; WB_Rsrq vs narrowband rsrq selection for 4G; DD/MM/YYYY date
+    parsing; default mode processes both 4G and 5G zips. Legacy Ofcom CSV mode retained
+    for backward compatibility via `--input` flag.
+  - `pipeline/p2-03-build-signal.test.ts` — added `normaliseOperator` tests (9 cases).
+    Total tests: 38.
+  - `data/signal-segments.json` — rebuilt from RDM 2026 data (March–May 2026 measurements).
+    10,270 nodes, 4,247,273 measurements. Source: "RDM NWR Yellow Train Mobile Network
+    Measurements, 2026 (4G + 5G)". Size: 7.0 MB.
+  - `specs/signal-model.md` — added DW-04 section: 4G/5G column schemas, operator
+    normalisation table, RSRP/RSRQ rationale (raw vs calibrated, wideband vs narrowband),
+    row counts per stage, band distribution, limitations, output file metadata.
+  - `package.json` / `package-lock.json` — added `unzipper` (^0.12.5) and
+    `@types/unzipper` (^0.10.11).
+
+---
+
 ## Phase 4 — Resilience, data upgrade, and link previews
 
 ### P4-02 — Accessibility constraints: Open Graph metadata on results pages
