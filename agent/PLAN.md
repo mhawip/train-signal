@@ -150,7 +150,7 @@ P4-03 is done — see the index above.
 
 ### P4-05 — Re-validate signal output against known notspots after RDM data
 - **owner:** qa
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-04
 - **why:** The P3-01 cross-validation ran against 2018-19 Ofcom data. The RDM data is
   from 2026 and includes 5G. Signal verdicts will change. The validation must re-run to
