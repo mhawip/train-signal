@@ -149,7 +149,7 @@ P4-03 is done — see the index above.
 
 ### P4-04 — Update vintage notice and attribution when RDM data lands
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** DW-04
 - **why:** When DW-04 ships, the signal data will be from July 2026, not 2018-19. The
   results page vintage notice ("Signal data is based on Ofcom rail measurements from
