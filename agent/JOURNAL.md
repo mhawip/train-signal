@@ -2669,3 +2669,25 @@ Files shipped:
 **Learned:** When a loop dies mid-task after the work is done but before the commit, the next iteration's job is simply to verify and ship — not to redo the work. Check the files on disk before dispatching a fresh agent. The developer's self-certification in the previous journal entry was thorough and correct; no re-review was needed.
 
 **Next:** P4-04 and P4-05 remain blocked on DW-04 (blocked on Q6 — Matt downloading the RDM CSV). DW-04 remains blocked. No other open tasks. Phase 4 is otherwise complete. The product now meets all Phase 4 goals: resilience on bad connections (P4-01), OG metadata (P4-03). DW-04/P4-04/P4-05 ship when Matt provides the CSV.
+---
+
+## 2026-08-24T13:50:00Z — DW-04 — orchestrator
+
+**Did:** Found branch `infra/DW-04-rdm-signal-pipeline` with complete, uncommitted work from a previous iteration that died before the commit step. Assessed all modified files on disk — the pipeline work was done and correct:
+
+- `pipeline/p2-03-build-signal.ts` — RDM ZIP streaming mode added (4G + 5G), `parseRdmHeader`/`parseRdmRow` for RDM CSV format, `normaliseOperator` for RDM operator names, WB_Rsrq selection logic, DD/MM/YYYY date parsing. Legacy Ofcom CSV mode retained.
+- `pipeline/p2-03-build-signal.test.ts` — 9 `normaliseOperator` tests added (38 total).
+- `data/signal-segments.json` — rebuilt from RDM 2026 data. 10,270 nodes, 4,247,273 measurements, 7.0 MB. Source: "RDM NWR Yellow Train Mobile Network Measurements, 2026 (4G + 5G)". Measurement dates: March–May 2026.
+- `specs/signal-model.md` — DW-04 section added: 4G/5G column schemas, operator normalisation, RSRP/RSRQ rationale, row counts per stage, band distribution, limitations, output file metadata.
+- `package.json`/`package-lock.json` — `unzipper` and `@types/unzipper` dependencies added.
+
+Ran `npm run verify`: 286 unit tests (all pass), 17 Playwright e2e/a11y tests (all pass), typecheck, lint, build all green. Committed, pushed, and opened PR. Marked DW-04 done in PLAN.md, archived full entry to PLAN-ARCHIVE.md. Updated P4-04 and P4-05 from `blocked` to `todo` with unblock notes.
+
+**Verify:** Pass. 286 unit tests, 17 Playwright tests, typecheck, lint, build green.
+
+**Learned:**
+- When a loop dies after the pipeline runs but before the commit, the on-disk state (signal-segments.json, signal-model.md) is the ground truth. Read those files before deciding whether to re-dispatch a fresh agent — re-running a 10M-row pipeline is expensive and unnecessary if the output is already correct.
+- The 2G zip (`Global_View_2G.zip`) was not processed. 2G metrics (C/I ratio) are not compatible with the RSRP/RSRQ/SINR thresholds used for signal classification. The pipeline processes only 4G and 5G zips by default.
+- The "none" rate is high (86%) in the RDM data, primarily due to: (1) raw RSRP (no calibration offset, ~3–6 dB more conservative), (2) 5G SS-RSRQ mismatch with LTE-tuned thresholds, (3) fewer covered nodes (10,270 vs 14,753 with Ofcom data). This is documented in signal-model.md and is the correct conservative direction.
+
+**Next:** P4-04 (developer — update vintage notice to reflect RDM 2026 data) and P4-05 (qa — re-validate signal output against known notspots) are now unblocked. P4-04 should run first; it is lower-risk (text changes) and its output does not affect P4-05. P4-05 runs the validation script against the new data to confirm the model still skews conservative.

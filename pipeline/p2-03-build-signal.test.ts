@@ -10,6 +10,7 @@ import {
   haversineMetres,
   buildGridIndex,
   findNearestNode,
+  normaliseOperator,
   THRESHOLDS,
 } from "./p2-03-build-signal";
 
@@ -213,5 +214,47 @@ describe("buildGridIndex and findNearestNode", () => {
     expect(result).not.toBeNull();
     expect(result!.id).toBe("1");
     expect(result!.dist).toBeLessThan(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Operator name normalisation (DW-04)
+// ---------------------------------------------------------------------------
+
+describe("normaliseOperator", () => {
+  it('normalises "EE" to "EE"', () => {
+    expect(normaliseOperator("EE")).toBe("EE");
+  });
+
+  it('normalises "O2 (Telefonica UK)" to "O2"', () => {
+    expect(normaliseOperator("O2 (Telef\u00f3nica UK)")).toBe("O2");
+  });
+
+  it('normalises plain "O2" to "O2"', () => {
+    expect(normaliseOperator("O2")).toBe("O2");
+  });
+
+  it('normalises "Three" to "Three"', () => {
+    expect(normaliseOperator("Three")).toBe("Three");
+  });
+
+  it('normalises "Vodafone UK" to "Vodafone"', () => {
+    expect(normaliseOperator("Vodafone UK")).toBe("Vodafone");
+  });
+
+  it('normalises plain "Vodafone" to "Vodafone"', () => {
+    expect(normaliseOperator("Vodafone")).toBe("Vodafone");
+  });
+
+  it("returns null for unrecognised operators", () => {
+    expect(normaliseOperator("Unknown")).toBeNull();
+  });
+
+  it("returns null for empty string", () => {
+    expect(normaliseOperator("")).toBeNull();
+  });
+
+  it("trims whitespace", () => {
+    expect(normaliseOperator("  EE  ")).toBe("EE");
   });
 });

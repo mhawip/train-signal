@@ -1,16 +1,23 @@
 /**
- * P2-03: Full signal pipeline
+ * P2-03 / DW-04: Full signal pipeline
  *
- * Streams the Ofcom LTE yellow-train CSV, snaps each measurement to the
- * nearest track-graph node, aggregates signal statistics per node per operator,
- * and emits data/signal-segments.json.
+ * Processes RDM NWR Yellow Train Mobile Network Measurements (4G + 5G),
+ * snaps each measurement to the nearest track-graph node, aggregates signal
+ * statistics per node per operator, and emits data/signal-segments.json.
+ *
+ * Default mode: streams from data/raw/Global_View_4G.zip and
+ * data/raw/Global_View_5G.zip (RDM 2026 data).
+ *
+ * Legacy mode: if --input points to a .csv file, uses the old Ofcom CSV
+ * parsing path for backward compatibility.
  *
  * Usage:
  *   npx tsx pipeline/p2-03-build-signal.ts [--dry-run] [--input <path>]
  *
  * --dry-run   Process only the first 100,000 rows (for fast iteration).
- * --input     Path to CSV file. Defaults to data/raw/lte-jun18tojun19-yt.csv.
- *             If the default file is missing, attempts to download it.
+ * --input     Path to a .csv or .zip file. If .csv, uses old Ofcom parsing.
+ *             If .zip, uses RDM parsing for that single zip.
+ *             If omitted, processes both RDM 4G and 5G zips.
  *
  * Output: data/signal-segments.json
  *
@@ -23,6 +30,7 @@ import * as path from "path";
 import * as readline from "readline";
 import * as https from "https";
 import * as http from "http";
+import * as unzipper from "unzipper";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -84,9 +92,13 @@ const FULL_CSV_URL =
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(PROJECT_ROOT, "data");
 const RAW_DIR = path.join(DATA_DIR, "raw");
-const DEFAULT_INPUT = path.join(RAW_DIR, "lte-jun18tojun19-yt.csv");
+const DEFAULT_OFCOM_CSV = path.join(RAW_DIR, "lte-jun18tojun19-yt.csv");
 const OUTPUT_PATH = path.join(DATA_DIR, "signal-segments.json");
 const GRAPH_PATH = path.join(DATA_DIR, "track-graph.json");
+
+/** RDM zip files — default inputs */
+const RDM_4G_ZIP = path.join(RAW_DIR, "Global_View_4G.zip");
+const RDM_5G_ZIP = path.join(RAW_DIR, "Global_View_5G.zip");
 
 /** Maximum distance (metres) from a graph node to accept a measurement. */
 const MAX_SNAP_DISTANCE_M = 500;
@@ -265,7 +277,24 @@ export function classifySignal(
 }
 
 // ---------------------------------------------------------------------------
-// CSV row parsing
+// Operator name normalisation (RDM → app)
+// ---------------------------------------------------------------------------
+
+/**
+ * Normalise RDM operator names to the four used by the app.
+ * Returns null for unrecognised operators (row will be filtered out).
+ */
+export function normaliseOperator(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (trimmed === "EE") return "EE";
+  if (trimmed === "O2" || trimmed === "O2 (Telef\u00f3nica UK)") return "O2";
+  if (trimmed === "Three") return "Three";
+  if (trimmed === "Vodafone" || trimmed === "Vodafone UK") return "Vodafone";
+  return null;
+}
+
+// ---------------------------------------------------------------------------
+// CSV row parsing — common interface
 // ---------------------------------------------------------------------------
 
 interface ParsedRow {
@@ -279,39 +308,43 @@ interface ParsedRow {
   date: string; // YYYY-MM-DD
 }
 
-// Column indices (set after header parsing)
-let COL: Record<string, number> = {};
+// ---------------------------------------------------------------------------
+// Legacy Ofcom CSV parsing
+// ---------------------------------------------------------------------------
 
-function parseHeader(line: string): void {
+// Column indices (set after header parsing)
+let OFCOM_COL: Record<string, number> = {};
+
+function parseOfcomHeader(line: string): void {
   // Strip BOM if present
   const clean = line.replace(/^\uFEFF/, "");
   const cols = clean.split(",");
-  COL = {};
+  OFCOM_COL = {};
   for (let i = 0; i < cols.length; i++) {
-    COL[cols[i].trim().toLowerCase()] = i;
+    OFCOM_COL[cols[i].trim().toLowerCase()] = i;
   }
   // Validate required columns
   const required = ["latitude", "longitude", "speed", "operator", "cal_rsrp", "rsrq", "sinr", "datetime"];
   for (const r of required) {
-    if (COL[r] === undefined) {
+    if (OFCOM_COL[r] === undefined) {
       throw new Error(`Missing required column: ${r}. Found columns: ${cols.join(", ")}`);
     }
   }
 }
 
-function parseRow(line: string): ParsedRow | null {
+function parseOfcomRow(line: string): ParsedRow | null {
   const parts = line.split(",");
-  if (parts.length < Object.keys(COL).length) return null;
+  if (parts.length < Object.keys(OFCOM_COL).length) return null;
 
-  const lat = parseFloat(parts[COL["latitude"]]);
-  const lon = parseFloat(parts[COL["longitude"]]);
-  const speed = parseFloat(parts[COL["speed"]]);
-  const operator = parts[COL["operator"]].trim();
-  const cal_rsrp = parseFloat(parts[COL["cal_rsrp"]]);
-  const rsrq = parseFloat(parts[COL["rsrq"]]);
-  const sinrRaw = parts[COL["sinr"]].trim();
+  const lat = parseFloat(parts[OFCOM_COL["latitude"]]);
+  const lon = parseFloat(parts[OFCOM_COL["longitude"]]);
+  const speed = parseFloat(parts[OFCOM_COL["speed"]]);
+  const operator = parts[OFCOM_COL["operator"]].trim();
+  const cal_rsrp = parseFloat(parts[OFCOM_COL["cal_rsrp"]]);
+  const rsrq = parseFloat(parts[OFCOM_COL["rsrq"]]);
+  const sinrRaw = parts[OFCOM_COL["sinr"]].trim();
   const sinr = sinrRaw === "" || sinrRaw.toLowerCase() === "null" ? null : parseFloat(sinrRaw);
-  const datetime = parts[COL["datetime"]].trim();
+  const datetime = parts[OFCOM_COL["datetime"]].trim();
 
   // Validate numeric fields
   if (isNaN(lat) || isNaN(lon) || isNaN(cal_rsrp) || isNaN(rsrq)) return null;
@@ -323,8 +356,97 @@ function parseRow(line: string): ParsedRow | null {
   return { lat, lon, speed: isNaN(speed) ? 0 : speed, operator, cal_rsrp, rsrq, sinr, date };
 }
 
+// Backward-compatible wrappers used by tests
+function parseHeader(line: string): void {
+  parseOfcomHeader(line);
+}
+
+function parseRow(line: string): ParsedRow | null {
+  return parseOfcomRow(line);
+}
+
+// Suppress unused-variable warnings for backward-compat wrappers
+void parseHeader;
+void parseRow;
+
 // ---------------------------------------------------------------------------
-// Download helper
+// RDM CSV parsing (4G and 5G)
+// ---------------------------------------------------------------------------
+
+let RDM_COL: Record<string, number> = {};
+
+function parseRdmHeader(line: string): void {
+  const clean = line.replace(/^\uFEFF/, "");
+  const cols = clean.split(",");
+  RDM_COL = {};
+  for (let i = 0; i < cols.length; i++) {
+    // Keep original case for matching, but also store lowercase
+    RDM_COL[cols[i].trim()] = i;
+    RDM_COL[cols[i].trim().toLowerCase()] = i;
+  }
+  // Validate required columns (case-insensitive)
+  const required = ["latitude", "longitude", "gps_speed", "operator", "rsrp", "rsrq", "sinr", "date"];
+  for (const r of required) {
+    if (RDM_COL[r] === undefined) {
+      throw new Error(`Missing required RDM column: ${r}. Found columns: ${cols.join(", ")}`);
+    }
+  }
+}
+
+function parseRdmRow(line: string): ParsedRow | null {
+  const parts = line.split(",");
+  if (parts.length < 10) return null;
+
+  const lat = parseFloat(parts[RDM_COL["latitude"]]);
+  const lon = parseFloat(parts[RDM_COL["longitude"]]);
+  const gpsSpeed = parseFloat(parts[RDM_COL["gps_speed"]]);
+  const operatorRaw = parts[RDM_COL["operator"]];
+  if (!operatorRaw) return null;
+  const operator = normaliseOperator(operatorRaw);
+  if (!operator) return null;
+
+  const rsrp = parseFloat(parts[RDM_COL["rsrp"]]);
+  const sinrRaw = parts[RDM_COL["sinr"]]?.trim() ?? "";
+  const sinr = sinrRaw === "" || sinrRaw.toLowerCase() === "null" ? null : parseFloat(sinrRaw);
+
+  // RSRQ: prefer WB_Rsrq (wideband, 4G only) which matches the Ofcom RSRQ scale.
+  // Fall back to rsrq (narrowband for 4G, SS-RSRQ for 5G) when WB_Rsrq is unavailable.
+  // See signal-model.md for why this matters.
+  let rsrq: number;
+  const wbRsrqIdx = RDM_COL["wb_rsrq"];
+  if (wbRsrqIdx !== undefined) {
+    const wbRsrqRaw = parts[wbRsrqIdx]?.trim() ?? "";
+    const wbRsrq = parseFloat(wbRsrqRaw);
+    // Use wideband if available and valid; fall back to narrowband
+    rsrq = !isNaN(wbRsrq) ? wbRsrq : parseFloat(parts[RDM_COL["rsrq"]]);
+  } else {
+    rsrq = parseFloat(parts[RDM_COL["rsrq"]]);
+  }
+
+  // Date: DD/MM/YYYY → YYYY-MM-DD
+  const dateRaw = parts[RDM_COL["date"]]?.trim() ?? "";
+  if (dateRaw.length < 10) return null;
+  const dateParts = dateRaw.split("/");
+  if (dateParts.length !== 3) return null;
+  const date = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+
+  // Validate numeric fields
+  if (isNaN(lat) || isNaN(lon) || isNaN(rsrp) || isNaN(rsrq)) return null;
+
+  return {
+    lat,
+    lon,
+    speed: isNaN(gpsSpeed) ? 0 : gpsSpeed,
+    operator,
+    cal_rsrp: rsrp, // RDM uses raw rsrp (no calibrated column); see signal-model.md
+    rsrq,
+    sinr,
+    date,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Download helper (legacy, for Ofcom CSV fallback)
 // ---------------------------------------------------------------------------
 
 function downloadFile(url: string, dest: string): Promise<void> {
@@ -384,126 +506,109 @@ function downloadFile(url: string, dest: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Main pipeline
+// ZIP streaming: read CSV lines from inside a zip file
 // ---------------------------------------------------------------------------
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const dryRun = args.includes("--dry-run");
-  const inputIdx = args.indexOf("--input");
-  let inputPath = inputIdx >= 0 && args[inputIdx + 1] ? args[inputIdx + 1] : DEFAULT_INPUT;
+interface StreamStats {
+  totalRows: number;
+  filteredInvalid: number;
+  filteredSpeed: number;
+  filteredNearTrack: number;
+  snappedRows: number;
+}
 
-  // Resolve relative paths
-  if (!path.isAbsolute(inputPath)) {
-    inputPath = path.resolve(process.cwd(), inputPath);
+/**
+ * Stream CSV rows from a ZIP file. The ZIP is expected to contain exactly one
+ * CSV file. Rows are parsed with the RDM parser and accumulated into the
+ * shared buckets map.
+ *
+ * Uses unzipper.Open.file() (central-directory approach) rather than streaming
+ * Parse() to avoid Z_BUF_ERROR on large compressed files.
+ */
+async function streamRdmZip(
+  zipPath: string,
+  label: string,
+  index: GridIndex,
+  graphNodes: Record<string, [number, number]>,
+  buckets: Map<string, NodeBucket>,
+  operatorCounts: Record<string, number>,
+  dryRun: boolean,
+  dryRunLimit: number
+): Promise<StreamStats> {
+  const stats: StreamStats = {
+    totalRows: 0,
+    filteredInvalid: 0,
+    filteredSpeed: 0,
+    filteredNearTrack: 0,
+    snappedRows: 0,
+  };
+
+  console.log(`\nStreaming ${label}: ${zipPath}`);
+
+  const directory = await unzipper.Open.file(zipPath);
+  const csvFile = directory.files.find(
+    (f) => f.path.toLowerCase().endsWith(".csv") && f.type === "File"
+  );
+  if (!csvFile) {
+    throw new Error(`No CSV file found inside ${zipPath}`);
   }
 
-  const DRY_RUN_LIMIT = 100_000;
+  console.log(`  Found CSV: ${csvFile.path} (${(csvFile.uncompressedSize / 1e6).toFixed(0)} MB uncompressed)`);
 
-  console.log("=== P2-03: Build signal segments ===");
-  console.log(`Mode: ${dryRun ? "DRY RUN (first " + DRY_RUN_LIMIT + " rows)" : "FULL"}`);
-  console.log(`Input: ${inputPath}`);
-  console.log(`Output: ${OUTPUT_PATH}`);
-  console.log("");
-
-  // --- Ensure input file exists ---
-  if (!fs.existsSync(inputPath)) {
-    if (inputPath === DEFAULT_INPUT) {
-      console.log("Full CSV not found locally. Attempting download...");
-      try {
-        await downloadFile(FULL_CSV_URL, inputPath);
-      } catch (err) {
-        console.error(`Download failed: ${err}`);
-        // Fall back to sample
-        const samplePath = path.join(RAW_DIR, "lte-sample-spread.csv");
-        if (fs.existsSync(samplePath)) {
-          console.log(`Falling back to sample file: ${samplePath}`);
-          inputPath = samplePath;
-        } else {
-          console.error("No input file available. Exiting.");
-          process.exit(1);
-        }
-      }
-    } else {
-      console.error(`Input file not found: ${inputPath}`);
-      process.exit(1);
-    }
-  }
-
-  // --- Load track graph ---
-  console.log("Loading track graph...");
-  const graph: { nodes: Record<string, [number, number]>; edges: [number, number, number][] } =
-    JSON.parse(fs.readFileSync(GRAPH_PATH, "utf8"));
-  console.log(`  ${Object.keys(graph.nodes).length} nodes, ${graph.edges.length} edges`);
-
-  // --- Build spatial index ---
-  console.log("Building spatial index...");
-  const index = buildGridIndex(graph.nodes);
-  console.log(`  ${index.cells.size} grid cells`);
-
-  // --- Stream and process ---
-  console.log("Streaming CSV...");
-  const buckets = new Map<string, NodeBucket>();
-
-  let totalRows = 0;
+  const entryStream = csvFile.stream();
   let headerParsed = false;
-  let filteredNearTrack = 0;
-  let filteredSpeed = 0;
-  let filteredInvalid = 0;
-  let snappedRows = 0;
-  const operatorCounts: Record<string, number> = {};
-
-  const isSampleFile = inputPath.includes("sample");
 
   await new Promise<void>((resolve, reject) => {
-    const stream = fs.createReadStream(inputPath, { encoding: "utf8" });
-    const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+    const rl = readline.createInterface({
+      input: entryStream,
+      crlfDelay: Infinity,
+    });
 
     rl.on("line", (line: string) => {
       if (!headerParsed) {
-        parseHeader(line);
+        parseRdmHeader(line);
         headerParsed = true;
         return;
       }
 
-      totalRows++;
+      stats.totalRows++;
 
-      if (dryRun && totalRows > DRY_RUN_LIMIT) {
+      if (dryRun && stats.totalRows > dryRunLimit) {
         rl.close();
-        stream.destroy();
+        entryStream.destroy();
         return;
       }
 
       // Log progress every 1M rows
-      if (totalRows % 1_000_000 === 0) {
-        console.log(`  ${(totalRows / 1e6).toFixed(0)}M rows processed...`);
+      if (stats.totalRows % 1_000_000 === 0) {
+        console.log(`  ${label}: ${(stats.totalRows / 1e6).toFixed(0)}M rows processed...`);
       }
 
-      const row = parseRow(line);
+      const row = parseRdmRow(line);
       if (!row) {
-        filteredInvalid++;
+        stats.filteredInvalid++;
         return;
       }
 
       // Filter stationary measurements
       if (row.speed < MIN_SPEED_KMH) {
-        filteredSpeed++;
+        stats.filteredSpeed++;
         return;
       }
 
       // Snap to nearest graph node
       const nearest = findNearestNode(index, row.lat, row.lon);
       if (!nearest) {
-        filteredNearTrack++;
+        stats.filteredNearTrack++;
         return;
       }
 
-      snappedRows++;
+      stats.snappedRows++;
       operatorCounts[row.operator] = (operatorCounts[row.operator] || 0) + 1;
 
       // Bucket the measurement
       if (!buckets.has(nearest.id)) {
-        const nodeCoords = graph.nodes[nearest.id];
+        const nodeCoords = graphNodes[nearest.id];
         buckets.set(nearest.id, {
           lat: nodeCoords[0],
           lon: nodeCoords[1],
@@ -527,8 +632,216 @@ async function main(): Promise<void> {
 
     rl.on("close", resolve);
     rl.on("error", reject);
-    stream.on("error", reject);
+    entryStream.on("error", reject);
   });
+
+  console.log(`  ${label} done: ${stats.totalRows.toLocaleString()} rows, ${stats.snappedRows.toLocaleString()} snapped`);
+  return stats;
+}
+
+// ---------------------------------------------------------------------------
+// Main pipeline
+// ---------------------------------------------------------------------------
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const dryRun = args.includes("--dry-run");
+  const inputIdx = args.indexOf("--input");
+  const explicitInput = inputIdx >= 0 && args[inputIdx + 1] ? args[inputIdx + 1] : null;
+
+  const DRY_RUN_LIMIT = 100_000;
+
+  // Determine mode: RDM zips (default) or legacy Ofcom CSV (--input with .csv)
+  const useRdmMode = explicitInput === null || explicitInput.toLowerCase().endsWith(".zip");
+
+  console.log("=== DW-04: Build signal segments ===");
+  console.log(`Mode: ${dryRun ? "DRY RUN (first " + DRY_RUN_LIMIT + " rows per file)" : "FULL"}`);
+  console.log(`Source: ${useRdmMode ? "RDM NWR Yellow Train (4G + 5G)" : "Legacy Ofcom CSV"}`);
+  console.log(`Output: ${OUTPUT_PATH}`);
+  console.log("");
+
+  // --- Load track graph ---
+  console.log("Loading track graph...");
+  const graph: { nodes: Record<string, [number, number]>; edges: [number, number, number][] } =
+    JSON.parse(fs.readFileSync(GRAPH_PATH, "utf8"));
+  console.log(`  ${Object.keys(graph.nodes).length} nodes, ${graph.edges.length} edges`);
+
+  // --- Build spatial index ---
+  console.log("Building spatial index...");
+  const index = buildGridIndex(graph.nodes);
+  console.log(`  ${index.cells.size} grid cells`);
+
+  // --- Shared state ---
+  const buckets = new Map<string, NodeBucket>();
+  const operatorCounts: Record<string, number> = {};
+  let totalRows = 0;
+  let filteredInvalid = 0;
+  let filteredSpeed = 0;
+  let filteredNearTrack = 0;
+  let snappedRows = 0;
+  let sourceDesc: string;
+
+  if (useRdmMode) {
+    // --- RDM ZIP mode ---
+    const zipFiles: Array<{ path: string; label: string }> = [];
+
+    if (explicitInput) {
+      // Single zip specified via --input
+      let zipPath = explicitInput;
+      if (!path.isAbsolute(zipPath)) {
+        zipPath = path.resolve(process.cwd(), zipPath);
+      }
+      if (!fs.existsSync(zipPath)) {
+        console.error(`Input file not found: ${zipPath}`);
+        process.exit(1);
+      }
+      zipFiles.push({ path: zipPath, label: path.basename(zipPath) });
+    } else {
+      // Default: 4G then 5G
+      for (const zf of [
+        { path: RDM_4G_ZIP, label: "4G" },
+        { path: RDM_5G_ZIP, label: "5G" },
+      ]) {
+        if (!fs.existsSync(zf.path)) {
+          console.error(`RDM zip not found: ${zf.path}`);
+          console.error("Download the RDM NWR Yellow Train data from https://raildata.org.uk");
+          process.exit(1);
+        }
+        zipFiles.push(zf);
+      }
+    }
+
+    // Process each zip, accumulating into the same buckets
+    for (const zf of zipFiles) {
+      const stats = await streamRdmZip(
+        zf.path,
+        zf.label,
+        index,
+        graph.nodes,
+        buckets,
+        operatorCounts,
+        dryRun,
+        DRY_RUN_LIMIT
+      );
+      totalRows += stats.totalRows;
+      filteredInvalid += stats.filteredInvalid;
+      filteredSpeed += stats.filteredSpeed;
+      filteredNearTrack += stats.filteredNearTrack;
+      snappedRows += stats.snappedRows;
+    }
+
+    sourceDesc = "RDM NWR Yellow Train Mobile Network Measurements, 2026 (4G + 5G)";
+  } else {
+    // --- Legacy Ofcom CSV mode ---
+    let inputPath = explicitInput!;
+    if (!path.isAbsolute(inputPath)) {
+      inputPath = path.resolve(process.cwd(), inputPath);
+    }
+
+    console.log(`Input: ${inputPath}`);
+
+    if (!fs.existsSync(inputPath)) {
+      if (inputPath === DEFAULT_OFCOM_CSV) {
+        console.log("Full CSV not found locally. Attempting download...");
+        try {
+          await downloadFile(FULL_CSV_URL, inputPath);
+        } catch (err) {
+          console.error(`Download failed: ${err}`);
+          const samplePath = path.join(RAW_DIR, "lte-sample-spread.csv");
+          if (fs.existsSync(samplePath)) {
+            console.log(`Falling back to sample file: ${samplePath}`);
+            inputPath = samplePath;
+          } else {
+            console.error("No input file available. Exiting.");
+            process.exit(1);
+          }
+        }
+      } else {
+        console.error(`Input file not found: ${inputPath}`);
+        process.exit(1);
+      }
+    }
+
+    const isSampleFile = inputPath.includes("sample");
+
+    console.log("Streaming CSV...");
+    let headerParsed = false;
+
+    await new Promise<void>((resolve, reject) => {
+      const stream = fs.createReadStream(inputPath, { encoding: "utf8" });
+      const rl = readline.createInterface({ input: stream, crlfDelay: Infinity });
+
+      rl.on("line", (line: string) => {
+        if (!headerParsed) {
+          parseOfcomHeader(line);
+          headerParsed = true;
+          return;
+        }
+
+        totalRows++;
+
+        if (dryRun && totalRows > DRY_RUN_LIMIT) {
+          rl.close();
+          stream.destroy();
+          return;
+        }
+
+        if (totalRows % 1_000_000 === 0) {
+          console.log(`  ${(totalRows / 1e6).toFixed(0)}M rows processed...`);
+        }
+
+        const row = parseOfcomRow(line);
+        if (!row) {
+          filteredInvalid++;
+          return;
+        }
+
+        if (row.speed < MIN_SPEED_KMH) {
+          filteredSpeed++;
+          return;
+        }
+
+        const nearest = findNearestNode(index, row.lat, row.lon);
+        if (!nearest) {
+          filteredNearTrack++;
+          return;
+        }
+
+        snappedRows++;
+        operatorCounts[row.operator] = (operatorCounts[row.operator] || 0) + 1;
+
+        if (!buckets.has(nearest.id)) {
+          const nodeCoords = graph.nodes[nearest.id];
+          buckets.set(nearest.id, {
+            lat: nodeCoords[0],
+            lon: nodeCoords[1],
+            operators: {},
+          });
+        }
+
+        const bucket = buckets.get(nearest.id)!;
+        if (!bucket.operators[row.operator]) {
+          bucket.operators[row.operator] = { rsrp: [], rsrq: [], sinr: [], dates: [] };
+        }
+
+        const opData = bucket.operators[row.operator];
+        opData.rsrp.push(row.cal_rsrp);
+        opData.rsrq.push(row.rsrq);
+        if (row.sinr !== null && !isNaN(row.sinr)) {
+          opData.sinr.push(row.sinr);
+        }
+        opData.dates.push(row.date);
+      });
+
+      rl.on("close", resolve);
+      rl.on("error", reject);
+      stream.on("error", reject);
+    });
+
+    sourceDesc = isSampleFile
+      ? "Ofcom LTE yellow-train measurements (SAMPLE: lte-sample-spread.csv, not full dataset)"
+      : "Ofcom LTE yellow-train measurements, Jun 2018 - Jun 2019";
+  }
 
   // --- Log statistics ---
   console.log("");
@@ -607,10 +920,6 @@ async function main(): Promise<void> {
   }
 
   // --- Build output ---
-  const sourceDesc = isSampleFile
-    ? "Ofcom LTE yellow-train measurements (SAMPLE: lte-sample-spread.csv, not full dataset)"
-    : "Ofcom LTE yellow-train measurements, Jun 2018 - Jun 2019";
-
   const output: SignalSegmentsOutput = {
     generated: new Date().toISOString(),
     source: sourceDesc,
@@ -629,10 +938,11 @@ async function main(): Promise<void> {
 
   // --- Write output ---
   console.log(`Writing ${OUTPUT_PATH}...`);
-  fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output, null, 2), "utf8");
+  fs.writeFileSync(OUTPUT_PATH, JSON.stringify(output), "utf8");
 
   const fileSizeKB = (fs.statSync(OUTPUT_PATH).size / 1024).toFixed(0);
-  console.log(`  File size: ${fileSizeKB} KB`);
+  const fileSizeMB = (fs.statSync(OUTPUT_PATH).size / (1024 * 1024)).toFixed(1);
+  console.log(`  File size: ${fileSizeKB} KB (${fileSizeMB} MB)`);
   console.log(`  Nodes: ${output.node_count}`);
   console.log(`  Total measurements: ${totalMeasurements.toLocaleString()}`);
   console.log("");

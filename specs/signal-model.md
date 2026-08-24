@@ -699,10 +699,7 @@ The classification is implemented in `pipeline/p2-03-build-signal.ts` and output
 the pipeline script and recorded in the output metadata for traceability.
 
 **Committed file format:** The committed `data/signal-segments.json` is compact JSON
-(no whitespace), 9.2 MB. The `rsrp_p50` field (median RSRP) was removed from the
-committed file to fit under the 10 MB pre-commit limit; it is not used in signal
-classification (which uses `rsrp_p10`) and is supplementary only. This file will be
-replaced when the pipeline is retargeted to the RDM product.
+(no whitespace). As of DW-04, this file is built from RDM 2026 data (7.0 MB).
 
 ### P2-03 pipeline results (full dataset)
 
@@ -729,6 +726,211 @@ This represents 68% of the 21,626 graph nodes having at least one operator measu
 The remaining 32% are on lines the yellow trains did not traverse during the measurement
 period. Those nodes correctly receive no entry in the output (the product shows "no data"
 rather than guessing).
+
+---
+
+## DW-04: RDM 2026 Pipeline Results
+
+### Data source
+
+The pipeline was retargeted from the Ofcom 2018-19 LTE CSV to the RDM NWR Yellow Train
+Mobile Network Measurements (2026). Two zip files are processed:
+
+- `data/raw/Global_View_4G.zip` (339 MB compressed, 1,084 MB uncompressed CSV)
+- `data/raw/Global_View_5G.zip` (105 MB compressed, 379 MB uncompressed CSV)
+
+The 2G file (`Global_View_2G.zip`) is not processed because its metrics (C/I ratio) are
+incompatible with the RSRP/RSRQ/SINR thresholds used for signal classification.
+
+### 4G column schema (confirmed from file header)
+
+| Column | Type | Description |
+|---|---|---|
+| `seq_id` | int | Sequence identifier |
+| `Latitude` | float | WGS84 latitude (decimal degrees) |
+| `Longitude` | float | WGS84 longitude (decimal degrees) |
+| `speed` | float | Train speed (often blank in RDM data) |
+| `gps_speed` | float | GPS-derived speed in km/h (always present, used for filtering) |
+| `train` | string | Train identifier |
+| `date` | string | Measurement date, format `DD/MM/YYYY` |
+| `time` | string | Measurement time, format `HH:MM:SS` |
+| `mnc` | int | Mobile Network Code |
+| `mcc` | int | Mobile Country Code (234 for UK) |
+| `operator` | string | Operator name (see normalisation below) |
+| `earfcn` | int | E-UTRA Absolute Radio Frequency Channel Number |
+| `dlfreq` | float | Downlink frequency |
+| `cellid` | int | Cell identifier |
+| `pci` | int | Physical Cell Identifier |
+| `rsrp` | float | Reference Signal Received Power, raw (dBm) |
+| `WB_Rsrp` | float | Wideband RSRP (dBm) |
+| `ptotal` | float | Total received power |
+| `rsrq` | float | Reference Signal Received Quality, narrowband (dB) |
+| `WB_Rsrq` | float | Wideband RSRQ (dB) -- used for classification |
+| `WB_Rssi` | float | Wideband RSSI |
+| `sinr` | float | Signal to Interference plus Noise Ratio (dB) |
+| `nr` | string | NR indicator |
+| `reading_count` | int | Number of readings aggregated into this row |
+
+### 5G column schema (confirmed from file header)
+
+| Column | Type | Description |
+|---|---|---|
+| `seq_id` | int | Sequence identifier |
+| `Latitude` | float | WGS84 latitude (decimal degrees) |
+| `Longitude` | float | WGS84 longitude (decimal degrees) |
+| `speed` | float | Train speed (often blank) |
+| `gps_speed` | float | GPS-derived speed in km/h |
+| `train` | string | Train identifier |
+| `date` | string | Measurement date, format `DD/MM/YYYY` |
+| `time` | string | Measurement time, format `HH:MM:SS` |
+| `mnc` | int | Mobile Network Code |
+| `mcc` | int | Mobile Country Code |
+| `operator` | string | Operator name |
+| `nrarfcn` | int | NR Absolute Radio Frequency Channel Number |
+| `dlfreq` | float | Downlink frequency |
+| `rssi` | float | Received Signal Strength Indicator |
+| `pci` | int | Physical Cell Identifier |
+| `rsrp` | float | SS-RSRP (dBm) |
+| `ssb_idx` | int | SSB index |
+| `rsrq` | float | SS-RSRQ (dB) |
+| `sinr` | float | SS-SINR (dB) |
+| `reading_count` | int | Number of readings aggregated |
+
+### Operator name normalisation
+
+The RDM data uses slightly different operator names from the Ofcom data. The pipeline
+normalises them to the four names used throughout the app:
+
+| RDM operator value | Normalised name |
+|---|---|
+| `EE` | `EE` |
+| `O2 (Telefonica UK)` | `O2` |
+| `O2` | `O2` |
+| `Three` | `Three` |
+| `Vodafone UK` | `Vodafone` |
+| `Vodafone` | `Vodafone` |
+
+Rows with empty or unrecognised operator names are filtered out (approximately 0.5% of
+rows have empty operator fields).
+
+### RSRP: raw vs calibrated
+
+The Ofcom data provided both `rsrp` (raw) and `cal_rsrp` (calibrated for cable loss and
+antenna gain). The RDM data provides only `rsrp` (raw) with no calibrated column. The
+Ofcom calibration offset was typically +3 to +6 dB above raw RSRP.
+
+**Decision:** Use `rsrp` from the RDM data with the existing thresholds unchanged
+(-85 dBm for video, -95 dBm for voice). Because raw RSRP is lower than calibrated RSRP,
+the thresholds are effectively 3 to 6 dB more conservative than they were with the Ofcom
+data. This is the correct failure mode: under-promising rather than over-promising.
+
+### RSRQ: wideband vs narrowband
+
+The RDM 4G data contains two RSRQ columns:
+
+- `rsrq` -- narrowband RSRQ, typically -7 to -40 dB
+- `WB_Rsrq` -- wideband RSRQ, typically -4 to -23 dB
+
+The existing RSRQ thresholds (-15 dB for video degradation, -20 dB for none degradation)
+were calibrated against the Ofcom data, which used a single `rsrq` column whose values
+match the range of `WB_Rsrq` in the RDM data. Using narrowband `rsrq` would classify
+nearly everything as "none" because its values are systematically 10 to 20 dB lower.
+
+**Decision:** Use `WB_Rsrq` for 4G data. When `WB_Rsrq` is not available or is empty,
+fall back to narrowband `rsrq`. For 5G data, which has no `WB_Rsrq` column, narrowband
+`rsrq` (actually SS-RSRQ) is used. The existing RSRQ thresholds are not well-calibrated
+for 5G SS-RSRQ, which tends to be lower than LTE wideband RSRQ. This makes 5G-only nodes
+more likely to be classified as "none" -- conservative, which is the correct direction.
+
+A future task could introduce 5G-specific RSRQ thresholds if cross-validation against
+known good-signal 5G corridors reveals systematic over-conservatism.
+
+### Row counts
+
+#### 4G (Global_View_4G.zip)
+
+| Stage | Count |
+|---|---|
+| Total data rows | 7,390,564 |
+| Snapped to graph nodes | 3,069,256 |
+
+#### 5G (Global_View_5G.zip)
+
+| Stage | Count |
+|---|---|
+| Total data rows | 2,906,625 |
+| Snapped to graph nodes | 1,178,017 |
+
+#### Combined (4G + 5G)
+
+| Stage | Count |
+|---|---|
+| Total data rows | 10,297,189 |
+| Invalid/unparseable | 501,431 |
+| Filtered: stationary (speed < 5 km/h) | 66,477 |
+| Filtered: not near track (> 500 m) | 5,482,008 |
+| Snapped to graph nodes | 4,247,273 |
+| Nodes with data | 10,270 |
+
+Per-operator measurement counts (after filtering and snapping):
+
+| Operator | Measurements |
+|---|---|
+| EE | 1,818,889 |
+| O2 | 1,124,292 |
+| Three | 884,361 |
+| Vodafone | 419,731 |
+
+### Band distribution
+
+| Band | Operator-node entries | Percentage |
+|---|---|---|
+| video | 715 | 1.8% |
+| voice | 2,399 | 6.1% |
+| none | 33,822 | 86.0% |
+| no-data | 2,398 | 6.1% |
+
+The high proportion of "none" classifications compared to the Ofcom data (which had more
+"voice" and "video" results) has three contributing factors:
+
+1. **Raw RSRP (no calibration offset).** The 3-6 dB conservatism from using raw rather
+   than calibrated RSRP pushes borderline nodes from "voice" to "none".
+2. **5G SS-RSRQ mismatch.** The RSRQ degradation thresholds were designed for LTE
+   wideband RSRQ. The 5G SS-RSRQ values are systematically lower, triggering the
+   degradation override more frequently on 5G-only nodes.
+3. **Measurement coverage.** The RDM data covers 10,270 nodes (47% of graph nodes)
+   compared to 14,753 (68%) from the Ofcom data. The covered nodes may represent
+   different parts of the network.
+
+This conservatism is acceptable and documented. The product's language ("expected",
+"likely") already accounts for uncertainty. Where the model says "no signal", a user may
+find usable signal in practice -- but the reverse (model says "good signal", user finds
+none) is the more costly failure mode.
+
+### Output file
+
+- **File:** `data/signal-segments.json`
+- **Size:** 7.0 MB (compact JSON, no whitespace)
+- **Nodes:** 10,270
+- **Measurements:** 4,247,273
+- **Source description:** `"RDM NWR Yellow Train Mobile Network Measurements, 2026 (4G + 5G)"`
+- **Measurement dates:** March to May 2026
+
+### Limitations
+
+1. **Roof-height measurements.** As with the Ofcom data, these are from antennas on the
+   train roof. In-carriage signal is 10-30 dB weaker.
+2. **Coverage gaps.** 53% of graph nodes have no signal data. The yellow trains did not
+   traverse these sections during the March-May 2026 measurement window.
+3. **Vodafone under-represented.** Vodafone has only 419,731 measurements vs 1,818,889
+   for EE. This may mean some nodes have Vodafone classified as "no-data" where other
+   operators have usable data.
+4. **53% of rows filtered as > 500 m from track.** The RDM data may include measurements
+   from locations not on the simplified track graph, or from track segments that were
+   simplified away during graph merging.
+5. **5G RSRQ thresholds are not calibrated.** The RSRQ degradation thresholds were
+   designed for LTE wideband RSRQ. 5G SS-RSRQ has a different scale, making 5G-only
+   nodes systematically more conservative than intended.
 
 ---
 

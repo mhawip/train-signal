@@ -83,6 +83,7 @@ and writes to it last.
 | P4-01 | Error and loading boundaries for bad connections | developer |
 | P4-02 | Accessibility constraints: Open Graph metadata on results pages | accessibility-specialist |
 | P4-03 | Open Graph metadata on results and departures pages | developer |
+| DW-04 | Retarget signal pipeline at RDM product | infra |
 
 ---
 
@@ -148,7 +149,7 @@ P4-03 is done — see the index above.
 
 ### P4-04 — Update vintage notice and attribution when RDM data lands
 - **owner:** developer
-- **status:** blocked
+- **status:** todo
 - **depends:** DW-04
 - **why:** When DW-04 ships, the signal data will be from July 2026, not 2018-19. The
   results page vintage notice ("Signal data is based on Ofcom rail measurements from
@@ -164,12 +165,13 @@ P4-03 is done — see the index above.
         stronger claims
   - [ ] Accessibility statement updated if the data-source description changes
   - [ ] `npm run verify` green
-- **blocked because:** DW-04 has not yet shipped; the exact RDM data vintage and
-  coverage details are not known until the pipeline runs.
+- **unblocked:** DW-04 shipped 2026-08-24. RDM data is dated March-May 2026. Source
+  description: "RDM NWR Yellow Train Mobile Network Measurements, 2026 (4G + 5G)".
+  Includes 5G measurements. See `specs/signal-model.md` DW-04 section for full details.
 
 ### P4-05 — Re-validate signal output against known notspots after RDM data
 - **owner:** qa
-- **status:** blocked
+- **status:** todo
 - **depends:** DW-04
 - **why:** The P3-01 cross-validation ran against 2018-19 Ofcom data. The RDM data is
   from 2026 and includes 5G. Signal verdicts will change. The validation must re-run to
@@ -190,7 +192,8 @@ P4-03 is done — see the index above.
         re-validation" section
   - [ ] If false positives are found, signal thresholds in `specs/signal-model.md`
         reviewed and adjusted before the data ships
-- **blocked because:** DW-04 has not yet shipped; the new signal data does not exist yet.
+- **unblocked:** DW-04 shipped 2026-08-24. New `data/signal-segments.json` built from
+  RDM 2026 data (10,270 nodes, 4,247,273 measurements). Ready to re-run validation.
 
 ---
 
@@ -198,27 +201,4 @@ P4-03 is done — see the index above.
 
 Bugs and follow-ups get filed here by whoever finds them.
 
-
-
-### DW-04 — Retarget signal pipeline at RDM product
-- **owner:** infra
-- **status:** in-progress
-- **depends:** —
-- **why:** Matt verified the RDM "NWR Yellow Train Mobile Network Measurements" product
-  (Rail Data Marketplace) on 2026-08-09. It is dated July 2026, contains 5G measurements
-  from this year, has all required fields (RSRP/RSRQ/SINR, MCC/MNC, operator), and is
-  smaller than the Ofcom CSVs. Matt explicitly recommends using the RDM product. The
-  current `data/signal-segments.json` was built from the 2018–19 Ofcom data. The RDM
-  data is materially newer and includes 5G — it is the better source.
-- **acceptance:**
-  - [ ] `pipeline/p2-03-build-signal.ts` updated to accept the RDM CSV format; any
-        column-name or schema differences from the Ofcom format handled
-  - [ ] RDM data downloaded to `data/raw/` (gitignored) and pipeline re-run
-  - [ ] `data/signal-segments.json` regenerated from RDM data and committed (under 10 MB)
-  - [ ] `specs/signal-model.md` updated with RDM schema, column names, and row counts
-  - [ ] Row counts logged at each stage (same as P2-03)
-  - [ ] Re-runnable to byte-identical output
-  - [ ] `npm run verify` green
-- **unblocked:** Q6 answered 2026-08-24. Matt downloaded 3 RDM zip files to
-  `data/raw/`: `Global_View_2G.zip` (452 MB), `Global_View_4G.zip` (339 MB),
-  `Global_View_5G.zip` (105 MB). Pipeline can now be updated and re-run.
+DW-04 is done — see index above.
