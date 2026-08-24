@@ -1071,3 +1071,30 @@ particular way, or its full original acceptance criteria).
   - [x] Accessibility statement updated if the data-source description changes
   - [x] `npm run verify` green
 - **PR:** #53 (dev/P4-04-vintage-notice → main)
+
+### P4-05 — Re-validate signal output against known notspots after RDM data
+- **owner:** qa
+- **status:** done
+- **depends:** DW-04
+- **why:** The P3-01 cross-validation ran against 2018-19 Ofcom data. The RDM data is
+  from 2026 and includes 5G. Signal verdicts will change. The validation must re-run to
+  confirm the new data still skews conservative and does not introduce false positives
+  (optimistic verdicts where signal is actually poor). A false positive -- telling
+  someone they will have signal when they will not -- is the highest-severity failure
+  this product can have.
+- **acceptance:**
+  - [x] `pipeline/p3-01-validate-notspots.ts` re-run against the regenerated
+        `data/signal-segments.json`
+  - [x] All 5 major routes re-checked (ECML, Transpennine, GWR, CrossCountry,
+        Edinburgh-Glasgow)
+  - [x] Any new false positives (known notspot now showing "voice" or "video")
+        investigated and filed as high-severity bugs
+  - [x] Direction of error confirmed: still conservative (under-promise, not
+        over-promise)
+  - [x] Findings appended to `specs/signal-model.md` under a new "P4-05 RDM
+        re-validation" section
+  - [x] If false positives are found, signal thresholds in `specs/signal-model.md`
+        reviewed and adjusted before the data ships
+- **result:** Zero false positives. Direction of error confirmed strongly conservative
+  (75.4% of nodes have all operators at none/no-data; only 4 nodes show all-video).
+  See `specs/signal-model.md` section "P4-05 RDM re-validation" for full findings.

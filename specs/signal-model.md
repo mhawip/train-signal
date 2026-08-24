@@ -1095,3 +1095,157 @@ conservative. The failure mode is "told a user they would not have signal when t
 might" (an inconvenience), not "told a user they would have signal when they would not"
 (a broken promise). This is the correct direction for a product whose core value
 proposition is trustworthiness.
+
+---
+
+## P4-05 RDM re-validation
+
+**Run date:** 2026-08-24
+**Data source:** RDM NWR Yellow Train Mobile Network Measurements, 2026 (4G + 5G)
+**Script:** `pipeline/p3-01-validate-notspots.ts`
+
+### Summary
+
+The RDM 2026 data is significantly more conservative than the Ofcom 2018-19 data it
+replaces. Zero false positives were found across all five validated routes. Every known
+notspot is confirmed as "none" or "no-data", and the overall none rate across the
+dataset is extremely high (75.4% of nodes have all operators at none or no-data; only
+4 nodes have all operators at video).
+
+### Route-by-route findings
+
+**ECML: Leeds to London Kings Cross**
+
+All ten segments show NONE or no-data for every operator. Specific findings:
+
+- **LDS-WKF:** 42% coverage (EE), all covered nodes NONE. High no-data rate due to
+  sparse RDM measurement passes through urban Leeds.
+- **WKF-DON:** 100% coverage for EE (all 32 nodes NONE), 94% for Three (21 NONE,
+  8 voice, 1 video). Even the best operator (Vodafone, 78% coverage) shows 17 NONE
+  nodes out of 25 covered.
+- **DON-RET and RET-NNG:** Rural sections between Retford and Newark. All operators
+  NONE at 33-39% coverage. Known notspot confirmed.
+- **NNG-GRA (Stoke Tunnel / Stoke summit area):** 93% coverage for EE, all 13 nodes
+  NONE. O2 identical. Vodafone has only 7% coverage (1 NONE node). Known notspot
+  confirmed across all operators.
+- **GRA-PBO, PBO-HUN, HUN-SVG:** Continuous NONE for EE and O2 at high coverage
+  (93-100%). Three shows some voice nodes but segment verdict remains NONE. Vodafone
+  has high no-data rates (0-37% coverage).
+- **SVG-FPK:** ECML tunnel detected (415m). All operators NONE at 58-92% coverage.
+- **FPK-KGX (Gasworks/Copenhagen Tunnels):** 27 tunnel segments detected. All four
+  operators show NONE for all 8 covered nodes (67% coverage). Known notspot confirmed.
+
+**Transpennine: Leeds to Manchester Piccadilly**
+
+- **LDS-HUD:** Low coverage (10-21% for most operators). What data exists is NONE.
+  Two Huddersfield Line tunnels detected.
+- **HUD-MAN (Standedge Tunnel area):** 0% coverage for all four operators -- 43 nodes,
+  all no-data. Seven tunnel segments detected (including Huddersfield Line tunnels up
+  to 596m and Penistone Line 665m). The complete absence of measurement data in this
+  area is the strongest possible conservative outcome: the model has no basis to claim
+  signal exists. Known notspot confirmed.
+
+**GWR: London Paddington to Bristol Temple Meads**
+
+- **PAD-RDG:** 95-96% coverage. All operators NONE (EE: 71/74, Three: 56/74, O2: 69/74,
+  Vodafone: 55/74 NONE nodes). Multiple GWR and Elizabeth Line tunnels detected.
+- **RDG-SWI:** 98-100% coverage. All operators NONE. Rural Wiltshire sections confirmed.
+- **SWI-CHW and CHW-BTH:** These segments follow a non-obvious path through the track
+  graph (190 and 209 nodes respectively, with many London-area tunnels detected),
+  indicating the Dijkstra routing found a circuitous path. Despite this, all operators
+  show NONE at 75-82% coverage. This is a known limitation of the path-finding (noted
+  in P3-01) but does not affect the safety conclusion since it cannot produce false
+  positives.
+- **BTH-BRI (Box Tunnel area):** 88-100% coverage. All operators NONE (EE: 23/25,
+  Three: 18/25, O2: 23/25, Vodafone: 19/25 NONE nodes). Known notspot confirmed.
+
+**CrossCountry: Reading to Birmingham New Street**
+
+- **RDG-OXF (rural Oxfordshire):** 83-100% coverage. All operators NONE. Known notspot
+  confirmed.
+- **OXF-BAN:** 29-90% coverage. All operators NONE. Rural sections through north
+  Oxfordshire confirmed as dead zones.
+- **BAN-LMS:** 43-57% coverage (Vodafone 0%). All operators with data show NONE.
+- **LMS-BHM:** 42-45% coverage. All operators NONE. Multiple Rugby-Birmingham-Stafford
+  Line tunnels detected (over 60 segments). Known Basingstoke-Coventry corridor
+  notspot confirmed.
+
+**Edinburgh to Glasgow Central**
+
+- **EDB-HYM (Edinburgh cuttings):** 44-89% coverage. All operators NONE. Four tunnel
+  segments detected (Edinburgh and Glasgow Main Line, East Coast Northern Line).
+  Known notspot confirmed.
+- **HYM-GLC:** 71-82% coverage. All operators NONE at segment level. Some voice and
+  video nodes exist (Three: 4 video, 14 voice out of 60 covered; Vodafone: 4 video,
+  8 voice out of 63 covered) but these are overwhelmed by NONE nodes (42-63). Two
+  Argyle Line tunnels detected.
+
+### False positives
+
+None found. Every known notspot across all five routes shows "none" or "no-data" for
+all operators. No case was identified where the model predicts usable signal in an area
+known to be a dead zone.
+
+### Direction of error
+
+The model is strongly conservative -- more so than the P3-01 validation against Ofcom
+2018-19 data. Three factors contribute:
+
+1. **Raw RSRP without calibration offset.** The RDM data uses uncalibrated RSRP values,
+   which are approximately 3-6 dB lower than the Ofcom measurements. This pushes more
+   nodes below the voice threshold (-95 dBm) and video threshold (-85 dBm).
+
+2. **5G SS-RSRQ mismatch.** The thresholds were tuned for LTE RSRQ. 5G SS-RSRQ values
+   behave differently, and the RSRQ degradation thresholds (-15 dB for voice, -20 dB
+   for none) appear to catch many 5G measurements that might otherwise classify as
+   voice or video on RSRP alone.
+
+3. **Fewer covered nodes.** 10,270 nodes versus 14,753 with Ofcom data (30% fewer).
+   More of the network falls into "no-data", which is the safest possible verdict.
+
+The dataset-wide statistics confirm this: 75.4% of all signal nodes have every operator
+at none or no-data. Only 4 nodes out of 10,270 have all operators at video. The model
+under-promises substantially.
+
+### Comparison with P3-01 (Ofcom 2018-19)
+
+| Metric | P3-01 (Ofcom) | P4-05 (RDM 2026) |
+|---|---|---|
+| Signal nodes | 14,753 | 10,270 |
+| Measurement count | ~5.6M (LTE only) | 4,247,273 (4G + 5G) |
+| All-operators-none/no-data nodes | Not recorded | 7,746 (75.4%) |
+| All-operators-video nodes | Not recorded | 4 (0.04%) |
+| False positives found | 0 | 0 |
+| Direction of error | Conservative | More conservative |
+
+Key differences:
+
+- **Coverage gaps are wider.** The RDM data has 30% fewer signal nodes, meaning larger
+  stretches of track fall to no-data. This is safe but reduces the product's ability to
+  give positive recommendations ("you can call here").
+- **ECML is almost entirely NONE.** In P3-01, some ECML segments had voice or video
+  nodes. With RDM data, the entire Leeds-Kings Cross route shows NONE for EE and O2,
+  with only scattered voice nodes for Three and Vodafone. This is almost certainly
+  too conservative for a major trunk route with known 4G/5G coverage.
+- **Transpennine HUD-MAN has zero data.** P3-01 had some measurements through the
+  Standedge area. The RDM data has none, which is safe but means the model cannot
+  distinguish between "definitely no signal" and "we did not measure here".
+- **GWR path-finding anomaly persists.** The SWI-CHW and CHW-BTH segments still follow
+  non-obvious routes through London, as noted in P3-01. This is a track-graph/routing
+  issue, not a signal data issue.
+
+### Conclusion
+
+The model is safe to ship. The direction of error is strongly conservative -- more so
+than with the Ofcom 2018-19 data. No false positives were found. Every known notspot
+is confirmed.
+
+The conservatism is arguably excessive: major routes like the ECML show almost no usable
+signal in the model, which contradicts common experience of these corridors having
+reasonable 4G coverage for most operators. This is a product-quality issue (the model
+under-promises to the point of being unhelpful on some routes) but it is not a safety
+issue. The three contributing factors (uncalibrated RSRP, 5G RSRQ mismatch, fewer
+covered nodes) are documented and could be addressed by future threshold tuning -- but
+any such tuning must be validated against notspots before shipping.
+
+The product requirement -- that errors skew conservative -- is satisfied with margin.

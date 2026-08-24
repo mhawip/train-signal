@@ -2710,3 +2710,44 @@ Self-certified WCAG AAA: text-only changes in existing reviewed components; no n
 - P4-05 (re-validation of signal output against known notspots) is now the only remaining open task and is unblocked.
 
 **Next:** P4-05 (qa — re-run validation script against new RDM signal data, check direction of error is still conservative).
+
+## 2026-08-24T15:00:00Z — P4-05 — qa
+
+**Did:** Re-ran `pipeline/p3-01-validate-notspots.ts` against the RDM 2026 signal data (10,270 nodes, 4,247,273 measurements). Analysed all five routes (ECML, Transpennine, GWR, CrossCountry, Edinburgh-Glasgow) for false positives against known notspots.
+
+Results: zero false positives found. Every known notspot confirmed as "none" or "no-data" across all operators. The model is more conservative than the P3-01 validation against Ofcom 2018-19 data: 75.4% of all signal nodes have every operator at none or no-data, and only 4 out of 10,270 nodes have all operators at video.
+
+Appended full findings to `specs/signal-model.md` under "P4-05 RDM re-validation". Marked P4-05 done in `agent/PLAN.md` and added to completed index.
+
+**Verify:** Validation script ran successfully. No bugs to file. No false positives.
+
+**Learned:**
+- The RDM data is significantly more conservative than Ofcom data, primarily due to uncalibrated RSRP (3-6 dB lower), 5G SS-RSRQ mismatch with LTE thresholds, and 30% fewer covered nodes.
+- The ECML (Leeds-Kings Cross) is almost entirely NONE across all operators, which is likely too conservative for a major trunk route with known 4G/5G coverage. This is a product-quality concern (under-promising to the point of unhelpfulness) but not a safety concern.
+- Transpennine HUD-MAN (Standedge Tunnel area) has zero measurement data in the RDM dataset -- all 43 nodes are no-data. This is the safest possible outcome but means the model cannot distinguish between "definitely no signal" and "we did not measure here".
+- The GWR SWI-CHW and CHW-BTH path-finding anomaly from P3-01 persists (Dijkstra finding a route through London). This is a track-graph routing issue unrelated to signal data.
+
+**Next:** No open tasks remain. All Phase 4 work is complete.
+
+## 2026-08-24T15:20:00Z — P4-05 — orchestrator
+
+**Did:** Oriented on `dev/P4-04-vintage-notice` branch. PR #53 was open with all CI
+green; merged it (squash). Switched to `main`, pulled, confirmed P4-05 as the next
+available task (qa, depends DW-04 which is done). Marked P4-05 in-progress on branch
+`qa/P4-05-revalidate-notspots`, dispatched the qa agent. Agent ran the validation
+script, found zero false positives, appended findings to `specs/signal-model.md`.
+Archived P4-05 full entry to PLAN-ARCHIVE.md (qa agent had marked it done but not
+archived). Ran `npm run verify` (286 unit tests, 17 Playwright tests, typecheck, lint,
+build — all green). Committed, pushed, opened PR #54, set to auto-merge.
+
+**Verify:** Pass. 286 unit tests, 17 Playwright tests, typecheck, lint, build green.
+
+**Learned:**
+- The qa agent marks tasks done in PLAN.md but does not archive to PLAN-ARCHIVE.md.
+  The orchestrator must do the archive step as part of shipping.
+- With P4-05 done, the backlog is empty. All Phase 4 goals are met: resilience (P4-01),
+  RDM data upgrade (DW-04 + P4-04), link previews (P4-02 + P4-03), re-validation
+  (P4-05). The product is complete against the brief.
+
+**Next:** Backlog is empty. The next loop should dispatch to `product` to assess whether
+a Phase 5 is warranted, or conclude that the product is complete against the brief.

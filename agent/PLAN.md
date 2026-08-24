@@ -85,6 +85,7 @@ and writes to it last.
 | P4-03 | Open Graph metadata on results and departures pages | developer |
 | DW-04 | Retarget signal pipeline at RDM product | infra |
 | P4-04 | Update vintage notice and attribution when RDM data lands | developer |
+| P4-05 | Re-validate signal output against known notspots after RDM data | qa |
 
 ---
 
@@ -148,31 +149,7 @@ P4-02 is done — see the index above.
 
 P4-03 is done — see the index above.
 
-### P4-05 — Re-validate signal output against known notspots after RDM data
-- **owner:** qa
-- **status:** todo
-- **depends:** DW-04
-- **why:** The P3-01 cross-validation ran against 2018-19 Ofcom data. The RDM data is
-  from 2026 and includes 5G. Signal verdicts will change. The validation must re-run to
-  confirm the new data still skews conservative and does not introduce false positives
-  (optimistic verdicts where signal is actually poor). A false positive -- telling
-  someone they will have signal when they will not -- is the highest-severity failure
-  this product can have.
-- **acceptance:**
-  - [ ] `pipeline/p3-01-validate-notspots.ts` re-run against the regenerated
-        `data/signal-segments.json`
-  - [ ] All 5 major routes re-checked (ECML, Transpennine, GWR, CrossCountry,
-        Edinburgh-Glasgow)
-  - [ ] Any new false positives (known notspot now showing "voice" or "video")
-        investigated and filed as high-severity bugs
-  - [ ] Direction of error confirmed: still conservative (under-promise, not
-        over-promise)
-  - [ ] Findings appended to `specs/signal-model.md` under a new "P4-05 RDM
-        re-validation" section
-  - [ ] If false positives are found, signal thresholds in `specs/signal-model.md`
-        reviewed and adjusted before the data ships
-- **unblocked:** DW-04 shipped 2026-08-24. New `data/signal-segments.json` built from
-  RDM 2026 data (10,270 nodes, 4,247,273 measurements). Ready to re-run validation.
+P4-05 is done — see the index above.
 
 ---
 
