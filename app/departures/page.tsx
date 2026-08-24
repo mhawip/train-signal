@@ -6,6 +6,10 @@ import { findScheduledDepartures } from "@/app/lib/schedule";
 import { buildResultsUrl, getTodayISO } from "@/app/lib/journey-params";
 import { getStationByCRS } from "@/app/lib/stations";
 import type { DepartureSummary } from "@/app/lib/journey-types";
+import {
+  buildOgTitle,
+  buildDeparturesDescription,
+} from "@/app/lib/og-metadata";
 
 interface DeparturesPageProps {
   searchParams: Promise<{
@@ -127,8 +131,23 @@ export async function generateMetadata({
   const dateStr = params.date ? formatDateFull(params.date) : "";
   const datePart = dateStr ? `, ${dateStr}` : "";
 
+  const ogTitle = buildOgTitle(
+    from,
+    to,
+    params.from,
+    params.to,
+    "departures — Train Signal",
+  );
+  const ogDescription = dateStr
+    ? buildDeparturesDescription(from, to, dateStr)
+    : buildDeparturesDescription(from, to, "the selected date");
+
   return {
     title: `Choose a departure: ${from} to ${to}${datePart} — Train Signal`,
+    openGraph: {
+      title: ogTitle,
+      description: ogDescription,
+    },
   };
 }
 

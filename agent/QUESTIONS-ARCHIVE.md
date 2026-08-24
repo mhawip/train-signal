@@ -179,3 +179,26 @@ recommendation is to use the RMD product.
 **Action taken:** Updated `specs/signal-model.md` data source recommendation to RDM
 product. A pipeline retargeting task will be filed to rebuild `data/signal-segments.json`
 from the RDM data.
+
+---
+
+### Q6 — Download RDM yellow-train CSV to data/raw/
+
+**Asked:** 2026-08-13
+**Status:** resolved 2026-08-24
+
+DW-04 (retarget signal pipeline at RDM product) was blocked until the Rail Data
+Marketplace CSV was available locally. The pipeline could not be updated or re-run without
+the actual file, because the RDM column names may differ from the Ofcom schema and
+could not be determined without inspecting the header.
+
+**What was needed:** Log into Rail Data Marketplace, navigate to the "NWR Yellow Train
+Mobile Network Measurements" product, and download the CSV to `data/raw/`.
+
+**Answer:** (Matt, 2026-08-21)
+Downloaded 3 zip files to `data/raw/`:
+- `Global_View_2G.zip` (452 MB) — 2G measurements
+- `Global_View_4G.zip` (339 MB) — 4G measurements
+- `Global_View_5G.zip` (105 MB) — 5G measurements
+
+**Action taken:** DW-04 unblocked. QUESTIONS.md updated; Q6 archived here.

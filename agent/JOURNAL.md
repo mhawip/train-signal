@@ -2615,3 +2615,57 @@ Minor implementation decisions:
 - The self-certification checklist in P4-02 section 14.7 means P4-03 does not need a separate accessibility-specialist review task — the developer can self-certify against the documented templates. This is the right call: the templates are already reviewed here; a second fresh-context agent would only re-read the same spec.
 
 **Next:** P4-03 (developer — OG metadata implementation) is now unblocked. Its dependency on P4-02 is met. DW-04, P4-04, P4-05 remain blocked on Q6.
+
+## 2026-08-21T13:10Z — P4-03 — developer
+
+**Did:** Implemented Open Graph metadata on results and departures pages, following the four templates from specs/accessibility.md section 14 (P4-02).
+
+Files changed:
+- `app/lib/og-metadata.ts` — new module with pure helper functions: `buildOgTitle` (with CRS fallback for 60-char limit), `buildResultsDescriptionWithWindow` (Template A), `buildResultsDescriptionNoWindow` (Template B), `buildRouteOverviewDescription` (Template C), `buildDeparturesDescription` (Template D), and `formatDurationOg`.
+- `app/results/page.tsx` — extended `generateMetadata` to return `openGraph.title` and `openGraph.description`. Handles three modes: specific-train with best window (A), specific-train without best window (B), and route-overview (C). Fetches journey server-side to compute best window for OG description.
+- `app/departures/page.tsx` — extended `generateMetadata` to return `openGraph.title` and `openGraph.description` (Template D).
+- `app/lib/og-metadata.test.ts` — 23 unit tests covering all four templates, character limits, CRS fallback, forbidden phrase checks, and honest framing.
+- `e2e/og-metadata.spec.ts` — 3 E2E tests verifying `<meta property="og:title">` and `<meta property="og:description">` exist with correct content patterns on results, route-overview, and departures pages.
+
+Self-certification against P4-02 checklist (section 14.7):
+- og:title present on results and departures pages: yes
+- og:description present on results and departures pages: yes
+- Every title 60 chars or fewer: yes (tested with Edinburgh Waverley to London Kings Cross; CRS fallback triggers)
+- Every description 155 chars or fewer: yes (tested with long station names)
+- No description claims signal quality without "expected" or "likely": yes
+- No forbidden phrases: yes (verified by unit tests)
+- No OG copy references colour, visual layout, or timeline: yes
+- No-best-window description uses Template B honest framing: yes
+- Route-overview description does not claim specific best window: yes
+- Departures description makes no signal quality claim: yes
+- Truncation does not produce misleading half-sentences: yes (graceful fallback drops date clause first)
+- og:image absent: yes
+- Axe-core no new violations: yes (9 E2E tests pass including 3 new)
+
+WCAG criteria touched: 2.4.2 (Page Titled), 3.1.5 (Reading Level). Both satisfied by existing patterns — page titles already follow the "[Context] — Train Signal" convention; all OG copy is written at Grade 5-6 reading level per the P4-02 templates.
+
+**Verify:** Pass. `npm run verify` green: typecheck, lint, 259 unit tests (23 new), build, 9 Playwright tests (3 new).
+
+**Learned:**
+- Next.js `generateMetadata` runs server-side, so calling `fetchJourney` + `getJourneySignal` + `findBestWindow` there is fine. The journey is fetched twice (once for metadata, once for the page component), but the overhead is minimal and avoids coupling metadata generation to page rendering.
+- The CRS fallback in `buildOgTitle` is essential: "Edinburgh Waverley to London Kings Cross signal -- Train Signal" is 63 chars, over the 60-char limit. The fallback to "EDB to KGX signal -- Train Signal" (32 chars) keeps it safe.
+- The description truncation strategy (drop date clause first, then hard-truncate) is simple and avoids producing misleading partial sentences because the hedge words ("expected", "likely") appear early in all templates.
+
+**Next:** P4-03 is complete. DW-04, P4-04, P4-05 remain blocked on Q6.
+
+## 2026-08-24T10:15Z — P4-03 — orchestrator
+
+**Did:** Picked up P4-03 on branch `dev/P4-03-og-metadata` where a previous iteration died before committing. The developer agent's work was complete and correct on disk. Ran `npm run verify` (green: 259 unit tests, 9 Playwright tests, typecheck, lint, build), committed, pushed, and opened PR #51. Marked P4-03 done in PLAN.md, archived full entry to PLAN-ARCHIVE.md.
+
+Files shipped:
+- `app/lib/og-metadata.ts` — pure OG title/description helpers for four templates
+- `app/lib/og-metadata.test.ts` — 23 unit tests
+- `app/results/page.tsx` — generateMetadata extended (Templates A/B/C)
+- `app/departures/page.tsx` — generateMetadata extended (Template D)
+- `e2e/og-metadata.spec.ts` — 3 E2E tests verifying og:title and og:description in HTML head
+
+**Verify:** Pass. 259 unit tests, 9 Playwright tests, typecheck, lint, build green.
+
+**Learned:** When a loop dies mid-task after the work is done but before the commit, the next iteration's job is simply to verify and ship — not to redo the work. Check the files on disk before dispatching a fresh agent. The developer's self-certification in the previous journal entry was thorough and correct; no re-review was needed.
+
+**Next:** P4-04 and P4-05 remain blocked on DW-04 (blocked on Q6 — Matt downloading the RDM CSV). DW-04 remains blocked. No other open tasks. Phase 4 is otherwise complete. The product now meets all Phase 4 goals: resilience on bad connections (P4-01), OG metadata (P4-03). DW-04/P4-04/P4-05 ship when Matt provides the CSV.
