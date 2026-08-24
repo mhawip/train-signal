@@ -20,8 +20,8 @@ export default function RootLayout({
 
         <footer className="ts-footer">
           <p>
-            Signal data: Ofcom yellow-train mobile signal measurements,
-            2018–19. Track geometry: OpenStreetMap contributors (ODbL).
+            Signal data: RDM NWR Yellow Train Mobile Network Measurements,
+            2026 (4G + 5G). Track geometry: OpenStreetMap contributors (ODbL).
             Station data: NaPTAN, Open Government Licence v3.
           </p>
           <p>

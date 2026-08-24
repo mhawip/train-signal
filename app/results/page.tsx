@@ -377,9 +377,9 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
       )}
 
       <p className="ts-notice ts-notice--vintage">
-        Signal data is based on Ofcom rail measurements from 2018 and 2019.
-        Results show expected signal, not a guarantee. Coverage may have
-        improved since then.
+        Signal data is based on Network Rail yellow-train measurements from
+        2026, including 4G and 5G. Results show expected signal, not a
+        guarantee.
       </p>
 
       <JourneyTimeline journey={journey} signalProfile={signalProfile} />

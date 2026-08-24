@@ -61,9 +61,9 @@ export default function AccessibilityPage() {
       <h2>Signal data</h2>
       <p>
         The signal information shown in this app is based on measurements
-        taken between 2018 and 2019. Mobile coverage may have changed since
-        then. Results show expected signal, not a guarantee. Where we have
-        limited data for a route, we say so rather than guessing.
+        taken in 2026, including 4G and 5G. Results show expected signal, not
+        a guarantee. Where we have limited data for a route, we say so
+        rather than guessing.
       </p>
 
       <h2>Report a problem</h2>
