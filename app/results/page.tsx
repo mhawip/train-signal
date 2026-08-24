@@ -9,6 +9,12 @@ import type { Journey } from "@/app/lib/journey-types";
 import { fetchDepartures } from "@/app/lib/darwin";
 import { findScheduledJourney, findTypicalJourney } from "@/app/lib/schedule";
 import { getTodayISO } from "@/app/lib/journey-params";
+import {
+  buildOgTitle,
+  buildResultsDescriptionWithWindow,
+  buildResultsDescriptionNoWindow,
+  buildRouteOverviewDescription,
+} from "@/app/lib/og-metadata";
 
 interface ResultsPageProps {
   searchParams: Promise<{
@@ -55,21 +61,99 @@ export async function generateMetadata({
     return { title: "Train Signal" };
   }
 
-  const from = params.from.toUpperCase();
-  const to = params.to.toUpperCase();
+  const fromCrs = params.from.toUpperCase();
+  const toCrs = params.to.toUpperCase();
 
-  // Route-overview mode: no date/time params
+  // Route-overview mode: no date/time params (Template C)
   if (!params.date && !params.time) {
+    // Try to fetch a typical journey to get full station names
+    const journey = findTypicalJourney(fromCrs, toCrs, params.network || "");
+    const fromName = journey ? journey.origin.name : fromCrs;
+    const toName = journey ? journey.destination.name : toCrs;
+
+    const ogTitle = buildOgTitle(
+      fromName,
+      toName,
+      fromCrs,
+      toCrs,
+      "route signal — Train Signal",
+    );
+    const ogDescription = buildRouteOverviewDescription(fromName, toName);
+
     return {
-      title: `${from} to ${to} route signal — Train Signal`,
+      title: ogTitle,
+      openGraph: {
+        title: ogTitle,
+        description: ogDescription,
+      },
     };
   }
 
+  // Specific-train mode: fetch journey to get station names and best window
+  const date = params.date || getTodayISO();
+  const time = params.time || "00:00";
+  const journey = await fetchJourney(
+    fromCrs,
+    toCrs,
+    date,
+    time,
+    params.network || "",
+  );
+
+  const fromName = journey ? journey.origin.name : fromCrs;
+  const toName = journey ? journey.destination.name : toCrs;
   const dateStr = params.date ? formatDate(params.date) : "";
+
+  const ogTitle = buildOgTitle(
+    fromName,
+    toName,
+    fromCrs,
+    toCrs,
+    "signal — Train Signal",
+  );
+
+  // Compute best window for the OG description (Templates A/B)
+  let ogDescription: string;
+  if (journey && dateStr) {
+    const signalProfile = getJourneySignal(journey);
+    const bestWindow = findBestWindow(journey, signalProfile);
+
+    if (bestWindow) {
+      ogDescription = buildResultsDescriptionWithWindow(
+        fromName,
+        toName,
+        dateStr,
+        {
+          startStation: bestWindow.startStation,
+          endStation: bestWindow.endStation,
+          durationMinutes: bestWindow.durationMinutes,
+          quality: bestWindow.quality,
+        },
+      );
+    } else {
+      ogDescription = buildResultsDescriptionNoWindow(
+        fromName,
+        toName,
+        dateStr,
+      );
+    }
+  } else {
+    // Journey not found or no date — fall back to no-window description
+    ogDescription = buildResultsDescriptionNoWindow(
+      fromName,
+      toName,
+      dateStr || "the selected date",
+    );
+  }
+
   const datePart = dateStr ? `, ${dateStr}` : "";
 
   return {
-    title: `${from} to ${to}${datePart} — Train Signal`,
+    title: `${fromCrs} to ${toCrs}${datePart} — Train Signal`,
+    openGraph: {
+      title: ogTitle,
+      description: ogDescription,
+    },
   };
 }
 
