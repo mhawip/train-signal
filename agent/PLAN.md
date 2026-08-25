@@ -93,6 +93,7 @@ and writes to it last.
 | P4-04 | Update vintage notice and attribution when RDM data lands | developer |
 | P4-05 | Re-validate signal output against known notspots after RDM data | qa |
 | P5-01 | Recalibrate signal thresholds for RDM raw data | data-engineer |
+| P5-02 | Re-validate notspots after threshold recalibration | qa |
 
 ---
 
@@ -189,26 +190,7 @@ label. See WCAG 3.3.2 (labels or instructions) and the brief's non-negotiable #2
 
 P5-01 is done — see the index above.
 
-### P5-02 — Re-validate notspots after threshold recalibration
-- **owner:** qa
-- **status:** todo
-- **depends:** P5-01
-- **why:** Any threshold loosening risks producing false positives — claiming "voice" or
-  "video" in a known dead zone. The notspot validation must be re-run against the
-  recalibrated data before it ships. This is a hard gate: if any known notspot now shows
-  "voice" or "video" on any operator, P5-01 must be revisited before we proceed.
-- **acceptance:**
-  - [ ] `pipeline/p3-01-validate-notspots.ts` run against the rebuilt
-        `data/signal-segments.json`
-  - [ ] All 9 previously confirmed notspots still show "none" or "no-data" for every
-        operator (Stoke Tunnel, Kings Cross tunnels, Standedge, rural Retford–Grantham,
-        rural Oxfordshire, Box Tunnel area, Edinburgh cuttings, Edinburgh–Glasgow central
-        belt, GWR rural Wiltshire)
-  - [ ] At least two of the five routes now show some "voice" or "video" nodes on at
-        least one operator (confirms the threshold shift had real effect)
-  - [ ] Results logged in `specs/signal-model.md` as a new "P5-02 validation" section,
-        mirroring the format of the P4-05 section
-  - [ ] `npm run verify` green
+P5-02 is done — see the index above.
 
 ### P5-03 — Ofcom Connected Nations 2025: pipeline integration
 - **owner:** data-engineer

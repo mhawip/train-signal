@@ -40,6 +40,33 @@ particular way, or its full original acceptance criteria).
         bypass, before/after distribution
   - [x] `npm run verify` green (289 unit tests, 17 Playwright tests). PR #55.
 
+### P5-02 — Re-validate notspots after threshold recalibration
+- **owner:** qa
+- **status:** done
+- **depends:** P5-01
+- **why:** Any threshold loosening risks producing false positives -- claiming "voice" or
+  "video" in a known dead zone. The notspot validation must be re-run against the
+  recalibrated data before it ships. This is a hard gate: if any known notspot now shows
+  "voice" or "video" on any operator, P5-01 must be revisited before we proceed.
+- **acceptance:**
+  - [x] `pipeline/p3-01-validate-notspots.ts` run against the rebuilt
+        `data/signal-segments.json`
+  - [x] All 9 previously confirmed notspots still show "none" or "no-data" for every
+        operator (Stoke Tunnel, Kings Cross tunnels, Standedge, rural Retford-Grantham,
+        rural Oxfordshire, Box Tunnel area, Edinburgh cuttings, Edinburgh-Glasgow central
+        belt, GWR rural Wiltshire)
+  - [x] At least two of the five routes now show some "voice" or "video" nodes on at
+        least one operator (confirms the threshold shift had real effect)
+  - [x] Results logged in `specs/signal-model.md` as a new "P5-02 validation" section,
+        mirroring the format of the P4-05 section
+  - [x] `npm run verify` green
+- **what changed:**
+  - `specs/signal-model.md` -- added P5-02 validation section: all 9 notspots confirmed
+    at none/no-data, all 5 routes show voice/video nodes post-recalibration, overall
+    verdict PASS. Band distribution recorded (video 3.7%, voice 12.1%, none 78.1%,
+    no-data 6.1%). All-operators-none/no-data rate improved from 75.4% to 59.9%.
+  - `agent/PLAN.md` -- P5-02 moved to completed index.
+
 ---
 
 ## Discovered work
