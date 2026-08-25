@@ -2835,3 +2835,17 @@ Changes committed to branch `infra/P5-03-connected-nations-pipeline`:
 - P5-04 (accessibility constraints for modelled/measured distinction) can proceed immediately: it designs for a format that is now defined, even if no nodes currently carry `source: "modelled"`. The constraints and design must be ready before the data merge lands.
 
 **Next:** P5-04 (accessibility-specialist — constraints for measured vs modelled signal display) is now unblocked. DW-20 filed for the actual data merge once Q7 is resolved.
+
+## 2026-08-25T20:15:00Z — P5-04 — orchestrator
+
+**Did:** Oriented on branch `a11y/P5-04-measured-vs-modelled-constraints` (single commit: in-progress marker only, no actual work). Dispatched the accessibility-specialist agent to write the constraints. Agent added section 15 to `specs/accessibility.md` (204 lines): visual treatment for modelled segments (135-degree dashed diagonal, opposite slope to 45-degree voice-only hatching, greyscale-distinguishable without colour); exact text-table wording ("Ofcom coverage maps suggest voice calls may be possible here" / "...no coverage here"); confidence column value "Estimated (coverage map)" distinct from High/Medium/Low; legend updated to six entries in specified order; screen reader constraints (full strings, no abbreviation); developer verification checklist (12 items). WCAG criteria addressed: 1.4.1, 1.3.3, 3.3.2, 3.1.5, 1.4.11. Archived P5-04 to PLAN-ARCHIVE.md. Opened PR #58.
+
+**Verify:** Pass. 289 unit tests, 17 Playwright AAA tests, typecheck, lint, build green.
+
+**Learned:**
+- P5-04 depends on P5-03 in the backlog ordering, but the accessibility constraints are independent of the pipeline implementation — they define what the UI must do, not how the data is generated. Starting P5-04 before P5-03 is complete is architecturally correct (constraints before design before implementation).
+- The "expected" vs "estimated" language distinction is the load-bearing accessibility and honesty constraint: "expected" is reserved for measured data; "estimated" for modelled. This must be enforced in P5-06 and verified in P5-07.
+- The 135-degree diagonal (vs 45-degree for voice-only) is the key greyscale distinguisher for modelled segments. Pattern geometry survives colour removal; colour alone does not.
+- P5-03 note from previous journal: the next loop said "P5-03 is the next unblocked task." P5-04 was already marked in-progress on its own branch — both were concurrently available. The orchestrator correctly took P5-04 to complete it rather than starting a third concurrent open branch.
+
+**Next:** P5-05 (designer — measured vs modelled signal display design) is now unblocked (P5-03 and P5-04 both done). Take it next.
