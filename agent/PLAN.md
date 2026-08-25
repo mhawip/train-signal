@@ -199,7 +199,7 @@ data via Q7. The `source` field is in the format and all downstream tasks can pr
 
 ### P5-04 — Accessibility constraints: measured vs modelled signal display
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** P5-03
 - **why:** P5-03 introduces a new information category — modelled coverage — that must
   be distinguishable from measured coverage in the UI. This affects visual timeline
