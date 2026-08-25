@@ -76,6 +76,13 @@
   --band-nodata-bg: #d5d5d5;
   --band-nodata-fg: #1a1a1a;
 
+  /* Modelled (estimated) signal: pale blue-grey, hsl(215, 14%, 87%).
+   * Distinguishable from measured bands by 135-degree dashed diagonal pattern.
+   * #1a1a1a on #d8dde3 = 12.74:1 (need 7:1). */
+  --band-modelled-bg: #d8dde3;
+  --band-modelled-fg: #1a1a1a;
+  --band-modelled-stripe: rgba(0, 0, 0, 0.18);
+
   /* --- Band borders --- */
   /* #5c5c5c vs good (#d4e8d7) = 5.20:1, vs ok (#f0e4c0) = 5.27:1,
    * vs none (#dcdcdc) = 4.88:1. All pass 3:1. */
@@ -173,6 +180,11 @@
     --band-nodata-bg: #3a3a3a;
     --band-nodata-fg: #e8e8e8;
 
+    /* #e8e8e8 on #2a3040 = 10.74:1 */
+    --band-modelled-bg: #2a3040;
+    --band-modelled-fg: #e8e8e8;
+    --band-modelled-stripe: rgba(255, 255, 255, 0.18);
+
     /* #999999 vs all dark bands >= 3.11:1 */
     --band-border: #999999;
     --band-tunnel-border: #999999;
@@ -240,6 +252,41 @@
 .ts-band--no-data {
   background-color: var(--band-nodata-bg);
   color: var(--band-nodata-fg);
+}
+
+/* Modelled voice: 135-degree dashed diagonal lines (opposite slope to
+ * measured voice-only 45-degree hatching). Dash length 4px, gap 3px,
+ * stroke width 1.5px. Pale blue-grey background.
+ * Distinguishable in greyscale by opposite diagonal direction.
+ * specs/accessibility.md section 15.2 */
+.ts-band--modelled-voice {
+  background-color: var(--band-modelled-bg);
+  color: var(--band-modelled-fg);
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent,
+    transparent 3px,
+    var(--band-modelled-stripe) 3px,
+    var(--band-modelled-stripe) 4.5px,
+    transparent 4.5px,
+    transparent 7.5px
+  );
+}
+
+/* Modelled none: widely-spaced dotted diagonal at 135 degrees.
+ * Dot diameter 2px, gap 6px. Clearly different from measured
+ * no-signal crosshatch (horizontal lines) and no-data (stipple).
+ * specs/accessibility.md section 15.2 */
+.ts-band--modelled-none {
+  background-color: var(--band-modelled-bg);
+  color: var(--band-modelled-fg);
+  background-image: radial-gradient(
+    circle 1px at 50% 50%,
+    var(--band-modelled-stripe) 50%,
+    transparent 50%
+  );
+  background-size: 8px 8px;
+  background-position: 0 0;
 }
 
 /* Low confidence: dashed border replaces solid, visually distinct
@@ -1084,7 +1131,9 @@ legend.ts-field__label + * {
 .ts-visual-timeline__segment.ts-band--video,
 .ts-visual-timeline__segment.ts-band--voice,
 .ts-visual-timeline__segment.ts-band--none,
-.ts-visual-timeline__segment.ts-band--no-data {
+.ts-visual-timeline__segment.ts-band--no-data,
+.ts-visual-timeline__segment.ts-band--modelled-voice,
+.ts-visual-timeline__segment.ts-band--modelled-none {
   width: auto;
   min-width: 4px;
   max-width: 10rem;
@@ -1413,8 +1462,19 @@ legend.ts-field__label + * {
   .ts-band--voice,
   .ts-band--none,
   .ts-band--no-data,
-  .ts-band--tunnel {
+  .ts-band--tunnel,
+  .ts-band--modelled-voice,
+  .ts-band--modelled-none {
     border-color: ButtonText;
+  }
+
+  /* Modelled bands in forced colours: use a dashed border to
+   * distinguish from measured bands, since background patterns
+   * are suppressed. The 135-degree diagonal cannot survive
+   * forced-colour remapping, but dashed borders do. */
+  .ts-band--modelled-voice,
+  .ts-band--modelled-none {
+    border-style: dashed;
   }
 
   .ts-legend {

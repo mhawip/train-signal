@@ -181,7 +181,8 @@ export function VisualTimeline({
     <section className="ts-visual-timeline" aria-hidden="true">
       <h2 className="ts-visual-timeline__heading">Journey timeline</h2>
 
-      {/* Legend: always visible, shows all band types with pattern + icon + label
+      {/* Legend: always visible, shows all six band types with pattern + icon + label.
+       * Order: decreasing confidence and capability (specs/accessibility.md 15.4).
        * (specs/accessibility.md 2.8, specs/design-system.md section 4) */}
       {signalProfile && signalProfile.length > 0 && (
         <div className="ts-legend">
@@ -194,6 +195,20 @@ export function VisualTimeline({
             <span className="ts-legend__swatch ts-band--voice" />
             <BandIcon band="voice" />
             <span className="ts-legend__label">Voice only</span>
+          </div>
+          <div className="ts-legend__item">
+            <span className="ts-legend__swatch ts-band--modelled-voice" />
+            <svg
+              aria-hidden="true"
+              className="ts-band-icon"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="currentColor"
+            >
+              <path d="M8 1a5 5 0 0 0-5 5c0 4.5 5 9 5 9s5-4.5 5-9a5 5 0 0 0-5-5Zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" />
+            </svg>
+            <span className="ts-legend__label">Estimated signal</span>
           </div>
           <div className="ts-legend__item">
             <span className="ts-legend__swatch ts-band--none" />
@@ -213,6 +228,10 @@ export function VisualTimeline({
               <path d="M8 1C4.5 1 2 4 2 7v8h2V7c0-2.2 1.8-4 4-4s4 1.8 4 4v8h2V7c0-3-2.5-6-6-6Z" />
             </svg>
             <span className="ts-legend__label">Tunnel</span>
+          </div>
+          <div className="ts-legend__item">
+            <span className="ts-legend__swatch ts-band--no-data" />
+            <span className="ts-legend__label">No data</span>
           </div>
         </div>
       )}
