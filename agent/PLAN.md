@@ -96,6 +96,7 @@ and writes to it last.
 | P5-02 | Re-validate notspots after threshold recalibration | qa |
 | P5-03 | Ofcom Connected Nations 2025: pipeline integration | data-engineer |
 | P5-04 | Accessibility constraints: measured vs modelled signal display | accessibility-specialist |
+| P5-05 | Design: measured vs modelled signal display | designer |
 
 ---
 
@@ -200,22 +201,7 @@ data via Q7. The `source` field is in the format and all downstream tasks can pr
 
 P5-04 is done — see the index above.
 
-### P5-05 — Design: measured vs modelled signal display
-- **owner:** designer
-- **status:** in-progress
-- **depends:** P5-04
-- **why:** Visual and interaction design for the modelled coverage tier before
-  implementation begins.
-- **acceptance:**
-  - [ ] Visual timeline: modelled segments have a distinct fill that works in greyscale
-        (WCAG 1.4.1), does not require colour to interpret (1.3.3), and is clearly
-        distinguishable from both measured-voice and no-data fills
-  - [ ] Legend updated to three entries; legend is accessible and visible at all
-        breakpoints
-  - [ ] Text timeline: wording for modelled rows specified and matches the approved
-        copy from P5-04
-  - [ ] Design token or class name proposed for the modelled visual state
-  - [ ] `npm run verify` green
+P5-05 is done — see the index above.
 
 ### P5-06 — Implement measured vs modelled signal display
 - **owner:** developer

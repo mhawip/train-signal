@@ -2849,3 +2849,26 @@ Changes committed to branch `infra/P5-03-connected-nations-pipeline`:
 - P5-03 note from previous journal: the next loop said "P5-03 is the next unblocked task." P5-04 was already marked in-progress on its own branch — both were concurrently available. The orchestrator correctly took P5-04 to complete it rather than starting a third concurrent open branch.
 
 **Next:** P5-05 (designer — measured vs modelled signal display design) is now unblocked (P5-03 and P5-04 both done). Take it next.
+
+## 2026-08-25T22:00:00Z — P5-05 — orchestrator / designer
+
+**Did:** Oriented on main with PRs #57 (P5-03) and #58 (P5-04) both open and green. Merged both by rebasing P5-04 to resolve a conflict in JOURNAL.md and PLAN.md (both had added entries to the same append-only positions). Took P5-05 (designer — measured vs modelled signal display). Created branch `design/P5-05-measured-vs-modelled-display`, marked in-progress, dispatched the designer agent.
+
+Designer added:
+- CSS tokens `--band-modelled-bg/fg/stripe` in light (`#d8dde3`, text 12.74:1) and dark (`#2a3040`, text 10.74:1) schemes to `app/globals.css`
+- `.ts-band--modelled-voice`: 135-degree dashed diagonal (opposite slope to measured-voice 45-degree hatching — greyscale-distinguishable by geometry alone)
+- `.ts-band--modelled-none`: widely-spaced dotted pattern at 135 degrees
+- Forced-colours fallback: `border-style: dashed` so Windows High Contrast Mode preserves the distinction
+- Legend in `VisualTimeline.tsx` expanded from 4 to 6 entries in the order specified by `specs/accessibility.md` section 15.4: Voice and video, Voice only, Estimated signal, No signal, Tunnel, No data
+- `specs/design-system.md`: contrast matrix rows, pattern spec, legend table, text wording table, 5 decisions-log entries
+- Unit test: asserts 6 legend entries in specified order
+PR #59 opened and merged.
+
+**Verify:** Pass. 289 unit tests, 17 Playwright AAA tests, typecheck, lint, build green.
+
+**Learned:**
+- The P5-04 and P5-03 PRs were both open simultaneously when this iteration started. Both had been developed from the same base, so when P5-03 was merged first, P5-04 needed a rebase. Conflicts were in JOURNAL.md and PLAN.md (both append-only files). Resolution: keep both entries — the P5-03 entry from HEAD, then the P5-04 entry from the branch.
+- The archive step (cut task from PLAN.md, paste to PLAN-ARCHIVE.md) should happen inside the work branch PR, not as a separate commit after merging. When the PR is already merged, a follow-up clean-up branch is needed. This costs an extra PR. To avoid it: always include the archive step in the same branch.
+- The CSS `background-image` for 135-degree dashes cannot use `repeating-linear-gradient` in the same way as the 45-degree pattern — the dash/gap rhythm is set via the gradient stops rather than a true SVG dash array. `repeating-linear-gradient(135deg, ...)` with alternating transparent/stroke colour stops achieves the visual correctly.
+
+**Next:** P5-06 (developer — implement measured vs modelled signal display) is now unblocked. P5-07 (accessibility-specialist — review of P5-06) depends on it.
