@@ -41,6 +41,7 @@ interface NodeMeasurements {
   rsrq: number[];
   sinr: number[]; // may have fewer entries than rsrp (NULLs)
   dates: string[]; // YYYY-MM-DD
+  is5g_count: number; // how many measurements came from the 5G zip
 }
 
 interface NodeBucket {
@@ -111,10 +112,10 @@ const GRID_CELL_DEG = 0.01;
 
 // Signal classification thresholds
 export const THRESHOLDS = {
-  /** RSRP p10 >= this: video+voice capable */
-  VIDEO_RSRP_MIN: -85,
-  /** RSRP p10 >= this (and < VIDEO): voice only */
-  VOICE_RSRP_MIN: -95,
+  /** RSRP p10 >= this: video+voice capable (shifted +4 dBm from -85 for RDM raw RSRP) */
+  VIDEO_RSRP_MIN: -89,
+  /** RSRP p10 >= this (and < VIDEO): voice only (shifted +4 dBm from -95 for RDM raw RSRP) */
+  VOICE_RSRP_MIN: -99,
   /** RSRQ p10 < this: degrade to voice even if RSRP is good */
   RSRQ_DEGRADE_VOICE: -15,
   /** RSRQ p10 < this: degrade to no-signal */
@@ -245,7 +246,8 @@ export function percentile(arr: number[], p: number): number {
 export function classifySignal(
   rsrpP10: number,
   rsrqP10: number,
-  count: number
+  count: number,
+  is5g: boolean = false
 ): { band: "video" | "voice" | "none" | "no-data"; confidence: "high" | "low" | "no-data" } {
   // Confidence first
   if (count < THRESHOLDS.MIN_COUNT_DATA) {
@@ -254,7 +256,8 @@ export function classifySignal(
   const confidence = count >= THRESHOLDS.MIN_COUNT_HIGH ? "high" : "low";
 
   // RSRQ override: very poor quality degrades regardless of power
-  if (rsrqP10 < THRESHOLDS.RSRQ_DEGRADE_NONE) {
+  // Skip for 5G rows: SS-RSRQ is not comparable to LTE WB_RSRQ thresholds
+  if (!is5g && rsrqP10 < THRESHOLDS.RSRQ_DEGRADE_NONE) {
     return { band: "none", confidence };
   }
 
@@ -269,7 +272,8 @@ export function classifySignal(
   }
 
   // RSRQ moderate degradation: video -> voice
-  if (band === "video" && rsrqP10 < THRESHOLDS.RSRQ_DEGRADE_VOICE) {
+  // Skip for 5G rows: SS-RSRQ is not comparable to LTE WB_RSRQ thresholds
+  if (!is5g && band === "video" && rsrqP10 < THRESHOLDS.RSRQ_DEGRADE_VOICE) {
     band = "voice";
   }
 
@@ -533,7 +537,8 @@ async function streamRdmZip(
   buckets: Map<string, NodeBucket>,
   operatorCounts: Record<string, number>,
   dryRun: boolean,
-  dryRunLimit: number
+  dryRunLimit: number,
+  is5g: boolean = false
 ): Promise<StreamStats> {
   const stats: StreamStats = {
     totalRows: 0,
@@ -618,7 +623,7 @@ async function streamRdmZip(
 
       const bucket = buckets.get(nearest.id)!;
       if (!bucket.operators[row.operator]) {
-        bucket.operators[row.operator] = { rsrp: [], rsrq: [], sinr: [], dates: [] };
+        bucket.operators[row.operator] = { rsrp: [], rsrq: [], sinr: [], dates: [], is5g_count: 0 };
       }
 
       const opData = bucket.operators[row.operator];
@@ -628,6 +633,9 @@ async function streamRdmZip(
         opData.sinr.push(row.sinr);
       }
       opData.dates.push(row.date);
+      if (is5g) {
+        opData.is5g_count++;
+      }
     });
 
     rl.on("close", resolve);
@@ -683,7 +691,7 @@ async function main(): Promise<void> {
 
   if (useRdmMode) {
     // --- RDM ZIP mode ---
-    const zipFiles: Array<{ path: string; label: string }> = [];
+    const zipFiles: Array<{ path: string; label: string; is5g: boolean }> = [];
 
     if (explicitInput) {
       // Single zip specified via --input
@@ -695,12 +703,13 @@ async function main(): Promise<void> {
         console.error(`Input file not found: ${zipPath}`);
         process.exit(1);
       }
-      zipFiles.push({ path: zipPath, label: path.basename(zipPath) });
+      const is5gFile = zipPath.toLowerCase().includes("5g");
+      zipFiles.push({ path: zipPath, label: path.basename(zipPath), is5g: is5gFile });
     } else {
       // Default: 4G then 5G
       for (const zf of [
-        { path: RDM_4G_ZIP, label: "4G" },
-        { path: RDM_5G_ZIP, label: "5G" },
+        { path: RDM_4G_ZIP, label: "4G", is5g: false },
+        { path: RDM_5G_ZIP, label: "5G", is5g: true },
       ]) {
         if (!fs.existsSync(zf.path)) {
           console.error(`RDM zip not found: ${zf.path}`);
@@ -721,7 +730,8 @@ async function main(): Promise<void> {
         buckets,
         operatorCounts,
         dryRun,
-        DRY_RUN_LIMIT
+        DRY_RUN_LIMIT,
+        zf.is5g
       );
       totalRows += stats.totalRows;
       filteredInvalid += stats.filteredInvalid;
@@ -821,7 +831,7 @@ async function main(): Promise<void> {
 
         const bucket = buckets.get(nearest.id)!;
         if (!bucket.operators[row.operator]) {
-          bucket.operators[row.operator] = { rsrp: [], rsrq: [], sinr: [], dates: [] };
+          bucket.operators[row.operator] = { rsrp: [], rsrq: [], sinr: [], dates: [], is5g_count: 0 };
         }
 
         const opData = bucket.operators[row.operator];
@@ -900,8 +910,9 @@ async function main(): Promise<void> {
       const dateMin = sortedDates[0];
       const dateMax = sortedDates[sortedDates.length - 1];
 
-      // Classify
-      const { band, confidence } = classifySignal(rsrpP10, rsrqP10, count);
+      // Classify — bypass RSRQ degradation for nodes with any 5G measurements
+      const is5g = data.is5g_count > 0;
+      const { band, confidence } = classifySignal(rsrpP10, rsrqP10, count, is5g);
 
       nodeOut.operators[op] = {
         count,
@@ -918,6 +929,38 @@ async function main(): Promise<void> {
 
     outputNodes[nodeId] = nodeOut;
   }
+
+  // --- Log band distribution ---
+  console.log("");
+  console.log("=== Band distribution (per operator) ===");
+  const bandCounts: Record<string, Record<string, number>> = {};
+  const totalBandCounts: Record<string, number> = { video: 0, voice: 0, none: 0, "no-data": 0 };
+
+  for (const node of Object.values(outputNodes)) {
+    for (const [op, opData] of Object.entries(node.operators)) {
+      if (!bandCounts[op]) {
+        bandCounts[op] = { video: 0, voice: 0, none: 0, "no-data": 0 };
+      }
+      bandCounts[op][opData.band]++;
+      totalBandCounts[opData.band]++;
+    }
+  }
+
+  const allOps = Object.keys(bandCounts).sort();
+  console.log(`  ${"Operator".padEnd(12)} ${"video".padStart(8)} ${"voice".padStart(8)} ${"none".padStart(8)} ${"no-data".padStart(8)} ${"total".padStart(8)}`);
+  for (const op of allOps) {
+    const c = bandCounts[op];
+    const total = c.video + c.voice + c.none + c["no-data"];
+    console.log(`  ${op.padEnd(12)} ${String(c.video).padStart(8)} ${String(c.voice).padStart(8)} ${String(c.none).padStart(8)} ${String(c["no-data"]).padStart(8)} ${String(total).padStart(8)}`);
+  }
+  const grandTotal = totalBandCounts.video + totalBandCounts.voice + totalBandCounts.none + totalBandCounts["no-data"];
+  console.log(`  ${"TOTAL".padEnd(12)} ${String(totalBandCounts.video).padStart(8)} ${String(totalBandCounts.voice).padStart(8)} ${String(totalBandCounts.none).padStart(8)} ${String(totalBandCounts["no-data"]).padStart(8)} ${String(grandTotal).padStart(8)}`);
+  console.log("");
+  console.log("  Percentages:");
+  console.log(`  video:   ${((totalBandCounts.video / grandTotal) * 100).toFixed(1)}%`);
+  console.log(`  voice:   ${((totalBandCounts.voice / grandTotal) * 100).toFixed(1)}%`);
+  console.log(`  none:    ${((totalBandCounts.none / grandTotal) * 100).toFixed(1)}%`);
+  console.log(`  no-data: ${((totalBandCounts["no-data"] / grandTotal) * 100).toFixed(1)}%`);
 
   // --- Build output ---
   const output: SignalSegmentsOutput = {

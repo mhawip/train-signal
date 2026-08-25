@@ -94,51 +94,71 @@ describe("classifySignal", () => {
     expect(result.confidence).toBe("low");
   });
 
-  it("degrades video to voice when RSRQ is poor", () => {
+  it("degrades video to voice when RSRQ is poor (4G)", () => {
     // RSRP good enough for video, but RSRQ < -15
-    const result = classifySignal(-80, -16, 50);
+    const result = classifySignal(-80, -16, 50, false);
     expect(result.band).toBe("voice");
   });
 
-  it("degrades to none when RSRQ is very poor", () => {
+  it("degrades to none when RSRQ is very poor (4G)", () => {
     // RSRP good enough for video, but RSRQ < -20
-    const result = classifySignal(-80, -21, 50);
+    const result = classifySignal(-80, -21, 50, false);
     expect(result.band).toBe("none");
   });
 
   it("RSRQ degradation does not affect already-none classification", () => {
-    const result = classifySignal(-100, -21, 50);
+    const result = classifySignal(-100, -21, 50, false);
+    expect(result.band).toBe("none");
+  });
+
+  it("5G bypass: RSRQ voice-degradation is skipped", () => {
+    // RSRP good enough for video, RSRQ < -15 would degrade to voice for 4G
+    // but 5G bypass means RSRQ is ignored => video
+    const result = classifySignal(-80, -16, 50, true);
+    expect(result.band).toBe("video");
+  });
+
+  it("5G bypass: RSRQ none-degradation is skipped", () => {
+    // RSRP good enough for video, RSRQ < -20 would degrade to none for 4G
+    // but 5G bypass means RSRQ is ignored => video
+    const result = classifySignal(-80, -21, 50, true);
+    expect(result.band).toBe("video");
+  });
+
+  it("5G bypass: RSRP-only classification still applies", () => {
+    // RSRP below voice threshold => none, regardless of is5g
+    const result = classifySignal(-100, -10, 50, true);
     expect(result.band).toBe("none");
   });
 
   it("boundary: RSRP exactly at video threshold", () => {
-    const result = classifySignal(THRESHOLDS.VIDEO_RSRP_MIN, -10, 20);
+    const result = classifySignal(THRESHOLDS.VIDEO_RSRP_MIN, -10, 20, false);
     expect(result.band).toBe("video");
   });
 
   it("boundary: RSRP just below video threshold", () => {
-    const result = classifySignal(THRESHOLDS.VIDEO_RSRP_MIN - 0.1, -10, 20);
+    const result = classifySignal(THRESHOLDS.VIDEO_RSRP_MIN - 0.1, -10, 20, false);
     expect(result.band).toBe("voice");
   });
 
   it("boundary: RSRP exactly at voice threshold", () => {
-    const result = classifySignal(THRESHOLDS.VOICE_RSRP_MIN, -10, 20);
+    const result = classifySignal(THRESHOLDS.VOICE_RSRP_MIN, -10, 20, false);
     expect(result.band).toBe("voice");
   });
 
   it("boundary: RSRP just below voice threshold", () => {
-    const result = classifySignal(THRESHOLDS.VOICE_RSRP_MIN - 0.1, -10, 20);
+    const result = classifySignal(THRESHOLDS.VOICE_RSRP_MIN - 0.1, -10, 20, false);
     expect(result.band).toBe("none");
   });
 
   it("boundary: exactly 3 measurements is not no-data", () => {
-    const result = classifySignal(-80, -10, 3);
+    const result = classifySignal(-80, -10, 3, false);
     expect(result.band).not.toBe("no-data");
     expect(result.confidence).toBe("low");
   });
 
   it("boundary: exactly 10 measurements is high confidence", () => {
-    const result = classifySignal(-80, -10, 10);
+    const result = classifySignal(-80, -10, 10, false);
     expect(result.confidence).toBe("high");
   });
 });
