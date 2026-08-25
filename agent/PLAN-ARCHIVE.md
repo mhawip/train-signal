@@ -1221,3 +1221,29 @@ particular way, or its full original acceptance criteria).
   format; downstream tasks P5-04 through P5-07 can proceed. DW-20 filed for the data
   merge once Q7 is resolved.
   See `specs/signal-model.md` section "P5-03 Connected Nations integration" for details.
+
+### P5-05 — Design: measured vs modelled signal display
+- **owner:** designer
+- **status:** done
+- **depends:** P5-04
+- **why:** Visual and interaction design for the modelled coverage tier before
+  implementation begins.
+- **acceptance:**
+  - [x] Visual timeline: modelled segments have a distinct fill that works in greyscale
+        (WCAG 1.4.1), does not require colour to interpret (1.3.3), and is clearly
+        distinguishable from both measured-voice and no-data fills
+  - [x] Legend updated to six entries in specified order; accessible and visible at all
+        breakpoints
+  - [x] Text timeline: wording for modelled rows confirmed and documented in
+        `specs/design-system.md` (references `specs/accessibility.md` section 15.3)
+  - [x] Design tokens `--band-modelled-bg/fg/stripe` and CSS classes
+        `.ts-band--modelled-voice` and `.ts-band--modelled-none` defined
+  - [x] `npm run verify` green (289 unit tests, 17 Playwright AAA tests, typecheck,
+        lint, build — all pass). PR #59.
+- **result:** CSS tokens (pale blue-grey `#d8dde3` light / `#2a3040` dark) and two pattern
+  classes added to `app/globals.css`. `.ts-band--modelled-voice` uses 135-degree dashed
+  diagonal (opposite slope to measured-voice 45-degree); `.ts-band--modelled-none` uses
+  widely-spaced dots at 135 degrees. Forced-colours fallback: `border-style: dashed`.
+  Legend in `VisualTimeline.tsx` expanded from 4 to 6 entries. `specs/design-system.md`
+  updated with contrast matrix (text: 12.74:1 light / 10.74:1 dark), decisions log,
+  and text wording table. Unit test asserts 6 legend entries in specified order.
