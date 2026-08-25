@@ -1,10 +1,16 @@
 ## Current state
 
 **v1 is complete.** All scope items from `specs/brief.md` section 5 are implemented,
-tested, and accessibility-reviewed (72 tasks, 46 PRs). The only open item is DW-04
-(RDM data upgrade), which is blocked on Matt downloading the CSV (Q6). The product
-ships with 2018-19 Ofcom data; the UI states the vintage and errs conservative. See
-journal entry 2026-08-18T14:30Z for the full assessment.
+tested, and accessibility-reviewed (72 tasks, 46 PRs). Phase 4 (RDM data upgrade,
+resilience, link previews) is also complete.
+
+**Signal accuracy is the active focus.** Post-P4-05 re-validation identified that the
+RDM 2026 data, while current, is excessively conservative — the ECML and other major
+trunk routes show "no signal" for all operators, which contradicts real-world experience.
+Two root causes are documented (uncalibrated RSRP, 5G SS-RSRQ mismatch). Phase 5
+addresses both, and adds Ofcom Connected Nations modelled coverage as a second-tier
+source for lines the yellow trains did not traverse. See journal entry 2026-08-24 and
+`specs/signal-model.md` section "P4-05 RDM re-validation" for full analysis.
 
 ---
 
@@ -86,6 +92,7 @@ and writes to it last.
 | DW-04 | Retarget signal pipeline at RDM product | infra |
 | P4-04 | Update vintage notice and attribution when RDM data lands | developer |
 | P4-05 | Re-validate signal output against known notspots after RDM data | qa |
+| P5-01 | Recalibrate signal thresholds for RDM raw data | data-engineer |
 
 ---
 
@@ -150,6 +157,165 @@ P4-02 is done — see the index above.
 P4-03 is done — see the index above.
 
 P4-05 is done — see the index above.
+
+---
+
+## Phase 5 — Signal accuracy
+
+**Goal:** Fix the excessive conservatism in the current signal model, then add Ofcom
+Connected Nations modelled coverage as an honest second-tier source for lines the
+yellow trains did not traverse.
+
+**Background:** P4-05 re-validation found that 75.4% of all signal nodes show "none"
+or "no-data" for every operator. The ECML (a major trunk route with known 4G/5G
+coverage on all networks) shows "no signal" end-to-end. Two documented causes:
+
+1. **Uncalibrated RSRP.** The Ofcom data had a calibrated `cal_rsrp` column (+3 to +6 dB
+   above raw). RDM 2026 data has only raw `rsrp`. Thresholds were set against calibrated
+   values, making them 3–6 dBm too conservative for the current dataset.
+2. **5G SS-RSRQ mismatch.** The RSRQ degradation thresholds (−15 dB, −20 dB) were tuned
+   for LTE wideband RSRQ (`WB_Rsrq`). 5G uses SS-RSRQ, which has a different scale and
+   is systematically lower. Applying LTE thresholds to SS-RSRQ causes most 5G nodes to
+   degrade from voice/video to "none" regardless of RSRP.
+
+Fix the calibration errors first, re-validate, then — and only then — layer in
+Connected Nations data to fill genuine no-data gaps. Never the other way around.
+
+**Constraint on using modelled data:** Modelled data (Connected Nations) must never
+override measured data (RDM yellow-train). It fills nodes with no measurements only.
+Every UI surface that draws on modelled data must say so clearly — "estimated from
+Ofcom coverage maps" is the minimum. This is a product honesty requirement, not just a
+label. See WCAG 3.3.2 (labels or instructions) and the brief's non-negotiable #2.
+
+P5-01 is done — see the index above.
+
+### P5-02 — Re-validate notspots after threshold recalibration
+- **owner:** qa
+- **status:** todo
+- **depends:** P5-01
+- **why:** Any threshold loosening risks producing false positives — claiming "voice" or
+  "video" in a known dead zone. The notspot validation must be re-run against the
+  recalibrated data before it ships. This is a hard gate: if any known notspot now shows
+  "voice" or "video" on any operator, P5-01 must be revisited before we proceed.
+- **acceptance:**
+  - [ ] `pipeline/p3-01-validate-notspots.ts` run against the rebuilt
+        `data/signal-segments.json`
+  - [ ] All 9 previously confirmed notspots still show "none" or "no-data" for every
+        operator (Stoke Tunnel, Kings Cross tunnels, Standedge, rural Retford–Grantham,
+        rural Oxfordshire, Box Tunnel area, Edinburgh cuttings, Edinburgh–Glasgow central
+        belt, GWR rural Wiltshire)
+  - [ ] At least two of the five routes now show some "voice" or "video" nodes on at
+        least one operator (confirms the threshold shift had real effect)
+  - [ ] Results logged in `specs/signal-model.md` as a new "P5-02 validation" section,
+        mirroring the format of the P4-05 section
+  - [ ] `npm run verify` green
+
+### P5-03 — Ofcom Connected Nations 2025: pipeline integration
+- **owner:** data-engineer
+- **status:** todo
+- **depends:** P5-02
+- **why:** The yellow trains did not traverse every line in the March–May 2026 window.
+  53% of graph nodes have zero measurements. For these nodes the product currently shows
+  "no data", which is honest but unhelpful — particularly on secondary routes where
+  users still need guidance. Ofcom Connected Nations 2025 publishes modelled 4G voice and
+  data coverage at 100 m grid-square resolution for each operator, submitted annually
+  under regulatory obligation and audited by Ofcom. It is more reliable than raw operator
+  coverage maps (which the brief rightly calls optimistic) but less accurate than
+  measured yellow-train data. It fills no-data nodes only; it never overrides a measured
+  classification.
+- **acceptance:**
+  - [ ] Ofcom Connected Nations 2025 geographic coverage data downloaded to `data/raw/`
+        (gitignored); source URL and licence recorded in `specs/signal-model.md`
+  - [ ] New pipeline script `pipeline/p5-03-build-connected-nations.ts` created: reads
+        the Connected Nations 100 m grid data, snaps each cell centroid to the nearest
+        graph node within 200 m, and for each operator writes a "modelled" coverage
+        record (band: "voice" if voice coverage present; "none" if not; source: "modelled")
+  - [ ] `data/signal-segments.json` format extended: each per-operator entry gains a
+        `source` field — `"measured"` (from RDM yellow-train data), `"modelled"` (from
+        Connected Nations), or `"no-data"`. Existing RDM entries are all `"measured"`.
+        New modelled entries populate only nodes where all four operators currently have
+        `< 3` measurements (i.e. the `"no-data"` tier). Measured entries are never
+        replaced.
+  - [ ] Modelled entries do not carry a band above "voice" — Connected Nations data
+        distinguishes "coverage" from "no coverage" but not voice vs video. A modelled
+        "voice" result means "the operator's coverage model says this area is served";
+        it says nothing about throughput.
+  - [ ] Node counts logged: how many nodes gained modelled data, per operator, per band
+  - [ ] `specs/signal-model.md` updated: Connected Nations schema documented, merge
+        logic documented, limitations documented (modelled not measured, voice ceiling,
+        no 5G coverage data in Connected Nations)
+  - [ ] `npm run verify` green
+
+### P5-04 — Accessibility constraints: measured vs modelled signal display
+- **owner:** accessibility-specialist
+- **status:** todo
+- **depends:** P5-03
+- **why:** P5-03 introduces a new information category — modelled coverage — that must
+  be distinguishable from measured coverage in the UI. This affects visual timeline
+  design (1.4.1, 1.3.3), text timeline content (3.1.5), and honesty (brief non-negotiable
+  #2). Constraints must be written before design begins.
+- **acceptance:**
+  - [ ] New section added to `specs/accessibility.md` covering the measured/modelled
+        distinction
+  - [ ] Visual treatment for modelled segments specified (must differ from measured by
+        pattern and/or icon, not colour alone — WCAG 1.4.1)
+  - [ ] Text timeline wording for modelled segments specified; must read at lower-secondary
+        level (WCAG 3.1.5); must not claim accuracy the data does not have
+        ("Ofcom coverage maps suggest voice may be available" is acceptable;
+        "voice signal expected" is not — that phrase is reserved for measured data)
+  - [ ] Legend update specified: existing two-source legend (measured, no data) must
+        become three-source (measured, estimated, no data)
+  - [ ] `npm run verify` green
+
+### P5-05 — Design: measured vs modelled signal display
+- **owner:** designer
+- **status:** todo
+- **depends:** P5-04
+- **why:** Visual and interaction design for the modelled coverage tier before
+  implementation begins.
+- **acceptance:**
+  - [ ] Visual timeline: modelled segments have a distinct fill that works in greyscale
+        (WCAG 1.4.1), does not require colour to interpret (1.3.3), and is clearly
+        distinguishable from both measured-voice and no-data fills
+  - [ ] Legend updated to three entries; legend is accessible and visible at all
+        breakpoints
+  - [ ] Text timeline: wording for modelled rows specified and matches the approved
+        copy from P5-04
+  - [ ] Design token or class name proposed for the modelled visual state
+  - [ ] `npm run verify` green
+
+### P5-06 — Implement measured vs modelled signal display
+- **owner:** developer
+- **status:** todo
+- **depends:** P5-05
+- **why:** Wire the new `source` field from `data/signal-segments.json` into the
+  timeline UI. Modelled segments need distinct visual treatment and distinct text.
+- **acceptance:**
+  - [ ] `app/lib/signal.ts`: `SegmentSignal` type gains `source: "measured" | "modelled" | "no-data"`
+        field; populated from the `source` field in `signal-segments.json`
+  - [ ] Visual timeline: modelled segments rendered with the design-approved fill/pattern;
+        aria-hidden (the text table carries the semantic content)
+  - [ ] Text timeline: modelled rows include the wording approved in P5-04; source is
+        stated explicitly in the table cell
+  - [ ] Legend updated to three entries; legend text matches P5-04 approved copy
+  - [ ] No existing test broken; new unit tests for the `source` field population
+  - [ ] `npm run verify` green
+
+### P5-07 — Accessibility review of P5-06
+- **owner:** accessibility-specialist
+- **status:** todo
+- **depends:** P5-06
+- **why:** The modelled/measured distinction introduces new patterns not seen in the
+  existing UI. Independent review required before shipping.
+- **acceptance:**
+  - [ ] All WCAG 2.2 AAA criteria from `specs/accessibility.md` section written in P5-04
+        verified against the built output
+  - [ ] Greyscale render confirms modelled and measured fills are distinguishable without
+        colour
+  - [ ] Screen reader walkthrough confirms modelled segments are announced with source
+        attribution, not just band
+  - [ ] Any violations fixed and re-verified before closing the task
+  - [ ] `npm run verify` green
 
 ---
 

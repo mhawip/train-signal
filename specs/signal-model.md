@@ -1249,3 +1249,106 @@ covered nodes) are documented and could be addressed by future threshold tuning 
 any such tuning must be validated against notspots before shipping.
 
 The product requirement -- that errors skew conservative -- is satisfied with margin.
+
+---
+
+## P5-01 threshold recalibration
+
+### Problem
+
+The DW-04 rebuild of `data/signal-segments.json` from RDM 2026 data produced excessively
+conservative results: 86.0% of all operator-node entries were classified as "none", and
+the ECML showed "no signal" end-to-end for most operators. This contradicts real-world
+experience of major trunk routes having reasonable 4G coverage.
+
+P4-05 re-validation identified two documented causes:
+
+1. **Uncalibrated RSRP.** The Ofcom data used `cal_rsrp` (calibrated for cable loss and
+   antenna gain), which is +3.2 to +5.6 dB above raw `rsrp`. The RDM pipeline uses raw
+   `rsrp` only (no calibrated column is available). The signal classification thresholds
+   were originally set against calibrated values.
+
+2. **5G SS-RSRQ mismatch.** The RSRQ degradation thresholds (-15 dB for voice, -20 dB
+   for none) were tuned for LTE wideband RSRQ (`WB_Rsrq`). 5G uses SS-RSRQ, which is
+   systematically lower than LTE wideband RSRQ. Applying LTE RSRQ thresholds to 5G
+   measurements suppresses valid voice/video classifications.
+
+### Changes
+
+#### RSRP threshold shift (+4 dBm)
+
+The midpoint of the documented calibration offset range (+3.2 to +5.6 dB) is +4.4 dB,
+rounded to +4 dBm. This shifts the thresholds to compensate for using raw RSRP instead
+of calibrated RSRP.
+
+| Threshold | Old value | New value | Change |
+|---|---|---|---|
+| VIDEO_RSRP_MIN | -85 dBm | -89 dBm | -4 dBm (less strict) |
+| VOICE_RSRP_MIN | -95 dBm | -99 dBm | -4 dBm (less strict) |
+| RSRQ_DEGRADE_VOICE | -15 dB | -15 dB | unchanged |
+| RSRQ_DEGRADE_NONE | -20 dB | -20 dB | unchanged |
+
+More negative RSRP threshold = less strict = more measurements classified as voice/video.
+
+#### 5G SS-RSRQ bypass
+
+For nodes where any measurements came from the 5G zip (`Global_View_5G.zip`), RSRQ
+degradation logic is bypassed entirely. Classification is based on RSRP alone.
+
+**Rationale:** SS-RSRQ (used in 5G NR) and LTE wideband RSRQ (`WB_Rsrq`) are not
+directly comparable. SS-RSRQ values are systematically lower because they measure
+reference signal quality over synchronization signal blocks (SSB) rather than across the
+full LTE carrier bandwidth. Applying LTE-calibrated RSRQ thresholds to 5G SS-RSRQ values
+incorrectly classifies many 5G nodes as "none" when their RSRP indicates usable signal.
+
+The bypass is conservative in the right direction: it removes a source of false
+negatives (wrongly classifying usable signal as "none") without introducing false
+positives (the RSRP thresholds alone remain conservative due to roof-height vs carriage
+attenuation).
+
+The RSRQ thresholds themselves (-15 dB and -20 dB) are not changed. They continue to
+apply correctly to 4G-only nodes, where `WB_Rsrq` is available and comparable to the
+original Ofcom RSRQ values.
+
+### Band distribution: before and after
+
+#### Before (DW-04 / P4-05 baseline)
+
+| Band | Operator-node entries | Percentage |
+|---|---|---|
+| video | 715 | 1.8% |
+| voice | 2,399 | 6.1% |
+| none | 33,822 | 86.0% |
+| no-data | 2,398 | 6.1% |
+
+#### After (P5-01 recalibration)
+
+| Band | Operator-node entries | Percentage |
+|---|---|---|
+| video | 1,449 | 3.7% |
+| voice | 4,760 | 12.1% |
+| none | 30,727 | 78.1% |
+| no-data | 2,398 | 6.1% |
+
+#### Per-operator breakdown (P5-01)
+
+| Operator | video | voice | none | no-data | total |
+|---|---|---|---|---|---|
+| EE | 131 | 700 | 9,025 | 273 | 10,129 |
+| O2 | 251 | 1,188 | 8,160 | 464 | 10,063 |
+| Three | 528 | 1,587 | 7,200 | 612 | 9,927 |
+| Vodafone | 539 | 1,285 | 6,342 | 1,049 | 9,215 |
+
+### Impact
+
+- "none" share fell from 86.0% to 78.1% (-7.9 percentage points, approximately 3,100
+  fewer "none" entries).
+- "voice" share doubled from 6.1% to 12.1% (+2,361 entries).
+- "video" share doubled from 1.8% to 3.7% (+734 entries).
+- "no-data" is unchanged (2,398 entries, 6.1%) -- this is expected since the threshold
+  changes affect classification, not measurement count.
+
+The model remains conservative: 78.1% of operator-node entries are still "none". But the
+recalibration makes the model more useful on trunk routes where prior results contradicted
+real-world experience. The direction of error remains under-promising rather than
+over-promising.
