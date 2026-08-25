@@ -191,7 +191,7 @@ P5-01 is done — see the index above.
 
 ### P5-02 — Re-validate notspots after threshold recalibration
 - **owner:** qa
-- **status:** todo
+- **status:** in-progress
 - **depends:** P5-01
 - **why:** Any threshold loosening risks producing false positives — claiming "voice" or
   "video" in a known dead zone. The notspot validation must be re-run against the
