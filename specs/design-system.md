@@ -190,14 +190,15 @@ the form fields without creating ambiguity about tap targets.
 
 ### The design problem
 
-Three signal bands plus tunnels must be distinguishable with colour entirely removed.
-Each band carries **three redundant cues** (required by 1.4.1):
+Three measured signal bands plus modelled (estimated) signal, tunnels, and no-data
+must all be distinguishable with colour entirely removed. Each band carries **three
+redundant cues** (required by 1.4.1):
 
-1. **Fill pattern** (solid, hatching, crosshatch, or solid dark)
+1. **Fill pattern** (solid, hatching, crosshatch, dashed diagonal, or solid dark)
 2. **Icon** (distinct shape per band)
 3. **Text label** (band name rendered inline for bands wider than ~60px)
 
-### Band definitions
+### Measured band definitions
 
 | Band | Fill | Pattern | Icon | Label | Greyscale value |
 |---|---|---|---|---|---|
@@ -206,6 +207,36 @@ Each band carries **three redundant cues** (required by 1.4.1):
 | No usable signal | Light grey `#dcdcdc` | Dense crosshatch (perpendicular 2px lines, 6px spacing) | X mark | "No signal" | ~220 (medium-light, distinguished by crosshatch) |
 | Tunnel | Near-black `#2d2d2d` | Solid dark fill | Tunnel entrance | Tunnel name (e.g. "Standedge Tunnel") | ~45 (dark, clearly distinct) |
 
+### Modelled (estimated) band definitions
+
+Modelled data comes from Ofcom Connected Nations coverage maps. It fills gaps where
+no yellow-train measurements exist but carries lower confidence. The visual treatment
+must clearly distinguish modelled from measured segments (specs/accessibility.md 15).
+
+| Band | Fill | Pattern | Icon | Label | CSS class |
+|---|---|---|---|---|---|
+| Modelled voice | Pale blue-grey `#d8dde3` (hsl 215, 14%, 87%) | 135-degree dashed diagonal, dash 4px, gap 3px, stroke 1.5px | Coverage-map pin | "Estimated signal" | `.ts-band--modelled-voice` |
+| Modelled none | Pale blue-grey `#d8dde3` | Widely-spaced dotted diagonal at 135 degrees, dot 2px, gap 6px | Coverage-map pin | "Estimated signal" | `.ts-band--modelled-none` |
+
+**Design tokens (light scheme):**
+
+| Token | Value | Purpose |
+|---|---|---|
+| `--band-modelled-bg` | `#d8dde3` | Pale blue-grey background |
+| `--band-modelled-fg` | `#1a1a1a` | Text colour |
+| `--band-modelled-stripe` | `rgba(0, 0, 0, 0.18)` | Pattern stroke colour |
+
+**Why 135 degrees:** measured voice-only hatches at 45 degrees (top-left to
+bottom-right). Modelled hatches at 135 degrees (top-right to bottom-left). This
+opposite slope is distinguishable in greyscale with zero colour information. The
+pattern density also differs: measured voice uses 2px lines at 8px spacing; modelled
+voice uses dashed lines with 4px dash and 3px gap.
+
+**Why pale blue-grey:** the colour must sit outside the green (video), amber (voice),
+grey-below-70% (no signal), and dark (tunnel) families. `hsl(215, 14%, 87%)` is a
+neutral blue-grey with very low saturation, clearly distinct from all existing band
+colours. The hue provides subtle reinforcement; the pattern is the primary distinguisher.
+
 ### Dark scheme band definitions
 
 | Band | Fill | Text colour |
@@ -213,16 +244,26 @@ Each band carries **three redundant cues** (required by 1.4.1):
 | Voice and video | `#1e3a22` (dark sage) | `#e8e8e8` |
 | Voice only | `#3d351c` (dark amber) | `#e8e8e8` |
 | No usable signal | `#4a4a4a` (dark grey) | `#e8e8e8` |
+| Modelled voice / none | `#2a3040` (dark blue-grey) | `#e8e8e8` |
 | Tunnel | `#0a0a0a` (near-black) | `#c8c8c8` |
+
+**Modelled dark tokens:**
+
+| Token | Value | Purpose |
+|---|---|---|
+| `--band-modelled-bg` | `#2a3040` | Dark blue-grey background |
+| `--band-modelled-fg` | `#e8e8e8` | Text colour |
+| `--band-modelled-stripe` | `rgba(255, 255, 255, 0.18)` | Pattern stroke colour |
 
 ### Greyscale distinguishability
 
-The three lighter bands (good, ok, none) have similar greyscale values (220-227). They
-are distinguished by **pattern**, not by lightness:
+The lighter bands (good, ok, none, modelled) have similar greyscale values (220-227).
+They are distinguished by **pattern**, not by lightness:
 
 - Good: clean, solid fill -- no visual texture
-- Ok: visible diagonal lines at 45 degrees
-- None: dense crosshatch -- visually heavier than the diagonal
+- Ok: visible diagonal lines at 45 degrees (top-left to bottom-right)
+- Modelled: dashed diagonal lines at 135 degrees (top-right to bottom-left)
+- None: dense crosshatch -- visually heavier than either diagonal
 
 The tunnel band is dramatically darker (~45 vs ~220+), distinguishable by value alone.
 
@@ -277,6 +318,35 @@ repeating-linear-gradient(
 ```
 Stripe colour is `rgba(0, 0, 0, 0.12)` (light) or `rgba(255, 255, 255, 0.12)` (dark).
 
+**Modelled voice -- 135-degree dashed diagonal:**
+```css
+repeating-linear-gradient(
+  135deg,
+  transparent,
+  transparent 3px,
+  var(--band-modelled-stripe) 3px,
+  var(--band-modelled-stripe) 4.5px,
+  transparent 4.5px,
+  transparent 7.5px
+)
+```
+Stripe colour is `rgba(0, 0, 0, 0.18)` (light) or `rgba(255, 255, 255, 0.18)` (dark).
+The dash-gap rhythm (4px on, 3px off) is visually lighter and more open than the
+measured voice-only pattern, and the opposite slope (135 vs 45 degrees) provides a
+geometric distinction visible without colour.
+
+**Modelled none -- widely-spaced dots at 135 degrees:**
+```css
+radial-gradient(
+  circle 1px at 50% 50%,
+  var(--band-modelled-stripe) 50%,
+  transparent 50%
+)
+```
+Background-size: 8px 8px. Dot diameter ~2px, gap ~6px. Clearly different from the
+measured no-signal crosshatch (structured perpendicular lines) and from no-data
+(light stipple at lower density).
+
 ### Band icons
 
 Icons are inline SVG or Unicode symbols, at least 16x16px, achieving 3:1 contrast
@@ -286,6 +356,7 @@ against the band background (per 1.4.11).
 |---|---|---|---|
 | Voice and video | Checkmark SVG | U+2713 | "Good signal" |
 | Voice only | Phone SVG | U+260E | "Voice only" |
+| Modelled voice / none | Coverage-map pin SVG | U+1F4CD | "Estimated signal" |
 | No usable signal | X mark SVG | U+2717 | "No signal" |
 | Tunnel | Tunnel arch SVG | U+25AE (black rectangle) | "Tunnel" |
 
@@ -296,7 +367,31 @@ text-equivalent table.
 ### Legend
 
 The legend is always visible on the results page (not behind a toggle). It shows all
-four band types with their pattern swatch, icon, and text label side by side.
+six band types with their pattern swatch, icon, and text label side by side, in order
+of decreasing confidence and capability (specs/accessibility.md 15.4):
+
+| Position | Label | Sub-label | Pattern swatch |
+|---|---|---|---|
+| 1 | Voice and video | Best signal -- video calls likely | Solid green fill |
+| 2 | Voice only | Enough for voice calls | 45-degree hatched amber fill |
+| 3 | Estimated signal | Based on Ofcom coverage maps | 135-degree dashed diagonal, pale blue-grey, with coverage-map pin icon |
+| 4 | No signal expected | Signal too weak to use | Sparse horizontal lines on grey |
+| 5 | Tunnel | Named tunnel, no signal | Solid dark fill with tunnel icon |
+| 6 | No data | No signal data available | Light stipple |
+
+### Text timeline wording for modelled segments
+
+The text-equivalent table uses the following exact strings for modelled rows
+(specs/accessibility.md 15.3):
+
+| Source | Band | Expected signal column | Confidence column |
+|---|---|---|---|
+| Modelled | Voice | "Ofcom coverage maps suggest voice calls may be possible here" | "Estimated (coverage map)" |
+| Modelled | None | "Ofcom coverage maps suggest no coverage here" | "Estimated (coverage map)" |
+
+"Expected" is reserved exclusively for measured data. "Suggest ... may be possible"
+communicates uncertainty honestly. "Estimated" is the user-facing adjective for
+modelled data -- plain English, lower-secondary reading level.
 
 ---
 
@@ -397,6 +492,7 @@ Ratio: `(L1 + 0.05) / (L2 + 0.05)` where L1 >= L2
 | `#1a1a1a` | `#f0e4c0` (ok band) | 13.73:1 | Yes |
 | `#1a1a1a` | `#dcdcdc` (none band) | 12.69:1 | Yes |
 | `#f0f0f0` | `#2d2d2d` (tunnel band) | 12.08:1 | Yes |
+| `#1a1a1a` | `#d8dde3` (modelled band) | 12.74:1 | Yes |
 
 ### Light scheme -- non-text elements (need 3:1)
 
@@ -408,6 +504,7 @@ Ratio: `(L1 + 0.05) / (L2 + 0.05)` where L1 >= L2
 | `#5c5c5c` (band border) | `#dcdcdc` (none) | 4.88:1 | Yes |
 | `#7a7a7a` (tunnel border) | `#2d2d2d` (tunnel) | 3.21:1 | Yes |
 | `#7a7a7a` (tunnel border) | `#ffffff` (page) | 4.29:1 | Yes |
+| `#5c5c5c` (band border) | `#d8dde3` (modelled) | 4.89:1 | Yes |
 | `#0044cc` (focus) | `#ffffff` (page) | 7.78:1 | Yes |
 
 ### Dark scheme -- text on backgrounds (need 7:1)
@@ -421,6 +518,7 @@ Ratio: `(L1 + 0.05) / (L2 + 0.05)` where L1 >= L2
 | `#e8e8e8` | `#3d351c` (ok band) | 9.94:1 | Yes |
 | `#e8e8e8` | `#4a4a4a` (none band) | 7.23:1 | Yes |
 | `#c8c8c8` | `#0a0a0a` (tunnel band) | 11.83:1 | Yes |
+| `#e8e8e8` | `#2a3040` (modelled band) | 10.74:1 | Yes |
 
 ### Dark scheme -- non-text elements (need 3:1)
 
@@ -431,6 +529,7 @@ Ratio: `(L1 + 0.05) / (L2 + 0.05)` where L1 >= L2
 | `#999999` (band border) | `#3d351c` (ok) | 4.27:1 | Yes |
 | `#999999` (band border) | `#4a4a4a` (none) | 3.11:1 | Yes |
 | `#999999` (band border) | `#0a0a0a` (tunnel) | 6.95:1 | Yes |
+| `#999999` (band border) | `#2a3040` (modelled) | 4.62:1 | Yes |
 | `#6699ff` (focus) | `#121212` (page) | 6.75:1 | Yes |
 
 ---
@@ -1049,8 +1148,9 @@ actual component implementation is the developer's responsibility.
 | Disclosure toggle | `--color-page-fg`, `--color-page-bg`, `--target-min`, `--radius-sm` | Secondary button + chevron; `aria-expanded` + `aria-controls` |
 | Error message | `--color-error` | Adjacent to field and in summary |
 | Headline result | `--font-size-2xl`, `--color-page-fg` | The product's primary output |
-| Signal band | `--band-*-bg`, `--band-*-fg`, `--band-*-pattern`, `--band-border` | Pattern + icon + label |
-| Band legend | All band tokens | Always visible, not toggleable |
+| Signal band (measured) | `--band-good-*`, `--band-ok-*`, `--band-none-*`, `--band-tunnel-*`, `--band-nodata-*`, `--band-border` | Pattern + icon + label |
+| Signal band (modelled) | `--band-modelled-bg`, `--band-modelled-fg`, `--band-modelled-stripe` | 135-degree dashed diagonal + pin icon + "Estimated signal" label |
+| Band legend | All band tokens | Always visible, 6 entries, not toggleable |
 | Data table | `--color-page-fg`, `--color-field-border` | Semantic HTML table |
 | Low confidence | `--band-border` (dashed variant) | Overlay on any band |
 | Skip link | `--color-focus`, `--color-page-bg` | First focusable element |
@@ -1087,6 +1187,11 @@ actual component implementation is the developer's responsibility.
 | No-network notice background `#f0f0f0` / `#1e1e1e` | Provides luminance shift from page background visible in greyscale; text contrast exceeds 14:1 in both schemes |
 | `network=open` sentinel for pre-opening accordion | Reuses existing truthy-check logic in JourneyForm; does not match any real network name so no radio is pre-selected |
 | No-network link is block-level, not inline | Ensures 44x44 tap target without relying on line-height calculations (2.5.5) |
+| Modelled bands use 135-degree diagonal (opposite to 45-degree measured) | Geometrically distinguishable in greyscale; survives forced-colour mode via dashed border fallback |
+| Modelled colour is pale blue-grey hsl(215, 14%, 87%) | Outside green/amber/grey-below-70%/dark families; 12.74:1 text contrast in light, 10.74:1 in dark |
+| Modelled bands use dashed border in forced-colours mode | Background patterns are suppressed by forced colours; dashed border is the only reliable visual distinction |
+| Legend expanded from 4 to 6 entries | Modelled ("Estimated signal") and No Data added per specs/accessibility.md 15.4 |
+| "Estimated signal" wording for modelled data | Plain English at lower-secondary level; "Estimated" communicates non-measurement without jargon |
 
 ---
 

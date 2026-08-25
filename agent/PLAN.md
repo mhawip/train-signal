@@ -202,7 +202,7 @@ P5-04 is done — see the index above.
 
 ### P5-05 — Design: measured vs modelled signal display
 - **owner:** designer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P5-04
 - **why:** Visual and interaction design for the modelled coverage tier before
   implementation begins.

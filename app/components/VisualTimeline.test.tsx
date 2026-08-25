@@ -273,6 +273,28 @@ describe("VisualTimeline", () => {
 
     const legend = container.querySelector(".ts-legend");
     expect(legend).toBeTruthy();
+
+    // Legend must have exactly 6 entries in order:
+    // Voice and video, Voice only, Estimated signal, No signal, Tunnel, No data
+    // (specs/accessibility.md section 15.4)
+    const items = legend!.querySelectorAll(".ts-legend__item");
+    expect(items).toHaveLength(6);
+
+    const labels = Array.from(items).map(
+      (item) => item.querySelector(".ts-legend__label")?.textContent
+    );
+    expect(labels).toEqual([
+      "Voice and video",
+      "Voice only",
+      "Estimated signal",
+      "No signal expected",
+      "Tunnel",
+      "No data",
+    ]);
+
+    // Third entry (Estimated signal) must have the modelled-voice swatch
+    const estimatedSwatch = items[2].querySelector(".ts-legend__swatch");
+    expect(estimatedSwatch?.classList.contains("ts-band--modelled-voice")).toBe(true);
   });
 
   it("does not render the legend when signalProfile is absent", () => {
