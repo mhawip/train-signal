@@ -1474,3 +1474,150 @@ bypass produced a meaningful improvement in signal classification (voice doubled
 6.1% to 12.1%, video doubled from 1.8% to 3.7%) without introducing any false positives
 in the 9 tested known notspots. The model continues to under-promise rather than
 over-promise, which is the correct failure mode for this product.
+
+---
+
+## P5-03 Connected Nations integration
+
+### Purpose
+
+53% of the 21,626 track-graph nodes have zero signal measurements from the RDM yellow-
+train data. For these nodes, the app shows "no data". P5-03 adds Ofcom Connected Nations
+modelled 4G voice coverage as a second-tier source to fill those gaps, allowing the app
+to give at least a "voice expected" or "no signal expected" verdict based on operator
+coverage predictions rather than silence.
+
+### Source
+
+| Field | Value |
+|---|---|
+| Source | Ofcom Connected Nations 2025 |
+| Report URL | <https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-20252> |
+| Data downloads | <https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-20252/data-downloads-2025> |
+| Licence | Open Government Licence (Ofcom open data) |
+| Attribution | "Contains Ofcom data" |
+| Data vintage | Coverage as of 1 July 2025 |
+| Technology | 4G voice and data (modelled), 5G (limited) |
+| Resolution | 100 m x 100 m grid squares (OSGB36 / EPSG:27700) |
+
+### Data availability
+
+**The per-pixel per-operator Connected Nations coverage data is NOT available as a direct
+public bulk download.** The publicly downloadable Connected Nations data
+(`202507_mobile_coverage_r01.zip` from the Ofcom data downloads page) contains only
+aggregated statistics at the parliamentary constituency and local authority level -- e.g.
+"percentage of premises covered by 0, 1, 2, 3, or 4 operators". It does not identify
+which specific operators cover which specific grid cells.
+
+The per-pixel per-operator data can potentially be obtained via:
+
+1. **Ofcom Connected Nations API** (requires registration at the Ofcom developer portal;
+   contact cnapisupport@ofcom.org.uk). Rate limited to 100 calls/minute, 50,000/month.
+   Coverage can be queried per postcode per operator.
+2. **FOI request to Ofcom** for the underlying 100m grid data that powers the Connected
+   Nations report.
+3. **Individual operator coverage APIs** (EE, O2, Three, Vodafone each publish coverage
+   checkers that could be queried systematically for track-adjacent locations).
+
+Until per-pixel data is obtained, the P5-03 pipeline script exists but cannot run. This
+is documented in `agent/QUESTIONS.md` as a question for Matt.
+
+### Expected schema
+
+The pipeline expects a CSV file at `data/raw/connected-nations-2025/coverage-grid.csv`
+with one row per grid cell per operator:
+
+| Column | Type | Description |
+|---|---|---|
+| `easting` | int | OSGB36 easting (100m grid cell centroid) |
+| `northing` | int | OSGB36 northing (100m grid cell centroid) |
+| `operator` | string | Operator name: EE, O2, Three, Vodafone |
+| `voice_outdoor` | int | 1 = covered for 4G voice outdoors, 0 = not covered |
+
+If the data source provides lat/lon instead of easting/northing, the CSV may use
+`latitude` and `longitude` columns -- the pipeline auto-detects the coordinate system.
+
+### Merge logic
+
+1. **Load track graph** (21,626 nodes with lat/lon).
+2. **Load signal-segments.json** (existing measured data from RDM yellow-train).
+3. **Identify eligible nodes**: a node is eligible only if ALL four operators have fewer
+   than 3 measurements. This means modelled data never overrides measured data -- if even
+   one operator has enough real measurements, the node is left as-is.
+4. **Stream Connected Nations CSV**: for each grid cell, convert OSGB36 easting/northing
+   to WGS84 lat/lon using the Helmert 7-parameter transformation (accuracy ~5 m,
+   sufficient for 100 m grid snapping). Find the nearest track-graph node within 200 m.
+5. **Record per-operator coverage**: if a grid cell snaps to an eligible node and says
+   "covered", mark that operator as "voice" at that node. If "not covered", mark as
+   "none". If multiple grid cells snap to the same node, take the optimistic value
+   (covered if any cell says covered -- conservative handling is done by the "voice" cap
+   and the "modelled" source tag).
+6. **Write modelled entries**: for each eligible node with Connected Nations data, write
+   operator entries with `band: "voice"` or `band: "none"`, `source: "modelled"`,
+   `confidence: "low"`, `count: 0`.
+
+### Source field
+
+P5-03 introduces a `source` field on every operator entry in `signal-segments.json`:
+
+| Value | Meaning |
+|---|---|
+| `"measured"` | RDM yellow-train measurement (count >= 3) |
+| `"no-data"` | Fewer than 3 measurements, no modelled data |
+| `"modelled"` | Ofcom Connected Nations modelled coverage prediction |
+
+The `source` field enables downstream code (app UI, API) to distinguish measured from
+modelled data and present appropriate caveats. The app must show "estimated from Ofcom
+coverage maps" or similar language for modelled entries.
+
+### Coordinate conversion
+
+OSGB36 easting/northing to WGS84 lat/lon uses a Helmert 7-parameter transformation
+via the Airy 1830 ellipsoid. This is the standard geodetic transform for OSGB36 to
+WGS84. Accuracy is approximately 5 metres, which is well within the 100 m grid
+resolution. The more accurate OSTN15 transform (sub-metre) is unnecessary for this
+application.
+
+### Limitations
+
+1. **Modelled, not measured.** Connected Nations data is operator-reported coverage
+   predictions, not measurements. Operators have a financial incentive to report
+   favourable coverage. The predictions may overestimate coverage, especially in
+   challenging terrain (cuttings, valleys, near tunnels). This is why modelled data caps
+   at "voice" -- we never claim video capability based on a coverage prediction.
+
+2. **Voice ceiling.** Modelled entries can only be "voice" or "none", never "video". The
+   Connected Nations data distinguishes "coverage" from "no coverage" but does not
+   provide signal strength information that would indicate video-calling capacity.
+
+3. **No 5G.** The pipeline processes 4G voice coverage only. Connected Nations does
+   include 5G predictions, but 5G coverage is sparse and the predictions are less mature.
+   Adding 5G from CN would require separate threshold work.
+
+4. **100 m grid resolution vs track curvature.** The 100 m grid squares may not align
+   precisely with track geometry, especially on curves. The 200 m snap radius accommodates
+   this, but some grid cells may snap to the wrong node at tight curves or junctions.
+
+5. **Outdoor coverage only.** Connected Nations reports outdoor coverage. In-carriage
+   signal is 10-30 dB weaker due to window glazing. However, the "voice" cap and "low"
+   confidence already account for this uncertainty -- and the same roof-vs-carriage issue
+   affects the measured data.
+
+6. **Data is not yet obtainable.** The per-pixel per-operator data is not publicly
+   downloadable. The pipeline script is implemented and ready to run once the data is
+   obtained. See agent/QUESTIONS.md.
+
+### Pipeline script
+
+- **File:** `pipeline/p5-03-build-connected-nations.ts`
+- **Usage:** `npx tsx pipeline/p5-03-build-connected-nations.ts [--dry-run]`
+- **Input:** `data/raw/connected-nations-2025/coverage-grid.csv`
+- **Output:** updated `data/signal-segments.json` (in place)
+
+### Node counts gained
+
+Cannot be reported until the Connected Nations per-pixel data is obtained. Expected
+gains: the pipeline targets the 11,356 graph nodes (53%) that currently have zero
+measurements. Of those, nodes near built-up areas with 4G coverage should gain "voice"
+classifications for most operators. Rural and remote nodes may remain "none" even with
+modelled data.

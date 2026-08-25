@@ -1157,3 +1157,38 @@ particular way, or its full original acceptance criteria).
 - **result:** Zero false positives. Direction of error confirmed strongly conservative
   (75.4% of nodes have all operators at none/no-data; only 4 nodes show all-video).
   See `specs/signal-model.md` section "P4-05 RDM re-validation" for full findings.
+
+---
+
+### P5-03 — Ofcom Connected Nations 2025: pipeline integration
+- **owner:** data-engineer
+- **status:** done
+- **depends:** P5-02
+- **why:** The yellow trains did not traverse every line in the March–May 2026 window.
+  53% of graph nodes have zero measurements. For these nodes the product currently shows
+  "no data", which is honest but unhelpful — particularly on secondary routes where
+  users still need guidance. Connected Nations 2025 publishes modelled 4G voice coverage
+  per operator at 100 m grid resolution. It fills no-data nodes only; it never overrides
+  measured data.
+- **acceptance:**
+  - [x] Pipeline script `pipeline/p5-03-build-connected-nations.ts` created: reads
+        Connected Nations 100 m grid data (easting/northing or lat/lon), snaps each cell
+        centroid to nearest graph node within 200 m, writes modelled coverage entries
+        (band: "voice" or "none"; source: "modelled"; confidence: "low").
+  - [x] `data/signal-segments.json` format extended: every per-operator entry gains a
+        `source` field — "measured" for RDM yellow-train entries, "modelled" for CN
+        entries, "no-data" for count < 3 entries. Measured entries are never replaced.
+  - [x] `app/lib/signal.ts` `OperatorSignal` type gains `source?` field for backward
+        compatibility with data written before P5-03.
+  - [x] Modelled entries cap at "voice" — CN data cannot distinguish voice vs video.
+  - [x] `specs/signal-model.md` updated: CN schema, merge logic, OSGB36→WGS84 Helmert
+        transform, all limitations documented.
+  - [x] `specs/data-sources.md` created with all external datasets documented.
+  - [x] `npm run verify` green (289 unit tests, 17 Playwright AAA tests, typecheck,
+        lint, build — all pass).
+- **result:** Engineering complete. The per-pixel per-operator CN data is not publicly
+  downloadable (Ofcom publishes only constituency-level aggregates at data-downloads2).
+  Pipeline is ready to run; data gap raised as Q7. The `source` field is live in the
+  format; downstream tasks P5-04 through P5-07 can proceed. DW-20 filed for the data
+  merge once Q7 is resolved.
+  See `specs/signal-model.md` section "P5-03 Connected Nations integration" for details.

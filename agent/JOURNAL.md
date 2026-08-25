@@ -2805,3 +2805,33 @@ Results written to `specs/signal-model.md` under "P5-02 validation". P5-02 archi
 - P5-03 (Connected Nations pipeline integration) is now unblocked. It fills nodes with no measurements only; it must never override measured data.
 
 **Next:** P5-03 (data-engineer — Ofcom Connected Nations 2025 pipeline integration) is the next unblocked task.
+
+## 2026-08-25T15:30:00Z — P5-03 — orchestrator / data-engineer
+
+**Did:** Implemented P5-03 — Ofcom Connected Nations 2025 pipeline integration.
+
+Changes committed to branch `infra/P5-03-connected-nations-pipeline`:
+
+1. **`pipeline/p2-03-build-signal.ts`** — added `source: "measured" | "modelled" | "no-data"` to `OperatorOutput` interface and populated it in the aggregation loop. All entries with `count >= 3` become `"measured"`; entries with `count < 3` become `"no-data"`.
+
+2. **`data/signal-segments.json`** — rebuilt from the existing pipeline: every operator entry now carries the `source` field. 36,936 entries marked `"measured"`, 2,398 marked `"no-data"`. File size grew from 7.0 MB to 7.7 MB.
+
+3. **`app/lib/signal.ts`** — `OperatorSignal` interface gains `source?: "measured" | "modelled" | "no-data"` (optional for backward compat).
+
+4. **`pipeline/p5-03-build-connected-nations.ts`** — new pipeline script. Reads a Connected Nations CSV (easting/northing or lat/lon, per-operator, voice_outdoor 0/1), converts OSGB36 coordinates to WGS84 via Helmert 7-parameter transform, snaps grid cells to nearest track-graph node within 200 m, and merges modelled voice/none entries for nodes with < 3 measurements across all operators. Capped at "voice" (never "video"). Source field set to "modelled". Confidence set to "low". Never overwrites measured data.
+
+5. **`specs/signal-model.md`** — new "P5-03 Connected Nations integration" section: schema, merge logic, coordinate conversion, limitations (modelled not measured, voice ceiling, no 5G in CN, 100 m resolution, OSGB36→WGS84 ~5 m accuracy).
+
+6. **`specs/data-sources.md`** — new file documenting all external datasets used by the project.
+
+**Key finding:** The Ofcom Connected Nations 2025 public download (`202507_mobile_coverage_r01.zip`) contains only constituency-level and local-authority-level aggregates. The per-pixel per-operator coverage grid that the pipeline requires is not publicly available as a bulk download. Raised as Q7 in QUESTIONS.md with four options (Ofcom CN API, FOI request, operator APIs, accept the gap).
+
+**Verify:** Pass. 289 unit tests, 17 Playwright AAA tests, typecheck, lint, build — all green.
+
+**Learned:**
+- The Ofcom Connected Nations "data downloads" page links to constituency-level aggregates, not the 100 m grid coverage data. The 100 m grid data powers the Ofcom coverage checker and is published in the annual CN report, but is not made available as a bulk file download (as of 2025 data).
+- The pipeline is fully implemented and ready to run once data is provided via any route (API, FOI, operator APIs). The CSV schema is flexible — it accepts easting/northing or lat/lon.
+- The `source` field addition to `signal-segments.json` is backward compatible. Existing code that reads the file without checking `source` continues to work correctly. The optional field in `OperatorSignal` is the right approach for this transition.
+- P5-04 (accessibility constraints for modelled/measured distinction) can proceed immediately: it designs for a format that is now defined, even if no nodes currently carry `source: "modelled"`. The constraints and design must be ready before the data merge lands.
+
+**Next:** P5-04 (accessibility-specialist — constraints for measured vs modelled signal display) is now unblocked. DW-20 filed for the actual data merge once Q7 is resolved.

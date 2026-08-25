@@ -56,6 +56,7 @@ interface OperatorSignal {
   date_max: string;
   band: "video" | "voice" | "none" | "no-data";
   confidence: "high" | "low" | "no-data";
+  source?: "measured" | "modelled" | "no-data";
 }
 
 interface SignalNode {

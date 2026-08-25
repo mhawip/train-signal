@@ -15,7 +15,41 @@ a one-line pointer in the index below.
 
 ## Open questions
 
-No open questions.
+### Q7: Ofcom Connected Nations per-pixel per-operator coverage data
+
+**Status:** open
+**Filed:** 2026-08-25
+**Filed by:** data-engineer (P5-03)
+
+**Context:** P5-03 integrates Ofcom Connected Nations modelled 4G voice coverage to fill
+the 53% of track-graph nodes that have no yellow-train measurements. The pipeline script
+is implemented and ready to run.
+
+**Problem:** The publicly downloadable Connected Nations 2025 data
+(`202507_mobile_coverage_r01.zip`) contains only aggregated statistics at the
+parliamentary constituency and local authority level (e.g. "X% of premises covered by
+N operators"). It does **not** contain per-pixel per-operator coverage data.
+
+The pipeline needs a CSV with one row per 100m grid cell per operator, indicating
+whether that cell has 4G voice outdoor coverage. This data exists -- it powers the
+Ofcom coverage checker and the Connected Nations report -- but is not published as a
+bulk download.
+
+**Options:**
+1. Register for the **Ofcom Connected Nations API** (contact
+   cnapisupport@ofcom.org.uk). The API provides per-postcode per-operator coverage.
+   Rate limit: 100 calls/min, 50k/month. We have ~21k track nodes, so querying the
+   nearest postcode for each is feasible within the rate limit.
+2. Submit an **FOI request** to Ofcom for the underlying 100m grid coverage data.
+3. Query the **individual operator coverage checker APIs** (EE, O2, Three, Vodafone)
+   for track-adjacent locations.
+4. Accept the 53% gap and rely solely on measured data.
+
+**Question for Matt:** Which approach should we take to obtain per-operator coverage
+data for the track graph? The Ofcom API (option 1) is the most straightforward but
+requires registration. Would you be willing to register and provide API credentials?
+
+**Answer:**
 
 ---
 
