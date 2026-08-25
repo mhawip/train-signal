@@ -2775,3 +2775,33 @@ Agent implemented two threshold fixes in `pipeline/p2-03-build-signal.ts`:
 - Phase 5 plan was already written by a previous orchestrator iteration but never committed. When recovering such a stash, commit the plan separately from the implementation so the history is clear.
 
 **Next:** P5-02 (qa — re-validate notspots after threshold recalibration) is now unblocked. This is a hard gate: if any known notspot now shows "voice" or "video", P5-01 thresholds must be revisited.
+
+## 2026-08-25T11:30:00Z — P5-02 — orchestrator
+
+**Did:** Merged PR #55 (P5-01, all CI green). Switched to main, pulled. Took P5-02 (qa — re-validate notspots after threshold recalibration). Created branch `qa/P5-02-revalidate-notspots`, marked P5-02 in-progress, dispatched qa agent.
+
+Agent ran `pipeline/p3-01-validate-notspots.ts` against the rebuilt `data/signal-segments.json` (P5-01 recalibrated, generated 2026-08-25T09:26:11.772Z).
+
+**Hard gate: PASS.** All 9 known notspots confirmed none/no-data for every operator:
+- Stoke Tunnel (NNG-GRA): EE/Three/O2=NONE, Vodafone=no-data
+- Kings Cross tunnels (FPK-KGX): all 4 operators=NONE
+- Standedge Tunnel (HUD-MAN): all 4 operators=no-data (no measurements)
+- Rural Retford–Grantham (RET-NNG): all 4 operators=NONE
+- Rural Oxfordshire (RDG-OXF): all 4 operators=NONE
+- Box Tunnel area (BTH-BRI): all 4 operators=NONE
+- Edinburgh cuttings (EDB-HYM): all 4 operators=NONE
+- Edinburgh–Glasgow central belt (HYM-GLC): all 4 operators=NONE at segment level
+- GWR rural Wiltshire (SWI-CHW): all 4 operators=NONE
+
+**Improvement check: PASS.** All 5 routes (not just the required 2) now show voice/video nodes on at least one operator. The +4 dBm RSRP shift and 5G SS-RSRQ bypass had real effect without producing false positives.
+
+Results written to `specs/signal-model.md` under "P5-02 validation". P5-02 archived to `PLAN-ARCHIVE.md`. PR #56 opened.
+
+**Verify:** Pass. 289 unit tests, 17 Playwright AAA tests, typecheck, lint, build green.
+
+**Learned:**
+- The threshold loosening (+4 dBm RSRP, 5G RSRQ bypass) is safe: no known dead zone was promoted to "voice" or "video". The model remains conservative — 78.1% of nodes are still "none", which is the correct failure mode (under-promising rather than over-promising).
+- Standedge Tunnel area (HUD-MAN) has zero measurements in the RDM dataset — all no-data. This is the safest outcome for a known notspot but means we cannot distinguish "definitely no signal" from "we did not measure here" for this segment.
+- P5-03 (Connected Nations pipeline integration) is now unblocked. It fills nodes with no measurements only; it must never override measured data.
+
+**Next:** P5-03 (data-engineer — Ofcom Connected Nations 2025 pipeline integration) is the next unblocked task.
