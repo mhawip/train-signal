@@ -100,6 +100,29 @@ must appear in the app footer (planned for DW-03 when header/footer landmarks la
 
 ---
 
+## Ofcom Connected Nations 2025 modelled coverage (P5-03)
+
+| Field | Value |
+|---|---|
+| URL | https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-20252 |
+| Data downloads | https://www.ofcom.org.uk/phones-and-broadband/coverage-and-speeds/connected-nations-20252/data-downloads-2025 |
+| Data | Modelled 4G voice coverage predictions per operator, 100m grid squares |
+| Licence | Open Government Licence (Ofcom open data) |
+| Attribution | "Contains Ofcom data" |
+| Share-alike | No |
+| Data vintage | Coverage as of 1 July 2025 |
+| Status | **Pipeline implemented, awaiting per-pixel data.** |
+
+**Note:** The publicly downloadable Connected Nations data contains only aggregated
+statistics at constituency/local authority level. The per-pixel per-operator coverage
+data that the pipeline requires is not available as a direct bulk download. It must be
+obtained via the Ofcom Connected Nations API (requires registration), FOI request, or
+operator coverage APIs. See `specs/signal-model.md` (P5-03 section) for details.
+
+**Download date:** Aggregated data downloaded 2026-08-25. Per-pixel data not yet obtained.
+
+---
+
 ## RDM NWR Yellow Train Mobile Network Measurements (under evaluation)
 
 | Field | Value |

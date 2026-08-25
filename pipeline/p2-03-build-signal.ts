@@ -60,6 +60,7 @@ interface OperatorOutput {
   date_max: string;
   band: "video" | "voice" | "none" | "no-data";
   confidence: "high" | "low" | "no-data";
+  source: "measured" | "modelled" | "no-data";
 }
 
 interface NodeOutput {
@@ -924,6 +925,7 @@ async function main(): Promise<void> {
         date_max: dateMax,
         band,
         confidence,
+        source: count >= THRESHOLDS.MIN_COUNT_DATA ? "measured" : "no-data",
       };
     }
 

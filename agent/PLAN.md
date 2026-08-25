@@ -206,27 +206,32 @@ P5-02 is done — see the index above.
   measured yellow-train data. It fills no-data nodes only; it never overrides a measured
   classification.
 - **acceptance:**
-  - [ ] Ofcom Connected Nations 2025 geographic coverage data downloaded to `data/raw/`
-        (gitignored); source URL and licence recorded in `specs/signal-model.md`
-  - [ ] New pipeline script `pipeline/p5-03-build-connected-nations.ts` created: reads
+  - [x] Ofcom Connected Nations 2025 aggregated data downloaded to `data/raw/`
+        (gitignored); source URL and licence recorded in `specs/signal-model.md`.
+        **Note:** the per-pixel per-operator data is NOT publicly downloadable -- see
+        Q7 in QUESTIONS.md. Aggregated constituency-level data obtained; pipeline
+        awaits per-pixel data.
+  - [x] New pipeline script `pipeline/p5-03-build-connected-nations.ts` created: reads
         the Connected Nations 100 m grid data, snaps each cell centroid to the nearest
         graph node within 200 m, and for each operator writes a "modelled" coverage
-        record (band: "voice" if voice coverage present; "none" if not; source: "modelled")
-  - [ ] `data/signal-segments.json` format extended: each per-operator entry gains a
+        record (band: "voice" if voice coverage present; "none" if not; source: "modelled").
+        Script is implemented but cannot run until per-pixel data is obtained.
+  - [x] `data/signal-segments.json` format extended: each per-operator entry gains a
         `source` field — `"measured"` (from RDM yellow-train data), `"modelled"` (from
         Connected Nations), or `"no-data"`. Existing RDM entries are all `"measured"`.
         New modelled entries populate only nodes where all four operators currently have
         `< 3` measurements (i.e. the `"no-data"` tier). Measured entries are never
         replaced.
-  - [ ] Modelled entries do not carry a band above "voice" — Connected Nations data
+  - [x] Modelled entries do not carry a band above "voice" — Connected Nations data
         distinguishes "coverage" from "no coverage" but not voice vs video. A modelled
         "voice" result means "the operator's coverage model says this area is served";
         it says nothing about throughput.
-  - [ ] Node counts logged: how many nodes gained modelled data, per operator, per band
-  - [ ] `specs/signal-model.md` updated: Connected Nations schema documented, merge
+  - [ ] Node counts logged: how many nodes gained modelled data, per operator, per band.
+        **Blocked:** cannot run pipeline without per-pixel data.
+  - [x] `specs/signal-model.md` updated: Connected Nations schema documented, merge
         logic documented, limitations documented (modelled not measured, voice ceiling,
         no 5G coverage data in Connected Nations)
-  - [ ] `npm run verify` green
+  - [x] `npm run verify` green
 
 ### P5-04 — Accessibility constraints: measured vs modelled signal display
 - **owner:** accessibility-specialist
