@@ -94,6 +94,7 @@ and writes to it last.
 | P4-05 | Re-validate signal output against known notspots after RDM data | qa |
 | P5-01 | Recalibrate signal thresholds for RDM raw data | data-engineer |
 | P5-02 | Re-validate notspots after threshold recalibration | qa |
+| P5-03 | Ofcom Connected Nations 2025: pipeline integration | data-engineer |
 
 ---
 
@@ -192,46 +193,9 @@ P5-01 is done — see the index above.
 
 P5-02 is done — see the index above.
 
-### P5-03 — Ofcom Connected Nations 2025: pipeline integration
-- **owner:** data-engineer
-- **status:** in-progress
-- **depends:** P5-02
-- **why:** The yellow trains did not traverse every line in the March–May 2026 window.
-  53% of graph nodes have zero measurements. For these nodes the product currently shows
-  "no data", which is honest but unhelpful — particularly on secondary routes where
-  users still need guidance. Ofcom Connected Nations 2025 publishes modelled 4G voice and
-  data coverage at 100 m grid-square resolution for each operator, submitted annually
-  under regulatory obligation and audited by Ofcom. It is more reliable than raw operator
-  coverage maps (which the brief rightly calls optimistic) but less accurate than
-  measured yellow-train data. It fills no-data nodes only; it never overrides a measured
-  classification.
-- **acceptance:**
-  - [x] Ofcom Connected Nations 2025 aggregated data downloaded to `data/raw/`
-        (gitignored); source URL and licence recorded in `specs/signal-model.md`.
-        **Note:** the per-pixel per-operator data is NOT publicly downloadable -- see
-        Q7 in QUESTIONS.md. Aggregated constituency-level data obtained; pipeline
-        awaits per-pixel data.
-  - [x] New pipeline script `pipeline/p5-03-build-connected-nations.ts` created: reads
-        the Connected Nations 100 m grid data, snaps each cell centroid to the nearest
-        graph node within 200 m, and for each operator writes a "modelled" coverage
-        record (band: "voice" if voice coverage present; "none" if not; source: "modelled").
-        Script is implemented but cannot run until per-pixel data is obtained.
-  - [x] `data/signal-segments.json` format extended: each per-operator entry gains a
-        `source` field — `"measured"` (from RDM yellow-train data), `"modelled"` (from
-        Connected Nations), or `"no-data"`. Existing RDM entries are all `"measured"`.
-        New modelled entries populate only nodes where all four operators currently have
-        `< 3` measurements (i.e. the `"no-data"` tier). Measured entries are never
-        replaced.
-  - [x] Modelled entries do not carry a band above "voice" — Connected Nations data
-        distinguishes "coverage" from "no coverage" but not voice vs video. A modelled
-        "voice" result means "the operator's coverage model says this area is served";
-        it says nothing about throughput.
-  - [ ] Node counts logged: how many nodes gained modelled data, per operator, per band.
-        **Blocked:** cannot run pipeline without per-pixel data.
-  - [x] `specs/signal-model.md` updated: Connected Nations schema documented, merge
-        logic documented, limitations documented (modelled not measured, voice ceiling,
-        no 5G coverage data in Connected Nations)
-  - [x] `npm run verify` green
+P5-03 is done — see the index above.
+**Note:** Per-pixel CN data not publicly downloadable; pipeline script ready but awaits
+data via Q7. The `source` field is in the format and all downstream tasks can proceed.
 
 ### P5-04 — Accessibility constraints: measured vs modelled signal display
 - **owner:** accessibility-specialist
@@ -311,3 +275,19 @@ P5-02 is done — see the index above.
 Bugs and follow-ups get filed here by whoever finds them.
 
 DW-04 is done — see index above.
+
+### DW-20 — Run P5-03 Connected Nations pipeline once per-pixel data is available
+- **owner:** data-engineer
+- **status:** blocked
+- **depends:** Q7 (Matt registers for Ofcom Connected Nations API or alternative)
+- **why:** `pipeline/p5-03-build-connected-nations.ts` is implemented but requires
+  per-operator 4G voice coverage data at per-pixel (100 m grid) or per-postcode
+  resolution, which is not publicly downloadable. Once Matt provides access (via
+  Ofcom CN API credentials or another route), this task runs the pipeline and updates
+  `data/signal-segments.json` with modelled entries for the ~11k currently no-data nodes.
+- **acceptance:**
+  - [ ] Pipeline runs successfully against the obtained data
+  - [ ] Console output logs per-operator node counts gained (logged by the script)
+  - [ ] `data/signal-segments.json` contains nodes with `source: "modelled"`
+  - [ ] No existing `source: "measured"` entries modified
+  - [ ] `npm run verify` green
