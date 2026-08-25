@@ -95,6 +95,7 @@ and writes to it last.
 | P5-01 | Recalibrate signal thresholds for RDM raw data | data-engineer |
 | P5-02 | Re-validate notspots after threshold recalibration | qa |
 | P5-03 | Ofcom Connected Nations 2025: pipeline integration | data-engineer |
+| P5-04 | Accessibility constraints: measured vs modelled signal display | accessibility-specialist |
 
 ---
 
@@ -197,26 +198,7 @@ P5-03 is done — see the index above.
 **Note:** Per-pixel CN data not publicly downloadable; pipeline script ready but awaits
 data via Q7. The `source` field is in the format and all downstream tasks can proceed.
 
-### P5-04 — Accessibility constraints: measured vs modelled signal display
-- **owner:** accessibility-specialist
-- **status:** in-progress
-- **depends:** P5-03
-- **why:** P5-03 introduces a new information category — modelled coverage — that must
-  be distinguishable from measured coverage in the UI. This affects visual timeline
-  design (1.4.1, 1.3.3), text timeline content (3.1.5), and honesty (brief non-negotiable
-  #2). Constraints must be written before design begins.
-- **acceptance:**
-  - [ ] New section added to `specs/accessibility.md` covering the measured/modelled
-        distinction
-  - [ ] Visual treatment for modelled segments specified (must differ from measured by
-        pattern and/or icon, not colour alone — WCAG 1.4.1)
-  - [ ] Text timeline wording for modelled segments specified; must read at lower-secondary
-        level (WCAG 3.1.5); must not claim accuracy the data does not have
-        ("Ofcom coverage maps suggest voice may be available" is acceptable;
-        "voice signal expected" is not — that phrase is reserved for measured data)
-  - [ ] Legend update specified: existing two-source legend (measured, no data) must
-        become three-source (measured, estimated, no data)
-  - [ ] `npm run verify` green
+P5-04 is done — see the index above.
 
 ### P5-05 — Design: measured vs modelled signal display
 - **owner:** designer

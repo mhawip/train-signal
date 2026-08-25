@@ -67,6 +67,35 @@ particular way, or its full original acceptance criteria).
     no-data 6.1%). All-operators-none/no-data rate improved from 75.4% to 59.9%.
   - `agent/PLAN.md` -- P5-02 moved to completed index.
 
+### P5-04 — Accessibility constraints: measured vs modelled signal display
+- **owner:** accessibility-specialist
+- **status:** done
+- **depends:** P5-03
+- **why:** P5-03 introduces a new information category — modelled coverage — that must
+  be distinguishable from measured coverage in the UI. This affects visual timeline
+  design (1.4.1, 1.3.3), text timeline content (3.1.5), and honesty (brief non-negotiable
+  #2). Constraints must be written before design begins.
+- **acceptance:**
+  - [x] New section added to `specs/accessibility.md` covering the measured/modelled
+        distinction
+  - [x] Visual treatment for modelled segments specified (must differ from measured by
+        pattern and/or icon, not colour alone — WCAG 1.4.1)
+  - [x] Text timeline wording for modelled segments specified; must read at lower-secondary
+        level (WCAG 3.1.5); must not claim accuracy the data does not have
+        ("Ofcom coverage maps suggest voice may be available" is acceptable;
+        "voice signal expected" is not — that phrase is reserved for measured data)
+  - [x] Legend update specified: existing two-source legend (measured, no data) must
+        become three-source (measured, estimated, no data)
+  - [x] `npm run verify` green
+- **what changed:**
+  - `specs/accessibility.md` -- added section 15 (204 lines): visual treatment for
+    modelled segments (135-degree dashed diagonal, distinct from 45-degree voice-only
+    hatching, greyscale-distinguishable); exact text-table wording ("Ofcom coverage maps
+    suggest..."); confidence column value "Estimated (coverage map)"; legend updated to
+    six entries; screen reader constraints; developer verification checklist (12 items).
+    WCAG criteria addressed: 1.4.1, 1.3.3, 3.3.2, 3.1.5, 1.4.11.
+  - `agent/PLAN.md` -- P5-04 moved to completed index.
+
 ---
 
 ## Discovered work
