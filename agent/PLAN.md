@@ -205,7 +205,7 @@ P5-05 is done — see the index above.
 
 ### P5-06 — Implement measured vs modelled signal display
 - **owner:** developer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P5-05
 - **why:** Wire the new `source` field from `data/signal-segments.json` into the
   timeline UI. Modelled segments need distinct visual treatment and distinct text.
