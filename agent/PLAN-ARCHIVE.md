@@ -10,6 +10,38 @@ particular way, or its full original acceptance criteria).
 
 ---
 
+## Phase 5 — Signal accuracy
+
+### P5-01 — Recalibrate signal thresholds for RDM raw data
+- **owner:** data-engineer
+- **status:** done
+- **depends:** —
+- **why:** The RSRP thresholds (`VIDEO_RSRP_MIN = -85 dBm`, `VOICE_RSRP_MIN = -95 dBm`)
+  were derived from Ofcom calibrated RSRP values. The Ofcom pipeline used `cal_rsrp`,
+  which was consistently +3.2 to +5.6 dBm above raw RSRP (observed on Train1 in P2-01).
+  The RDM pipeline uses raw `rsrp` only. The result is that borderline nodes that would
+  be "voice" under Ofcom classification fall to "none" under RDM. A +4 dBm shift
+  (midpoint of the documented offset) corrects this without over-correcting. Separately,
+  5G SS-RSRQ is not comparable to LTE WB_RSRQ: SS-RSRQ values are systematically lower,
+  and applying the LTE degradation thresholds to 5G nodes suppresses valid voice and
+  video classifications. The fix is to bypass RSRQ degradation entirely for 5G-sourced
+  rows, relying on RSRP alone for band classification on 5G nodes. This is conservative
+  (RSRQ cannot improve a 5G classification) but not overcautious (RSRQ cannot incorrectly
+  destroy one either).
+- **acceptance:**
+  - [x] `pipeline/p2-03-build-signal.ts`: `VIDEO_RSRP_MIN` changed from −85 to −89 dBm;
+        `VOICE_RSRP_MIN` changed from −95 to −99 dBm
+  - [x] RSRQ degradation disabled for rows sourced from the 5G zip (`Global_View_5G.zip`);
+        4G RSRQ degradation using `WB_Rsrq` is unchanged
+  - [x] `data/signal-segments.json` rebuilt; node count and band distribution logged
+  - [x] Band distribution: "none" fell from 86.0% to 78.1% (material drop); "voice"
+        doubled 6.1% → 12.1%; "video" doubled 1.8% → 3.7%
+  - [x] `specs/signal-model.md` updated: threshold table, +4 dBm rationale, 5G RSRQ
+        bypass, before/after distribution
+  - [x] `npm run verify` green (289 unit tests, 17 Playwright tests). PR #55.
+
+---
+
 ## Discovered work
 
 ### DW-04 — Retarget signal pipeline at RDM product

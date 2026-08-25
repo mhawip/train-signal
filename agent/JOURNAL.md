@@ -2751,3 +2751,27 @@ build — all green). Committed, pushed, opened PR #54, set to auto-merge.
 
 **Next:** Backlog is empty. The next loop should dispatch to `product` to assess whether
 a Phase 5 is warranted, or conclude that the product is complete against the brief.
+
+## 2026-08-25T10:45:00Z — P5-01 — orchestrator
+
+**Did:** Oriented on main (PR #54 was merged but local was behind). Recovered Phase 5 plan from a stash left by a previous iteration that died before committing it — the plan had been written to PLAN.md but never staged. Applied it to main, created branch `infra/P5-01-recalibrate-signal-thresholds`, marked P5-01 in-progress, dispatched the infra agent.
+
+Agent implemented two threshold fixes in `pipeline/p2-03-build-signal.ts`:
+1. RSRP thresholds shifted +4 dBm: `VIDEO_RSRP_MIN` −85 → −89 dBm, `VOICE_RSRP_MIN` −95 → −99 dBm (corrects for RDM raw RSRP vs Ofcom calibrated RSRP offset of +3.2–+5.6 dBm)
+2. 5G SS-RSRQ bypass: `classifySignal()` gains `is5g: boolean` (default false); when true, all RSRQ degradation skipped. `NodeMeasurements` gains `is5g_count`; tracked during streaming. Aggregation passes `is5g_count > 0` as the flag.
+
+`data/signal-segments.json` rebuilt from full pipeline (10.3M rows). Band distribution:
+- "none" fell 86.0% → 78.1% (material drop of 7.9 pp)
+- "voice" doubled 6.1% → 12.1%
+- "video" doubled 1.8% → 3.7%
+
+`specs/signal-model.md` updated with P5-01 threshold recalibration section. 289 unit tests (3 new), 17 Playwright tests, typecheck, lint, build all green. PR #55 opened.
+
+**Verify:** Pass. 289 unit tests, 17 Playwright AAA tests, typecheck, lint, build green.
+
+**Learned:**
+- "none" dropped less than the 60–70% estimate (landed at 78%). The +4 dBm shift corrects the calibration gap but many nodes have genuinely weak RSRP well below −99 dBm. The 5G bypass helps only nodes with 5G measurements. Model is still strongly conservative, which is correct.
+- The stash from a previous dead iteration is recoverable even after switching branches. `git stash pop` applies it to whatever branch is checked out. Always check for stashes before concluding a loop died with no work saved.
+- Phase 5 plan was already written by a previous orchestrator iteration but never committed. When recovering such a stash, commit the plan separately from the implementation so the history is clear.
+
+**Next:** P5-02 (qa — re-validate notspots after threshold recalibration) is now unblocked. This is a hard gate: if any known notspot now shows "voice" or "video", P5-01 thresholds must be revisited.

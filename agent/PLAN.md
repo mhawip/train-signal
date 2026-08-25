@@ -92,6 +92,7 @@ and writes to it last.
 | DW-04 | Retarget signal pipeline at RDM product | infra |
 | P4-04 | Update vintage notice and attribution when RDM data lands | developer |
 | P4-05 | Re-validate signal output against known notspots after RDM data | qa |
+| P5-01 | Recalibrate signal thresholds for RDM raw data | data-engineer |
 
 ---
 
@@ -186,34 +187,7 @@ Every UI surface that draws on modelled data must say so clearly — "estimated 
 Ofcom coverage maps" is the minimum. This is a product honesty requirement, not just a
 label. See WCAG 3.3.2 (labels or instructions) and the brief's non-negotiable #2.
 
-### P5-01 — Recalibrate signal thresholds for RDM raw data
-- **owner:** data-engineer
-- **status:** in-progress
-- **depends:** —
-- **why:** The RSRP thresholds (`VIDEO_RSRP_MIN = -85 dBm`, `VOICE_RSRP_MIN = -95 dBm`)
-  were derived from Ofcom calibrated RSRP values. The Ofcom pipeline used `cal_rsrp`,
-  which was consistently +3.2 to +5.6 dBm above raw RSRP (observed on Train1 in P2-01).
-  The RDM pipeline uses raw `rsrp` only. The result is that borderline nodes that would
-  be "voice" under Ofcom classification fall to "none" under RDM. A +4 dBm shift
-  (midpoint of the documented offset) corrects this without over-correcting. Separately,
-  5G SS-RSRQ is not comparable to LTE WB_RSRQ: SS-RSRQ values are systematically lower,
-  and applying the LTE degradation thresholds to 5G nodes suppresses valid voice and
-  video classifications. The fix is to bypass RSRQ degradation entirely for 5G-sourced
-  rows, relying on RSRP alone for band classification on 5G nodes. This is conservative
-  (RSRQ cannot improve a 5G classification) but not overcautious (RSRQ cannot incorrectly
-  destroy one either).
-- **acceptance:**
-  - [ ] `pipeline/p2-03-build-signal.ts`: `VIDEO_RSRP_MIN` changed from −85 to −89 dBm;
-        `VOICE_RSRP_MIN` changed from −95 to −99 dBm
-  - [ ] RSRQ degradation disabled for rows sourced from the 5G zip (`Global_View_5G.zip`);
-        4G RSRQ degradation using `WB_Rsrq` is unchanged
-  - [ ] `data/signal-segments.json` rebuilt; node count and band distribution logged
-  - [ ] Band distribution compared against P4-05 baseline; "none" share must fall
-        materially (expect from ~86% toward ~60–70%); any rise is a bug
-  - [ ] `specs/signal-model.md` updated: threshold table updated, rationale for +4 dBm
-        shift documented, 5G RSRQ bypass documented with reference to SS-RSRQ scale
-        difference
-  - [ ] `npm run verify` green
+P5-01 is done — see the index above.
 
 ### P5-02 — Re-validate notspots after threshold recalibration
 - **owner:** qa
