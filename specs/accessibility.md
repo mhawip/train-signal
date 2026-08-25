@@ -2091,6 +2091,210 @@ novel OG patterns are introduced that are not covered by the templates above.
 
 ---
 
+## 15. Measured vs modelled signal display (P5-04)
+
+This section specifies accessibility constraints for displaying signal data from two
+distinct sources: measured (yellow-train antenna readings) and modelled (Ofcom Connected
+Nations 2025 coverage maps). The modelled source fills gaps where no measurements exist
+but carries lower confidence and a capability ceiling of voice only (no video
+distinction).
+
+### 15.1 The three-source distinction
+
+The UI must make a clear, unambiguous distinction between measured signal data, modelled
+signal data, and segments with no data at all. This is required by:
+
+- **Brief non-negotiable #2** ("Never claim accuracy we don't have") — modelled data is
+  operator-submitted coverage predictions audited by Ofcom, not direct measurements on
+  the rail network. Presenting modelled data identically to measured data would
+  misrepresent our confidence level.
+- **WCAG 3.3.2 Labels or Instructions** — users must understand what they are reading.
+  The data source affects how much trust a user should place in the verdict. Failing to
+  label the source is a labelling failure.
+- **WCAG 1.4.1 Use of Colour** — the distinction between measured and modelled must not
+  rely on colour alone. Pattern, icon, and text label must all independently communicate
+  the difference.
+- **WCAG 1.3.3 Sensory Characteristics** — instructions and distinctions cannot rely
+  solely on shape, size, visual location, or orientation. The text label "Estimated
+  signal" must be present; sighted users cannot be expected to decode a fill pattern
+  without a text key.
+
+### 15.2 Visual treatment for modelled segments
+
+The visual timeline is marked `aria-hidden="true"` and is progressive enhancement over
+the text table. However, sighted users — including those with colour vision deficiency —
+still need to distinguish modelled segments from measured ones.
+
+**Fill pattern:**
+
+- Measured voice-and-video: solid fill (existing).
+- Measured voice-only: diagonal hatching at 45 degrees (existing).
+- Measured no-signal: sparse horizontal lines (existing).
+- Modelled voice: **dashed diagonal lines at 135 degrees** (opposite slope to
+  voice-only hatching). Dash length 4px, gap 3px, stroke width 1.5px. This is lighter
+  and more open than voice-only hatching but clearly structured, unlike the solid fill.
+- Modelled none: **widely-spaced dotted diagonal at 135 degrees**. Dot diameter 2px,
+  gap 6px. Clearly different from the measured no-signal horizontal lines.
+- No-data: **light stipple** (randomly scattered dots at low density). Clearly different
+  from the structured diagonals of modelled segments.
+- Tunnel: solid dark fill with tunnel icon (existing, unchanged).
+
+**Distinguishability in greyscale:** the modelled patterns use the opposite diagonal
+slope (135 degrees vs 45 degrees). In a greyscale render, measured voice-only hatches
+top-left to bottom-right; modelled voice hatches top-right to bottom-left. This
+geometric difference remains visible with zero colour information.
+
+**Icon requirement:** each modelled band must display a small coverage-map pin icon at
+intervals no greater than 80px along the band length. Icon size: minimum 16x16px.
+Contrast: at least 3:1 against the band background (WCAG 1.4.11 Non-text Contrast). The
+icon is purely decorative within the aria-hidden timeline but aids sighted users who
+cannot distinguish fill patterns alone.
+
+**Text label:** each modelled band carries the inline label "Estimated signal" rendered
+directly on the band. Font size minimum 12px. Contrast minimum 4.5:1 against band
+background (WCAG 1.4.3, superseded by our 7:1 target from 1.4.6 for body text — but
+these labels sit on patterned fills, so 4.5:1 against the lightest background pixel is
+the floor). Labels repeat at intervals such that at least one is always visible in the
+viewport at 100% zoom.
+
+**Colour range for modelled bands:** pale blue-grey family. Suggested range:
+`hsl(210-230, 10-20%, 85-92%)`. This must not overlap with:
+- Green family (voice-and-video)
+- Amber/orange family (voice-only)
+- Grey family below 70% lightness (no-signal)
+- Dark grey/black (tunnel)
+
+The exact token values will be set by the designer in `specs/design-system.md` after
+verifying 7:1 contrast for overlaid text.
+
+### 15.3 Text timeline wording for modelled segments
+
+The text-equivalent table is the primary accessible representation. The "Expected
+signal" column must use these exact strings:
+
+| Source | Band | Wording |
+|--------|------|---------|
+| Measured | Voice and video | "Voice and video calls expected" |
+| Measured | Voice only | "Voice calls expected" |
+| Measured | No signal | "No signal expected" |
+| Modelled | Voice | "Ofcom coverage maps suggest voice calls may be possible here" |
+| Modelled | None | "Ofcom coverage maps suggest no coverage here" |
+| No data | — | "No signal data available" |
+
+**Rationale for wording choices:**
+
+- "Expected" is reserved exclusively for measured data. It communicates direct
+  observation. It must never appear in a modelled row.
+- "Suggest ... may be possible" communicates uncertainty honestly. It attributes the
+  source explicitly (Ofcom coverage maps) so users understand what they are reading.
+- "Estimated" is the user-facing adjective for modelled data. It is plain English,
+  lower-secondary reading level, and immediately communicates that this is not a direct
+  measurement.
+- Flesch-Kincaid analysis: "Ofcom coverage maps suggest voice calls may be possible
+  here" scores approximately Grade 7 (13 words, no jargon, one proper noun). Within
+  the 3.1.5 target of Grade 6-8.
+
+**Confidence column values:**
+
+| Source | Confidence column |
+|--------|-------------------|
+| Measured (high density) | "High" |
+| Measured (medium density) | "Medium" |
+| Measured (low density) | "Low" |
+| Modelled | "Estimated (coverage map)" |
+| No data | "No data" |
+
+The string "Estimated (coverage map)" is distinct from all measured-confidence values.
+It communicates both the nature of the estimate and its source in a single readable
+phrase.
+
+### 15.4 Legend update
+
+The results page legend must include all signal tiers. The complete legend in order:
+
+| Position | Label | Sub-label | Pattern/Icon |
+|----------|-------|-----------|--------------|
+| 1 | Voice and video | Best signal — video calls likely | Solid green fill |
+| 2 | Voice only | Enough for voice calls | 45-degree hatched amber fill |
+| 3 | Estimated signal | Based on Ofcom coverage maps | 135-degree dashed diagonal, pale blue-grey, with coverage-map pin icon |
+| 4 | No signal | Signal too weak to use | Sparse horizontal lines on grey |
+| 5 | Tunnel | Named tunnel, no signal | Solid dark fill with tunnel icon |
+| 6 | No data | No signal data available | Light stipple |
+
+**Ordering rationale:** decreasing confidence and capability. Measured data with best
+signal first, measured data with worst signal next, then modelled (lower confidence),
+then physical obstacles (tunnels), then absence of data.
+
+**WCAG criteria touched by the legend:**
+
+- 1.4.1 (Use of Colour): each entry shows its pattern and icon alongside the colour
+  swatch, so the legend itself does not rely on colour alone.
+- 3.1.5 (Reading Level): all labels and sub-labels use plain English at
+  lower-secondary level.
+- 3.3.2 (Labels or Instructions): the sub-label for "Estimated signal" explicitly
+  names the source ("Based on Ofcom coverage maps") so users understand the data
+  provenance without needing to read documentation.
+
+The existing "No data" legend entry remains unchanged.
+
+### 15.5 Screen reader experience
+
+The visual timeline is `aria-hidden="true"`. Screen readers encounter only the text
+table. The following constraints apply to the table when modelled rows are present:
+
+- The "Expected signal" column for modelled rows must read the **full string** from
+  section 15.3 — "Ofcom coverage maps suggest voice calls may be possible here" or
+  "Ofcom coverage maps suggest no coverage here". No abbreviation or shortening is
+  permitted. The full attribution is the accessibility feature; removing it would hide
+  the data source from screen reader users.
+- The Confidence column must read "Estimated (coverage map)" — the parenthetical is
+  part of the string and must not be treated as supplementary or hidden.
+- The table caption remains unchanged. It describes the journey (origin, destination,
+  departure time). The data source distinction is communicated per-row, not at table
+  level, because a single journey may contain both measured and modelled segments.
+- No ARIA live region changes are needed. The table is rendered once on page load and
+  does not update dynamically. The source distinction is structural (column content),
+  not a state change that requires announcement.
+- Column headers remain unchanged. The column is still headed "Expected signal" — the
+  word "expected" in the header is acceptable because it describes what the column
+  contains (a signal expectation), not the confidence level of any individual row.
+
+### 15.6 Developer verification checklist (P5-06)
+
+Before opening the PR for P5-06 (implement measured vs modelled display), the developer
+must verify all of the following. Each item must be checked manually — automated tests
+alone are insufficient for items marked with an asterisk (*).
+
+- [ ] "Estimated signal" never appears in a measured row
+- [ ] "Expected" never appears in a modelled row (check both the signal column and the
+      confidence column)
+- [ ] * The modelled visual pattern (135-degree dashed diagonal) is distinguishable from
+      measured-voice (solid fill) in a greyscale render — verify by applying a CSS
+      `filter: grayscale(1)` to the timeline and confirming the two are visually distinct
+- [ ] * The modelled visual pattern is distinguishable from no-data (stipple) in a
+      greyscale render — same method as above
+- [ ] The legend has exactly six entries in the order specified in section 15.4:
+      Voice and video, Voice only, Estimated signal, No signal, Tunnel, No data
+- [ ] The Confidence column reads "Estimated (coverage map)" for every modelled row —
+      verify by inspecting the accessibility tree, not just the rendered text
+- [ ] axe-core at AAA ruleset finds no new violations introduced by the modelled display
+      (run `npm run test:a11y` and compare output against the baseline)
+- [ ] The full wording from section 15.3 appears verbatim for a modelled voice segment
+      and a modelled none segment — test with a known route that contains modelled nodes
+      (see test fixtures in the P5-06 implementation)
+- [ ] * The coverage-map pin icon meets 3:1 contrast against its band background —
+      measure with a colour-contrast analyser tool, not by eye
+- [ ] * The inline "Estimated signal" text label on visual bands meets 4.5:1 contrast
+      against the lightest pixel of the patterned background
+- [ ] The pale blue-grey colour token does not overlap with green, amber, grey-below-70%,
+      or dark-grey/black — verify computed HSL values fall within the range specified in
+      section 15.2
+- [ ] In Windows High Contrast mode (forced colours), the modelled band remains
+      distinguishable from measured bands — the pattern geometry (opposite diagonal slope)
+      must survive forced-colour remapping
+
+---
+
 ## Appendix: criteria not applicable to this product
 
 | Criterion | Why not applicable |
