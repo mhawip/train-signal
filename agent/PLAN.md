@@ -194,7 +194,7 @@ P5-02 is done — see the index above.
 
 ### P5-03 — Ofcom Connected Nations 2025: pipeline integration
 - **owner:** data-engineer
-- **status:** todo
+- **status:** in-progress
 - **depends:** P5-02
 - **why:** The yellow trains did not traverse every line in the March–May 2026 window.
   53% of graph nodes have zero measurements. For these nodes the product currently shows
