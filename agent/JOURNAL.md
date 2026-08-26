@@ -2895,3 +2895,37 @@ The implementation itself (signal.ts, JourneyTimeline.tsx, VisualTimeline.tsx, s
 - P5-07 (accessibility-specialist review) is now unblocked. This introduces new patterns: modelled segments with distinct visual treatment, `PinIcon` in both the text table and visual timeline, and the `confidenceLabel` / `SignalCell` wording differences. Independent review required before shipping.
 
 **Next:** P5-07 (accessibility-specialist — review of P5-06 implementation).
+
+## 2026-08-26T07:45:00Z — P5-07 — orchestrator / accessibility-specialist
+
+**Did:** Completed P5-07 — accessibility review of P5-06 (measured vs modelled signal display).
+
+Dispatched the accessibility-specialist agent to verify all 12 items in `specs/accessibility.md` section 15.6 against the built implementation. One real violation was found and fixed:
+
+**Violation found:** The specific-train timeline table was missing the Confidence column. The route-overview table already included it (added in a previous task), but the specific-train code path had never been updated. As a result, `confidenceLabel()` — which returns "Estimated (coverage map)" for modelled segments — was never rendered for specific-train results. This violated:
+- `specs/accessibility.md` section 15.3 (Confidence column must show "Estimated (coverage map)" for modelled rows)
+- `specs/accessibility.md` section 15.5 (screen reader must encounter "Estimated (coverage map)"; parenthetical must not be hidden)
+
+**Fix:** Added `<th scope="col">Confidence</th>` to the specific-train table header; added per-row `<td>{confidenceLabel(segmentSignal)}</td>` cells; updated `totalColCount` from `baseColCount + 1` to `baseColCount + 2`. Single file change: `app/components/JourneyTimeline.tsx`.
+
+All other 11 checklist items passed:
+- "Estimated signal" never appears in a measured row
+- "Expected" never appears in a modelled row
+- 135-degree diagonal fill geometrically distinct from solid fill and no-data in greyscale
+- Legend has exactly 6 entries in correct order
+- Pin icon: 12.74:1 contrast light, 10.74:1 dark (need 3:1) — pass
+- Inline label: 12.74:1 contrast light, 10.74:1 dark (need 4.5:1) — pass
+- Blue-grey token HSL(212, 16%, 87%) — not in green/amber/dark families — pass
+- Forced-colours: dashed border preserves structural distinction — pass
+- axe-core AAA: 17 Playwright tests all pass, no new violations
+
+PR #62 opened. 289 unit tests, 17 Playwright AAA tests, typecheck, lint, build — all green.
+
+**Verify:** Pass. 289 unit tests, 17 Playwright AAA tests, typecheck, lint, build green.
+
+**Learned:**
+- The specific-train and route-overview tables share the same component but are rendered in separate branches of the JSX (`isRouteOverview ? ... : ...`). A column added to one branch does not automatically appear in the other. When adding columns to `JourneyTimeline`, always check both branches.
+- The Confidence column was added to the route-overview branch in a previous task (DW-18 review) but the specific-train branch was not updated at that time. This is a coordination gap that the P5-04 constraints document would have caught if the developer had used the checklist from section 15.6 point 6. The checklist is worth running before PR, not just by the reviewer.
+- P5-05 through P5-07 (design, implement, review) form a complete feature cycle for measured vs modelled display. The feature is now fully implemented and reviewed. The UI correctly distinguishes measured and modelled data with pattern, icon, text, and confidence label — all four independent cues that survive colour removal, forced colours, and screen reader use.
+
+**Next:** Phase 5 signal accuracy work is complete for the measured side. The remaining open item is DW-20 (run the Connected Nations pipeline once per-pixel data is available via Q7), which is blocked on Matt providing the data. No further tasks are ready in the backlog. Dispatch `product` to plan the next phase or surface any remaining gaps.

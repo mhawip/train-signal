@@ -98,6 +98,7 @@ and writes to it last.
 | P5-04 | Accessibility constraints: measured vs modelled signal display | accessibility-specialist |
 | P5-05 | Design: measured vs modelled signal display | designer |
 | P5-06 | Implement measured vs modelled signal display | developer |
+| P5-07 | Accessibility review of P5-06 | accessibility-specialist |
 
 ---
 
@@ -206,21 +207,7 @@ P5-05 is done — see the index above.
 
 P5-06 is done — see index above.
 
-### P5-07 — Accessibility review of P5-06
-- **owner:** accessibility-specialist
-- **status:** in-progress
-- **depends:** P5-06
-- **why:** The modelled/measured distinction introduces new patterns not seen in the
-  existing UI. Independent review required before shipping.
-- **acceptance:**
-  - [ ] All WCAG 2.2 AAA criteria from `specs/accessibility.md` section written in P5-04
-        verified against the built output
-  - [ ] Greyscale render confirms modelled and measured fills are distinguishable without
-        colour
-  - [ ] Screen reader walkthrough confirms modelled segments are announced with source
-        attribution, not just band
-  - [ ] Any violations fixed and re-verified before closing the task
-  - [ ] `npm run verify` green
+P5-07 is done — see index above.
 
 ---
 
