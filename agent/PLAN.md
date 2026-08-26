@@ -229,7 +229,7 @@ unblocks, DW-20 runs independently of Phase 6.
 
 ### P6-01 — End-to-end QA: signal accuracy on major routes
 - **owner:** qa
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** The failure that matters most is telling someone they will have signal when they will not. A final cross-check of signal verdicts on well-known routes catches false positives before real users rely on the product.
 - **acceptance:**
