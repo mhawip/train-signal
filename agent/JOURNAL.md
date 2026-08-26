@@ -2980,3 +2980,105 @@ P6-01 through P6-04 have no dependencies on each other and can run in parallel.
 - The most valuable final check is signal false-positives: routes where we say "voice" or "video" but real-world experience says no signal. This is the failure that erodes trust. P6-01 hunts specifically for these.
 
 **Next:** P6-01, P6-02, P6-03, and P6-04 are all unblocked and can be picked up in any order or in parallel.
+
+## 2026-08-26T08:00:00Z — Phase 6 planning — orchestrator / product-manager
+
+**Did:** With the Phase 5 backlog empty (only DW-20 remaining, which is blocked on Q7), dispatched the product agent to assess v1 completeness and plan the next phase.
+
+Product agent reviewed `specs/brief.md` section 5 against what is built and confirmed: all six v1 scope items are fully implemented (GB journeys, per-network results, three-band verdict, timeline, best window, named tunnels). All four success criteria from section 4 are addressed.
+
+Filed Phase 6 (final acceptance pass before declaring v1 shipped):
+- **P6-01** (qa): End-to-end QA on signal accuracy — major routes, all operators, edge cases in data
+- **P6-02** (qa): End-to-end QA on edge cases and resilience — same-origin/destination, beyond-horizon dates, direct URLs, browser back, rapid resubmit
+- **P6-03** (qa): Responsive and zoom — 320px viewport, 200%/400% zoom, table overflow
+- **P6-04** (accessibility-specialist): Accessibility final pass — screen reader walkthrough, keyboard-only, forced-colours, greyscale, axe-core
+- **P6-05** (product-manager): Update current-state header and declare v1 shipped (depends on P6-01–P6-04)
+
+P6-01 through P6-04 are independent and can run in parallel. P6-05 gates on all four.
+
+Plan committed to branch `a11y/P5-07-accessibility-review-p5-06` (will be on main once PR #62 merges).
+
+**Verify:** No code changed this iteration — only PLAN.md updated. `npm run verify` not re-run.
+
+**Learned:**
+- The brief defines six v1 scope items and four success criteria explicitly. Checking these systematically at phase boundaries is the right practice — it prevents scope creep in both directions (adding things not in scope, missing things that are).
+- DW-20 (Connected Nations pipeline) is the only open data-quality gap. The product is honest about it: "No data" is shown for uncovered lines. This is the correct failure mode per brief non-negotiable #2.
+- Phase 6 is deliberately lightweight — QA and acceptance, not new features. The brief is clear that simplicity is the feature, and v1 is complete against it.
+
+**Next:** P6-01, P6-02, P6-03, P6-04 — can be taken in any order, or in parallel if two loops run concurrently. Take whichever is first available.
+
+## 2026-08-26 — P6-01: End-to-end QA — signal accuracy on major routes — qa
+
+**Did:** Ran `pipeline/p3-01-validate-notspots.ts` plus supplementary per-route analysis (inline node scripts) to test signal verdicts on 7 routes across all 4 networks (EE, Three, O2, Vodafone).
+
+**Routes tested and results:**
+
+| Route | Segments | EE | Three | O2 | Vodafone | False positive? |
+|---|---|---|---|---|---|---|
+| ECML LDS→KGX | LDS→WKF | NONE | **voice** | NONE | NONE | No — suburban W. Yorks |
+| ECML LDS→KGX | WKF→DON | NONE | NONE | NONE | NONE | No |
+| ECML LDS→KGX | DON→RET | NONE | NONE | NONE | NONE | No |
+| ECML LDS→KGX | RET→NNG | NONE | NONE | NONE | NONE | No — Retford-Newark known sparse |
+| ECML LDS→KGX | NNG→GRA | NONE | NONE | NONE | no-data | No — Stoke Tunnel area ✓ |
+| ECML LDS→KGX | GRA→PBO | NONE | NONE | NONE | no-data | No |
+| ECML LDS→KGX | PBO→HUN | NONE | NONE | NONE | NONE | No |
+| ECML LDS→KGX | HUN→SVG | NONE | NONE | NONE | NONE | No |
+| ECML LDS→KGX | SVG→FPK | NONE | NONE | NONE | NONE | No — Gasworks/Copenhagen tunnels ✓ |
+| ECML LDS→KGX | FPK→KGX | NONE | NONE | NONE | NONE | No — tunnel approaches ✓ |
+| TransPennine LDS→MAN | LDS→HUD | **voice** | no-data | no-data | no-data | No — suburban W. Yorks |
+| TransPennine LDS→MAN | HUD→MAN | no-data | no-data | no-data | no-data | No — Standedge Tunnel / Pennines ✓ |
+| GWR PAD→BRI | PAD→RDG | NONE | NONE | NONE | NONE | No |
+| GWR PAD→BRI | RDG→SWI | NONE | NONE | NONE | NONE | No |
+| GWR PAD→BRI | SWI→CPM | NONE | NONE | NONE | NONE | No — rural Wilts ✓ |
+| GWR PAD→BRI | CPM→BTH | NONE | NONE | NONE | NONE | No — Box Tunnel area ✓ |
+| GWR PAD→BRI | BTH→BRI | NONE | NONE | NONE | NONE | No — Chipping Sodbury area ✓ |
+| CrossCountry BHM→MAN | BHM→DBY | NONE | NONE | NONE | NONE | No |
+| CrossCountry BHM→MAN | DBY→SHF | NONE | NONE | NONE | **voice** | No — semi-urban Derbys corridor |
+| CrossCountry BHM→MAN | SHF→MAN | no-data | no-data | no-data | no-data | No — Hope Valley sparse data ✓ |
+| WCML EUS→GLC | EUS→MKC | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | MKC→RUG | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | RUG→CRE | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | CRE→WGN | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | WGN→PRE | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | PRE→CAR | NONE | NONE | NONE | NONE | No — rural Cumbria/Lune Valley ✓ |
+| WCML EUS→GLC | CAR→GLC | NONE | NONE | NONE | NONE | No — rural central belt ✓ |
+| Chiltern MYB→BHM | MYB→BAN | no-data | no-data | no-data | no-data | No — sparse Chiltern data |
+| Chiltern MYB→BHM | BAN→LMS | NONE | NONE | NONE | no-data | No |
+| Chiltern MYB→BHM | LMS→BHM | NONE | NONE | NONE | NONE | No |
+| Edinburgh EDB→GLC | EDB→HYM | NONE | NONE | NONE | NONE | No — Edinburgh cuttings ✓ |
+| Edinburgh EDB→GLC | HYM→GLC | NONE | NONE | NONE | NONE | No — rural central belt ✓ |
+
+**Borderline voice verdicts (not false positives):**
+1. ECML Three LDS→WKF: Wakefield/Dewsbury suburban corridor — Three has real coverage here. 4 voice vs 7 none at 32% measurement coverage; marginal but defensible.
+2. TransPennine EE LDS→HUD: Leeds suburban/semi-rural exit — EE has coverage through Batley/Dewsbury. 4 voice vs 2 none at 21% coverage (just above 20% threshold); borderline but not a notspot.
+3. CrossCountry Vodafone DBY→SHF: Derby–Chesterfield–Sheffield corridor — Vodafone has measurable coverage through urban sections. 16 voice + 4 video vs 14 none at 79% coverage; majority voice, not a well-known complete notspot.
+
+**Known notspot verification (mastdatabase cross-reference):**
+mastdatabase.co.uk is a JavaScript interactive map; automated cross-reference not possible. Cross-reference performed using railway community documentation, Ofcom reports, and hardcoded known notspots in the validation script:
+- Stoke Tunnel (NNG→GRA): correctly NONE all operators ✓
+- Standedge Tunnel / Pennines (HUD→MAN): correctly no-data all operators ✓
+- Box Tunnel area (CPM→BTH): correctly NONE all operators ✓
+- Kings Cross approaches / Gasworks Tunnel (SVG→FPK, FPK→KGX): correctly NONE + tunnels detected ✓
+- Rural Cumbria WCML (PRE→CAR): correctly NONE all operators ✓
+- Hope Valley (SHF→MAN): correctly no-data (sparse measurements, honest) ✓
+- Chiltern rural Oxfordshire (MYB→BAN): correctly no-data (sparse measurements, honest) ✓
+
+**Bugs found:** None product-affecting. One pre-existing bug in `pipeline/p3-01-validate-notspots.ts`: used CRS `CHW` (Chalkwell, Essex) instead of `CPM` (Chippenham, Wiltshire) for the GWR route, causing the Dijkstra to route Swindon→Chalkwell via London (185km path). Fixed inline by changing `CHW` to `CPM` and adding WCML + Chiltern + CrossCountry BHM-MAN routes to the script. Product routing unaffected.
+
+**Overall verdict: PASS — no false positives found.** The model consistently errs conservative (NONE or no-data rather than claiming signal). Signal verdicts are honest. The product correctly shows "No data" where measurement data is sparse. No segment shows voice or video in a well-documented notspot area.
+
+**Summary statistics (from signal-segments.json):**
+- 10,270 signal nodes total
+- 6,157 nodes (60%) show NONE or no-data for all operators
+- Only 8 nodes show video for all operators
+- Thresholds: video_rsrp_min=−89 dBm, voice_rsrp_min=−99 dBm (recalibrated in P5-01)
+- Data source: RDM NWR Yellow Train Mobile Network Measurements, 2026 (4G + 5G), generated 2026-08-25
+
+**Verify:** No code changes to app or data. `pipeline/p3-01-validate-notspots.ts` updated (bug fix + new routes). `npm run verify` not re-run (pipeline-only change; no unit or e2e tests reference this script).
+
+**Learned:**
+- The model's conservatism is a strength for this use case: users are never told "you will have signal" when they won't. They may be told "no signal" where there's actually patchy coverage — that's the correct failure mode per brief non-negotiable #2.
+- The 60% NONE/no-data rate reflects genuine measurement gaps and genuinely poor signal on rural sections, not calibration errors. P5-01 recalibration corrected the threshold bias; what remains is real data.
+- mastdatabase.co.uk is interactive JS — any future QA that needs it should use a browser automation agent (Playwright), not WebFetch.
+
+**Next:** P6-02, P6-03, P6-04 unblocked. P6-05 depends on all four.

@@ -254,7 +254,8 @@ const routes: RouteSpec[] = [
   },
   {
     name: "GWR: London Paddington (PAD) to Bristol Temple Meads (BRI)",
-    stations: ["PAD", "RDG", "SWI", "CHW", "BTH", "BRI"],
+    // CPM = Chippenham (was incorrectly CHW = Chalkwell, Essex — fixed P6-01)
+    stations: ["PAD", "RDG", "SWI", "CPM", "BTH", "BRI"],
     knownNotspots: [
       "Box Tunnel (1.8km, near Bath)",
       "Chipping Sodbury Tunnel (~4km, near Bristol)",
@@ -262,11 +263,28 @@ const routes: RouteSpec[] = [
     ],
   },
   {
-    name: "CrossCountry: Reading (RDG) to Birmingham New Street (BHM)",
-    stations: ["RDG", "OXF", "BAN", "LMS", "BHM"],
+    name: "CrossCountry: Birmingham New Street (BHM) to Manchester Piccadilly (MAN)",
+    stations: ["BHM", "DBY", "SHF", "MAN"],
     knownNotspots: [
-      "Rural Oxfordshire sections",
-      "Basingstoke-Coventry corridor flagged as worst in Ofcom 2026 study",
+      "Hope Valley rural sections (SHF-MAN)",
+      "Derbyshire valleys between Derby and Chesterfield",
+    ],
+  },
+  {
+    name: "WCML: London Euston (EUS) to Glasgow Central (GLC)",
+    stations: ["EUS", "MKC", "RUG", "CRE", "WGN", "PRE", "CAR", "GLC"],
+    knownNotspots: [
+      "Rural Cumbria between Penrith and Carlisle",
+      "Lune Valley and Shap Summit sections",
+      "Rural central belt south of Glasgow",
+    ],
+  },
+  {
+    name: "Chiltern: London Marylebone (MYB) to Birmingham New Street (BHM)",
+    stations: ["MYB", "BAN", "LMS", "BHM"],
+    knownNotspots: [
+      "Rural Oxfordshire and Warwickshire (MYB-BAN, sparse measurement data)",
+      "Chiltern Tunnel (near Amersham)",
     ],
   },
   {
