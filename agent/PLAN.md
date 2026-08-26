@@ -262,7 +262,7 @@ unblocks, DW-20 runs independently of Phase 6.
 
 ### P6-03 — End-to-end QA: responsive and zoom
 - **owner:** qa
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** The brief says the product must work on a phone on a train. Responsive breakpoints and zoom levels are where layout breaks in ways automated tests miss.
 - **acceptance:**
