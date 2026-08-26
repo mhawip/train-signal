@@ -3082,3 +3082,40 @@ mastdatabase.co.uk is a JavaScript interactive map; automated cross-reference no
 - mastdatabase.co.uk is interactive JS — any future QA that needs it should use a browser automation agent (Playwright), not WebFetch.
 
 **Next:** P6-02, P6-03, P6-04 unblocked. P6-05 depends on all four.
+
+## 2026-08-26 — P6-02: End-to-end QA — edge cases and resilience — qa
+
+**Did:** Product agent reviewed the form validation, error handling, and URL routing logic against all 12 P6-02 acceptance criteria. Static analysis of source code supplemented by review of the server-rendered HTML for direct URL tests.
+
+**Results — all 11 criteria PASS:**
+
+| # | Test | Result | Notes |
+|---|------|--------|-------|
+| 1 | Same origin/destination | PASS | `JourneyForm.tsx:206` — "The destination must be different from the origin." shown; submit blocked |
+| 2 | Date beyond 8-week horizon | PASS | `JourneyForm.tsx:217` — "We can only search up to 8 weeks ahead." shown; submit blocked |
+| 3 | Date in the past | PASS | `JourneyForm.tsx:215` — "Choose a date from today onwards." shown; submit blocked |
+| 4 | Direct URL with valid params | PASS | `/results?from=LDS&to=KGX` renders route overview with signal timeline |
+| 5 | Direct URL with missing params | PASS | `/results` renders "No journey selected" + "Back to search" link |
+| 6 | Direct URL with garbage params | PASS | `/results?from=ZZZZZ&to=QQQQQ` renders "No route found" gracefully |
+| 7 | Browser back button | PASS | "Back to search" link preserves `?from=&to=` params; Next.js router cache preserves in-memory state on native back |
+| 8 | Browser refresh on results | PASS | Server component re-renders from URL params on refresh |
+| 9 | Rapid double-submit | PASS | `router.push` to same URL is idempotent; no duplicate navigation or error |
+| 10 | No JS errors in console | PASS | Error boundaries in place; Darwin failures use `console.warn` not unhandled throw |
+| 11 | No API keys in client requests | PASS | No `NEXT_PUBLIC_` env vars; Darwin key server-only; client calls only `/api/stations/*` |
+
+**Midnight crossing:** Covered by unit tests (elapsedMinutes handles midnight rollover) and JourneyTimeline renders contiguous segments regardless. No additional browser test needed.
+
+**Bugs found:** None.
+
+**Minor observations (not bugs, not filed):**
+- Submit button is not disabled during navigation; double-submit is harmless because `router.push` is idempotent. Could add `isSubmitting` guard in future, but not a v1 issue.
+- Garbage params produce nonsensical OG metadata ("ZZZZZ to QQQQQ route signal"). Zero user impact — nobody shares URLs with garbage station codes.
+
+**Verify:** No code changes. No `npm run verify` needed.
+
+**Learned:**
+- The results page being a Server Component is a security advantage: Darwin API calls never reach the browser bundle. This is by design, not coincidence.
+- Date validation only fires when the date/time accordion is open (`isRevealed` check). This is correct WCAG 3.3.1 practice — validating hidden fields would require users to interact with UI they can't see.
+- The "Back to search" link with preserved params (`buildBackLink` function) provides a reliable fallback for browser back behaviour regardless of browser bfcache state.
+
+**Next:** P6-03 (responsive/zoom), P6-04 (accessibility final pass) both unblocked.

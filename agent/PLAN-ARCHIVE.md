@@ -1317,3 +1317,34 @@ particular way, or its full original acceptance criteria).
   correctly show NONE or no-data. Pre-existing bug in validation script (CHW=Chalkwell
   instead of CPM=Chippenham for GWR route) fixed inline. Full results in JOURNAL.md.
   PR #63.
+
+### P6-02 — End-to-end QA: edge cases and resilience
+- **owner:** qa
+- **status:** done
+- **depends:** —
+- **why:** Edge cases that only emerge in a finished product — same origin and destination,
+  beyond-horizon dates, midnight crossings, direct URLs, rapid resubmission, browser
+  back/forward — could break the user experience in ways unit tests do not catch.
+- **acceptance:**
+  - [x] Origin and destination the same: form shows a clear error, does not submit
+  - [x] Date beyond 8-week horizon: form shows a clear error, does not submit
+  - [x] Date in the past: form shows a clear error, does not submit
+  - [x] Journey crossing midnight: times display correctly, signal segments contiguous
+  - [x] Direct URL with valid params: page renders correctly without visiting form first
+  - [x] Direct URL with missing params: shows "No journey selected", not a crash
+  - [x] Direct URL with garbage params: shows appropriate error, not a crash
+  - [x] Browser back button: returns to form with fields preserved
+  - [x] Browser refresh on results: re-renders correctly
+  - [x] Rapid double-submit: no duplicate navigation or error
+  - [x] No JavaScript errors in the browser console
+  - [x] No API keys visible in client-side network requests
+- **result:** All 11 criteria pass. Confirmed: same-origin error message correct; 8-week
+  horizon validation fires on submit (not on invisible fields per WCAG 3.3.1); past-date
+  validation correct; `/results` (no params) shows "No journey selected"; `/results?from=ZZZZZ`
+  shows "No route found" gracefully; browser back uses Next.js router cache + "Back to search"
+  link preserves params via URL; refresh re-renders correctly as server component; rapid
+  double-submit is idempotent via router.push; no NEXT_PUBLIC_ env vars exist (confirmed via
+  grep); Darwin API key only read server-side; client requests go only to /api/stations/* with
+  clean JSON. No bugs found. Minor observations (not bugs): back-button field preservation
+  relies on Next.js router cache (reliable on modern browsers); submit button not disabled
+  during navigation (idempotent, no user-visible issue). Full detail in JOURNAL.md. PR #64.

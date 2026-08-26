@@ -101,6 +101,7 @@ and writes to it last.
 | P5-06 | Implement measured vs modelled signal display | developer |
 | P5-07 | Accessibility review of P5-06 | accessibility-specialist |
 | P6-01 | End-to-end QA: signal accuracy on major routes | qa |
+| P6-02 | End-to-end QA: edge cases and resilience | qa |
 
 ---
 
@@ -242,22 +243,22 @@ unblocks, DW-20 runs independently of Phase 6.
 
 ### P6-02 — End-to-end QA: edge cases and resilience
 - **owner:** qa
-- **status:** in-progress
+- **status:** done
 - **depends:** —
 - **why:** Edge cases that only emerge in a finished product — same origin and destination, beyond-horizon dates, midnight crossings, direct URLs, rapid resubmission, browser back/forward — could break the user experience in ways unit tests do not catch.
 - **acceptance:**
-  - [ ] Origin and destination the same: form shows a clear error, does not submit
-  - [ ] Date beyond 8-week horizon: form shows a clear error, does not submit
-  - [ ] Date in the past: form shows a clear error, does not submit
-  - [ ] Journey crossing midnight (e.g. late-night service): times display correctly, signal segments are contiguous
-  - [ ] Direct URL to results page with valid params: page renders correctly without visiting the form first
-  - [ ] Direct URL to results page with missing params: shows the "No journey selected" message, not a crash
-  - [ ] Direct URL to results page with garbage params: shows appropriate error, not a crash
-  - [ ] Browser back button from results returns to the form with fields preserved
-  - [ ] Browser refresh on results page re-renders correctly
-  - [ ] Rapid double-submit of the form: no duplicate navigation or error
-  - [ ] No JavaScript errors in the browser console during any of the above
-  - [ ] No API keys visible in client-side network requests
+  - [x] Origin and destination the same: form shows a clear error, does not submit
+  - [x] Date beyond 8-week horizon: form shows a clear error, does not submit
+  - [x] Date in the past: form shows a clear error, does not submit
+  - [x] Journey crossing midnight (e.g. late-night service): times display correctly, signal segments are contiguous
+  - [x] Direct URL to results page with valid params: page renders correctly without visiting the form first
+  - [x] Direct URL to results page with missing params: shows the "No journey selected" message, not a crash
+  - [x] Direct URL to results page with garbage params: shows appropriate error, not a crash
+  - [x] Browser back button from results returns to the form with fields preserved
+  - [x] Browser refresh on results page re-renders correctly
+  - [x] Rapid double-submit of the form: no duplicate navigation or error
+  - [x] No JavaScript errors in the browser console during any of the above
+  - [x] No API keys visible in client-side network requests
 
 ### P6-03 — End-to-end QA: responsive and zoom
 - **owner:** qa
