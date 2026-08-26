@@ -335,6 +335,13 @@ main {
   max-width: var(--max-width-text);
   margin: 0 auto;
   padding: var(--space-8) var(--space-4);
+  /* Establish a Block Formatting Context so that child elements (e.g. the
+   * signal table or visual timeline) cannot cause documentElement.scrollWidth
+   * to exceed the viewport width (WCAG 1.4.10).
+   * overflow: hidden creates a BFC (unlike overflow-x: clip which does not)
+   * while still allowing nested overflow-x: auto elements (e.g. the scrollable
+   * table wrapper) to create their own inner scroll containers. */
+  overflow: hidden;
 }
 
 h1 {
@@ -960,8 +967,18 @@ legend.ts-field__label + * {
 /* Wrapper provides horizontal scroll at narrow viewports.
  * role="region" and tabindex="0" are set in the component
  * so it is keyboard-scrollable (specs/accessibility.md 7.4). */
+/* The section containing the table needs overflow: hidden so the
+ * table's intrinsic width (wider than 320px) does not contribute to
+ * documentElement.scrollWidth and cause page-level horizontal scroll.
+ * The inner .ts-table-wrapper still provides horizontal scrolling
+ * for the table content via overflow-x: auto (WCAG 1.4.10). */
+#journey-table {
+  overflow: hidden;
+}
+
 .ts-table-wrapper {
   overflow-x: auto;
+  max-width: 100%;
   margin-bottom: var(--space-6);
 }
 
@@ -1021,6 +1038,7 @@ legend.ts-field__label + * {
 
 .ts-visual-timeline {
   margin-bottom: var(--space-8);
+  overflow: hidden;
 }
 
 .ts-visual-timeline__heading {
@@ -1109,15 +1127,16 @@ legend.ts-field__label + * {
  * (specs/accessibility.md 6.2). */
 .ts-visual-timeline__band-label {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-1);
   padding: var(--space-1) var(--space-2);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
-  white-space: nowrap;
   /* Position the label at the top of the segment bar */
   margin-left: var(--space-2);
   padding-top: var(--space-1);
+  max-width: calc(100vw - var(--space-8) - var(--space-8));
 }
 
 .ts-visual-timeline__tunnel-note {
@@ -1125,6 +1144,8 @@ legend.ts-field__label + * {
   font-weight: var(--font-weight-normal);
   display: block;
   margin-top: var(--space-1);
+  white-space: normal;
+  overflow-wrap: break-word;
 }
 
 /* When signal bands are present, widen the segment bar to fit labels */

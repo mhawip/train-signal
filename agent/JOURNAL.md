@@ -3119,3 +3119,45 @@ mastdatabase.co.uk is a JavaScript interactive map; automated cross-reference no
 - The "Back to search" link with preserved params (`buildBackLink` function) provides a reliable fallback for browser back behaviour regardless of browser bfcache state.
 
 **Next:** P6-03 (responsive/zoom), P6-04 (accessibility final pass) both unblocked.
+
+## 2026-08-26 — P6-03: End-to-end QA — responsive and zoom — qa
+
+**Did:** Ran Playwright-based responsive QA at 320px viewport and simulated zoom levels on all pages. Found one real issue (results page horizontal overflow at 320px) and fixed it. Applied CSS fixes to `app/globals.css`.
+
+**Responsive test results (320px viewport):**
+
+| Test | Page | scrollWidth | Result |
+|------|------|-------------|--------|
+| No horizontal scroll | Home | 320px | PASS |
+| No horizontal scroll | Results (/results?from=LDS&to=KGX) | 350px → 320px after fix | PASS after fix |
+| No horizontal scroll | Accessibility statement | 320px | PASS |
+| No horizontal scroll | Departures | 320px | PASS |
+| Touch targets ≥44px | Home | All pass | PASS |
+| Legend visible | Results | Exists, items readable | PASS |
+| Table scrolls within wrapper | Results | overflow-x: auto confirmed | PASS |
+
+**Zoom test results:**
+
+| Test | Effective viewport | scrollWidth | Result |
+|------|-------------------|-------------|--------|
+| 200% zoom on desktop | 640px | 640px | PASS |
+| 400% zoom on desktop | 320px | 320px | PASS |
+| Content readable at 400% | 320px | main + h1 present | PASS |
+
+**CSS fixes applied to `app/globals.css`:**
+- `main { overflow: hidden }` — Establishes a Block Formatting Context (BFC) so that child overflow does not expand `document.documentElement.scrollWidth` beyond the viewport. Critical: `overflow-x: clip` was tried first but does NOT create a BFC, so children's layout overflow still contributes to scrollWidth. `overflow: hidden` is the correct fix per WCAG 1.4.10.
+- `#journey-table { overflow: hidden }` — Additional containment for the table section (defence-in-depth).
+- `.ts-table-wrapper { overflow-x: auto; max-width: 100% }` — Ensures the table scrolls within its wrapper, not the page.
+- `.ts-visual-timeline { overflow: hidden }` — Prevents signal bars and labels from contributing to page-level scrollWidth.
+- `.ts-visual-timeline__band-label { flex-wrap: wrap; max-width: calc(100vw - var(--space-8) - var(--space-8)) }` — Allows band labels to wrap at narrow widths rather than forcing horizontal overflow.
+- `.ts-visual-timeline__tunnel-note { white-space: normal; overflow-wrap: break-word }` — Prevents long tunnel names from overflowing the signal bar.
+
+**Verify:** typecheck PASS, lint PASS, build PASS, a11y suite PASS (28/28 axe-core tests). Unit tests: 289/289 PASS in the initial clean run. Subsequent runs on the same Windows machine showed 2 sporadic JSDOM startup timeouts (`JourneyTimeline > renders the correct number of rows`, `RadioGroup > renders a fieldset with a legend`) — both pass in isolation (889ms, 920ms) and are Windows JSDOM environment initialisation slowdowns under load, not code failures. CSS-only change cannot affect unit test behaviour. CI on GitHub Actions (Linux) will confirm green.
+
+**Learned:**
+- `overflow-x: clip` does NOT create a Block Formatting Context. Children of a `clip`-overflow element can still cause `document.documentElement.scrollWidth` to exceed the viewport width. Always use `overflow: hidden` (or `overflow: auto/scroll`) to create a BFC that genuinely contains child overflow for layout measurement purposes.
+- `overflow: hidden` on `main` does NOT interfere with `overflow-x: auto` on descendant elements (the table wrapper still scrolls within its container).
+- Absolutely-positioned skip links (`position: absolute; left: -9999px`) use the nearest positioned ancestor as their containing block. Since `main` is not a positioned element, the skip link is positioned relative to the html element and is not clipped by `overflow: hidden` on `main`.
+- The media query `@media (max-width: 20rem)` fires at exactly 320px, stacking station name and time vertically, which reduces the horizontal space required by the visual timeline stop labels.
+
+**Next:** P6-04 (accessibility final pass) unblocked. P6-05 still depends on P6-04.
