@@ -27,7 +27,7 @@ function seg(
   band: SegmentSignal["band"],
   confidence: SegmentSignal["confidence"] = "high"
 ): SegmentSignal {
-  return { band, confidence, coveredNodes: 10, totalNodes: 10, tunnels: [] };
+  return { band, confidence, source: "measured", coveredNodes: 10, totalNodes: 10, tunnels: [] };
 }
 
 /** Build a Journey from a list of calling points. */

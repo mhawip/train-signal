@@ -174,6 +174,7 @@ describe("VisualTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 50,
         totalNodes: 60,
         tunnels: [],
@@ -181,6 +182,7 @@ describe("VisualTimeline", () => {
       {
         band: "voice" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],
@@ -188,6 +190,7 @@ describe("VisualTimeline", () => {
       {
         band: "none" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 20,
         totalNodes: 25,
         tunnels: [],
@@ -211,6 +214,7 @@ describe("VisualTimeline", () => {
       {
         band: "voice" as const,
         confidence: "low" as const,
+        source: "measured" as const,
         coveredNodes: 10,
         totalNodes: 40,
         tunnels: [],
@@ -218,6 +222,7 @@ describe("VisualTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],
@@ -225,6 +230,7 @@ describe("VisualTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],
@@ -247,6 +253,7 @@ describe("VisualTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 50,
         totalNodes: 60,
         tunnels: [],
@@ -254,6 +261,7 @@ describe("VisualTimeline", () => {
       {
         band: "voice" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],
@@ -261,6 +269,7 @@ describe("VisualTimeline", () => {
       {
         band: "none" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 20,
         totalNodes: 25,
         tunnels: [],
