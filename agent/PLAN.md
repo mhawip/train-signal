@@ -208,7 +208,7 @@ P5-06 is done — see index above.
 
 ### P5-07 — Accessibility review of P5-06
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** P5-06
 - **why:** The modelled/measured distinction introduces new patterns not seen in the
   existing UI. Independent review required before shipping.
