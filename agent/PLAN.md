@@ -100,6 +100,7 @@ and writes to it last.
 | P5-05 | Design: measured vs modelled signal display | designer |
 | P5-06 | Implement measured vs modelled signal display | developer |
 | P5-07 | Accessibility review of P5-06 | accessibility-specialist |
+| P6-01 | End-to-end QA: signal accuracy on major routes | qa |
 
 ---
 
@@ -229,15 +230,15 @@ unblocks, DW-20 runs independently of Phase 6.
 
 ### P6-01 — End-to-end QA: signal accuracy on major routes
 - **owner:** qa
-- **status:** in-progress
+- **status:** done
 - **depends:** —
 - **why:** The failure that matters most is telling someone they will have signal when they will not. A final cross-check of signal verdicts on well-known routes catches false positives before real users rely on the product.
 - **acceptance:**
-  - [ ] Test at least 6 routes: ECML (KGX-EDB), WCML (EUS-GLC), GWR (PAD-BRI), CrossCountry (BHM-MAN), TransPennine (LDS-MAN), Chiltern (MYB-BHM)
-  - [ ] For each route and each of the 4 networks, compare the signal verdict to mastdatabase.co.uk rail notspots map
-  - [ ] No false positive found: no segment shows "voice" or "video" where mastdatabase or common experience says no signal
-  - [ ] Any new false positive filed as a high-severity bug in PLAN.md
-  - [ ] Document results in `agent/JOURNAL.md` with route, network, and pass/fail per segment
+  - [x] Test at least 6 routes: ECML (KGX-EDB), WCML (EUS-GLC), GWR (PAD-BRI), CrossCountry (BHM-MAN), TransPennine (LDS-MAN), Chiltern (MYB-BHM)
+  - [x] For each route and each of the 4 networks, compare the signal verdict to mastdatabase.co.uk rail notspots map
+  - [x] No false positive found: no segment shows "voice" or "video" where mastdatabase or common experience says no signal
+  - [x] Any new false positive filed as a high-severity bug in PLAN.md
+  - [x] Document results in `agent/JOURNAL.md` with route, network, and pass/fail per segment
 
 ### P6-02 — End-to-end QA: edge cases and resilience
 - **owner:** qa

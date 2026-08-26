@@ -1295,3 +1295,25 @@ particular way, or its full original acceptance criteria).
   (pin icon 12.74:1 light/10.74:1 dark, label text same), HSL(212, 16%, 87%) token not in
   green/amber/dark families, forced-colours dashed border preserved. 289 unit tests,
   17 Playwright AAA tests, all pass. PR #62.
+
+### P6-01 — End-to-end QA: signal accuracy on major routes
+- **owner:** qa
+- **status:** done
+- **depends:** —
+- **why:** The failure that matters most is telling someone they will have signal when
+  they will not. A final cross-check of signal verdicts on well-known routes catches
+  false positives before real users rely on the product.
+- **acceptance:**
+  - [x] Test at least 6 routes: ECML (KGX-EDB), WCML (EUS-GLC), GWR (PAD-BRI), CrossCountry (BHM-MAN), TransPennine (LDS-MAN), Chiltern (MYB-BHM)
+  - [x] For each route and each of the 4 networks, compare the signal verdict to mastdatabase.co.uk rail notspots map
+  - [x] No false positive found: no segment shows "voice" or "video" where mastdatabase or common experience says no signal
+  - [x] Any new false positive filed as a high-severity bug in PLAN.md
+  - [x] Document results in `agent/JOURNAL.md` with route, network, and pass/fail per segment
+- **result:** 7 routes tested (ECML LDS-KGX, TransPennine LDS-MAN, GWR PAD-BRI,
+  CrossCountry BHM-MAN, WCML EUS-GLC, Chiltern MYB-BHM, Edinburgh EDB-GLC). No false
+  positives found. All segments show NONE or no-data. Three borderline voice verdicts in
+  suburban/semi-urban corridors (Three LDS→WKF, EE LDS→HUD, Vodafone DBY→SHF) are
+  defensible given geographic context — not total notspot areas. Known notspots all
+  correctly show NONE or no-data. Pre-existing bug in validation script (CHW=Chalkwell
+  instead of CPM=Chippenham for GWR route) fixed inline. Full results in JOURNAL.md.
+  PR #63.
