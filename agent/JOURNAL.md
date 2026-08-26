@@ -2929,3 +2929,54 @@ PR #62 opened. 289 unit tests, 17 Playwright AAA tests, typecheck, lint, build �
 - P5-05 through P5-07 (design, implement, review) form a complete feature cycle for measured vs modelled display. The feature is now fully implemented and reviewed. The UI correctly distinguishes measured and modelled data with pattern, icon, text, and confidence label — all four independent cues that survive colour removal, forced colours, and screen reader use.
 
 **Next:** Phase 5 signal accuracy work is complete for the measured side. The remaining open item is DW-20 (run the Connected Nations pipeline once per-pixel data is available via Q7), which is blocked on Matt providing the data. No further tasks are ready in the backlog. Dispatch `product` to plan the next phase or surface any remaining gaps.
+
+## 2026-08-26T10:00:00Z — Phase 6 planning — product-manager
+
+**Did:** Reviewed the complete product against `specs/brief.md` and planned Phase 6.
+
+**Assessment — v1 scope check against brief section 5:**
+
+All six in-scope items are implemented:
+1. GB National Rail journeys (origin, destination, date, time) — form with combobox, date/time accordion, departures page, results page
+2. Per-network results (EE, O2, Vodafone, Three) — network radio group, per-operator signal lookup, worst-case fallback when no network selected
+3. Three-band signal verdict (voice+video, voice only, no signal) — `classifySegment` in signal.ts, rendered in both text table and visual timeline
+4. Journey timeline visualisation — `JourneyTimeline` (text table, always visible) and `VisualTimeline` (decorative visual, aria-hidden)
+5. "Best window to book" — `BestWindow` component, headline answer above the timeline
+6. Tunnels called out explicitly by name — detected from track geometry, named in the text table
+
+All four success criteria (brief section 4) are addressed:
+1. Under 15 seconds — Lighthouse CI gates, minimal form, server-rendered results
+2. Accurate enough to trust — recalibrated thresholds (P5-01), cross-validated against mastdatabase (P3-01, P5-02)
+3. WCAG 2.2 AAA — automated axe-core suite (17 tests), manual audit (P3-03), per-task accessibility reviews
+4. Works on phone/train/bad connection — error/loading boundaries (P4-01), responsive design
+
+**What is not in v1 and stays out:**
+- Saved journeys, accounts, sharing links (brief: v2)
+- Live disruption / delay adjustment (brief: v2)
+- Non-GB journeys (brief: data not available)
+- Underground / metro / tram (brief: out of scope)
+- Onboard wifi quality (brief: different problem, later)
+- Map view, social sharing, journey planning features (scope creep — rejected)
+
+**What remains blocked:**
+- DW-20 (Connected Nations data merge) on Q7 (Matt providing Ofcom data access). Not a v1 blocker — the product works without it, showing "No data" honestly.
+
+**Decision: file Phase 6 as a final acceptance pass, not new features.**
+
+Five tasks filed:
+- P6-01: Signal accuracy QA on 6 major routes against mastdatabase (qa)
+- P6-02: Edge case and resilience QA (qa)
+- P6-03: Responsive and zoom QA at 320px, 200%, 400% (qa)
+- P6-04: Final accessibility pass with screen reader, forced colours, greyscale (accessibility-specialist)
+- P6-05: Update PLAN.md and JOURNAL.md to declare v1 shipped (product-manager, depends on P6-01 through P6-04)
+
+P6-01 through P6-04 have no dependencies on each other and can run in parallel.
+
+**Verify:** n/a — planning task, no code changes.
+
+**Learned:**
+- The product is feature-complete for v1. The temptation at this stage is to add "just one more thing" — a share button, a route map, saved journeys. Each is defensible alone. Together they destroy the product. The brief is clear: v2 scope stays out.
+- The Connected Nations data gap (53% of track nodes have no measurements) is real but the honest response ("No data") is better than the dishonest one (guessing from coverage maps without the data to power them). DW-20 will improve this when Q7 unblocks, but shipping without it is correct.
+- The most valuable final check is signal false-positives: routes where we say "voice" or "video" but real-world experience says no signal. This is the failure that erodes trust. P6-01 hunts specifically for these.
+
+**Next:** P6-01, P6-02, P6-03, and P6-04 are all unblocked and can be picked up in any order or in parallel.
