@@ -437,9 +437,10 @@ export function JourneyTimeline({
     );
   }
 
-  // Specific-train table: original 5-column layout
+  // Specific-train table: 4 base columns + 2 signal columns when signal is present
+  // (Expected signal + Confidence per specs/accessibility.md section 7.1, 15.3)
   const baseColCount = 4;
-  const totalColCount = hasSignal ? baseColCount + 1 : baseColCount;
+  const totalColCount = hasSignal ? baseColCount + 2 : baseColCount;
 
   return (
     <section id="journey-table" aria-labelledby="journey-table-heading">
@@ -458,6 +459,7 @@ export function JourneyTimeline({
               <th scope="col">Arrives</th>
               <th scope="col">Departs</th>
               {hasSignal && <th scope="col">Expected signal</th>}
+              {hasSignal && <th scope="col">Confidence</th>}
               <th scope="col">Journey time</th>
             </tr>
           </thead>
@@ -487,6 +489,15 @@ export function JourneyTimeline({
                     <td>
                       {segmentSignal ? (
                         <SignalCell signal={segmentSignal} />
+                      ) : (
+                        "\u2013"
+                      )}
+                    </td>
+                  )}
+                  {hasSignal && (
+                    <td>
+                      {segmentSignal ? (
+                        confidenceLabel(segmentSignal)
                       ) : (
                         "\u2013"
                       )}
