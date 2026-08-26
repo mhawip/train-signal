@@ -265,7 +265,7 @@ P6-03 is done — see index above.
 
 ### P6-04 — End-to-end QA: accessibility final pass
 - **owner:** accessibility-specialist
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** The Phase 5 changes (measured vs modelled display, confidence column, new legend entries) added UI that was reviewed per-task but has not been tested as a complete product with a screen reader, in forced-colours mode, and in greyscale since the Phase 3 manual audit.
 - **acceptance:**
