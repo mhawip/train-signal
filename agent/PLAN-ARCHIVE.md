@@ -1272,3 +1272,26 @@ particular way, or its full original acceptance criteria).
   classes. Legend has six entries in the order specified by `specs/accessibility.md`
   section 15.4. Test fixtures updated with `source` field; label assertions updated to
   full wording. 289 unit tests, 17 Playwright AAA tests, all pass. PR #61.
+
+### P5-07 — Accessibility review of P5-06
+- **owner:** accessibility-specialist
+- **status:** done
+- **depends:** P5-06
+- **why:** The modelled/measured distinction introduces new patterns not seen in the
+  existing UI. Independent review required before shipping.
+- **acceptance:**
+  - [x] All WCAG 2.2 AAA criteria from `specs/accessibility.md` section 15 verified
+        against the built output
+  - [x] Greyscale render confirms modelled and measured fills are distinguishable without
+        colour (135-degree vs solid fill, geometrically distinct)
+  - [x] Screen reader walkthrough confirms modelled segments announced with source
+        attribution (full strings per section 15.3, Confidence column "Estimated (coverage map)")
+  - [x] Any violations fixed and re-verified before closing the task
+  - [x] `npm run verify` green
+- **result:** One violation found and fixed: the specific-train table was missing the
+  Confidence column (route-overview table already had it). Fix adds `<th>Confidence</th>`
+  header and per-row `confidenceLabel()` cells, updates `totalColCount` from `baseColCount+1`
+  to `baseColCount+2`. All 12 section 15.6 checklist items verified: contrast ratios
+  (pin icon 12.74:1 light/10.74:1 dark, label text same), HSL(212, 16%, 87%) token not in
+  green/amber/dark families, forced-colours dashed border preserved. 289 unit tests,
+  17 Playwright AAA tests, all pass. PR #62.
