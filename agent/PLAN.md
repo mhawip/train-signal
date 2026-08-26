@@ -1,16 +1,17 @@
 ## Current state
 
-**v1 is complete.** All scope items from `specs/brief.md` section 5 are implemented,
-tested, and accessibility-reviewed (72 tasks, 46 PRs). Phase 4 (RDM data upgrade,
-resilience, link previews) is also complete.
+**v1 scope is complete.** All scope items from `specs/brief.md` section 5 are
+implemented, tested, and accessibility-reviewed (72+ tasks, 46+ PRs). Phase 5 (signal
+accuracy recalibration and measured vs modelled display) is complete. The only remaining
+open item is DW-20 (Connected Nations data merge), which is blocked on Q7 (Matt
+providing Ofcom API credentials or alternative data source). The product works correctly
+without it — uncovered lines show "No data" honestly rather than guessing.
 
-**Signal accuracy is the active focus.** Post-P4-05 re-validation identified that the
-RDM 2026 data, while current, is excessively conservative — the ECML and other major
-trunk routes show "no signal" for all operators, which contradicts real-world experience.
-Two root causes are documented (uncalibrated RSRP, 5G SS-RSRQ mismatch). Phase 5
-addresses both, and adds Ofcom Connected Nations modelled coverage as a second-tier
-source for lines the yellow trains did not traverse. See journal entry 2026-08-24 and
-`specs/signal-model.md` section "P4-05 RDM re-validation" for full analysis.
+**Phase 6 is a final v1 acceptance pass.** The product has been built incrementally over
+five phases. Before declaring v1 shipped, a holistic end-to-end QA pass verifies the
+complete product against every success criterion in `specs/brief.md` section 4, hunts
+signal false-positives (the failure that matters most), and tests the edge cases that
+only emerge in a finished product. No new features. No scope expansion.
 
 ---
 
@@ -98,6 +99,7 @@ and writes to it last.
 | P5-04 | Accessibility constraints: measured vs modelled signal display | accessibility-specialist |
 | P5-05 | Design: measured vs modelled signal display | designer |
 | P5-06 | Implement measured vs modelled signal display | developer |
+| P5-07 | Accessibility review of P5-06 | accessibility-specialist |
 
 ---
 
@@ -206,21 +208,95 @@ P5-05 is done — see the index above.
 
 P5-06 is done — see index above.
 
-### P5-07 — Accessibility review of P5-06
+P5-07 is done — see index above.
+
+---
+
+## Phase 6 — v1 acceptance and ship
+
+**Goal:** Verify the complete product against the brief's success criteria and ship v1.
+No new features. No scope expansion.
+
+**What this phase is not:** It is not a place to add features deferred to v2 (accounts,
+saved journeys, live disruption, sharing links, map views, non-GB journeys, onboard
+wifi). Each of those is defensible alone. Together they destroy the product. They stay
+out.
+
+**What DW-20 means for v1:** The Connected Nations data merge (DW-20) is blocked on Q7.
+The product is complete without it — lines with no yellow-train measurements show
+"No data" honestly. DW-20 is a data-quality enhancement, not a v1 blocker. When Q7
+unblocks, DW-20 runs independently of Phase 6.
+
+### P6-01 — End-to-end QA: signal accuracy on major routes
+- **owner:** qa
+- **status:** todo
+- **depends:** —
+- **why:** The failure that matters most is telling someone they will have signal when they will not. A final cross-check of signal verdicts on well-known routes catches false positives before real users rely on the product.
+- **acceptance:**
+  - [ ] Test at least 6 routes: ECML (KGX-EDB), WCML (EUS-GLC), GWR (PAD-BRI), CrossCountry (BHM-MAN), TransPennine (LDS-MAN), Chiltern (MYB-BHM)
+  - [ ] For each route and each of the 4 networks, compare the signal verdict to mastdatabase.co.uk rail notspots map
+  - [ ] No false positive found: no segment shows "voice" or "video" where mastdatabase or common experience says no signal
+  - [ ] Any new false positive filed as a high-severity bug in PLAN.md
+  - [ ] Document results in `agent/JOURNAL.md` with route, network, and pass/fail per segment
+
+### P6-02 — End-to-end QA: edge cases and resilience
+- **owner:** qa
+- **status:** todo
+- **depends:** —
+- **why:** Edge cases that only emerge in a finished product — same origin and destination, beyond-horizon dates, midnight crossings, direct URLs, rapid resubmission, browser back/forward — could break the user experience in ways unit tests do not catch.
+- **acceptance:**
+  - [ ] Origin and destination the same: form shows a clear error, does not submit
+  - [ ] Date beyond 8-week horizon: form shows a clear error, does not submit
+  - [ ] Date in the past: form shows a clear error, does not submit
+  - [ ] Journey crossing midnight (e.g. late-night service): times display correctly, signal segments are contiguous
+  - [ ] Direct URL to results page with valid params: page renders correctly without visiting the form first
+  - [ ] Direct URL to results page with missing params: shows the "No journey selected" message, not a crash
+  - [ ] Direct URL to results page with garbage params: shows appropriate error, not a crash
+  - [ ] Browser back button from results returns to the form with fields preserved
+  - [ ] Browser refresh on results page re-renders correctly
+  - [ ] Rapid double-submit of the form: no duplicate navigation or error
+  - [ ] No JavaScript errors in the browser console during any of the above
+  - [ ] No API keys visible in client-side network requests
+
+### P6-03 — End-to-end QA: responsive and zoom
+- **owner:** qa
+- **status:** todo
+- **depends:** —
+- **why:** The brief says the product must work on a phone on a train. Responsive breakpoints and zoom levels are where layout breaks in ways automated tests miss.
+- **acceptance:**
+  - [ ] At 320px viewport width: no horizontal scroll on any page (home, departures, results, accessibility statement)
+  - [ ] At 320px viewport width: all interactive elements are at least 44x44 CSS pixels
+  - [ ] At 200% zoom on desktop: no horizontal scroll, no text truncation, no overlapping elements
+  - [ ] At 400% zoom on desktop: content remains readable, no horizontal scroll on text content
+  - [ ] Visual timeline legend is fully visible and readable at all tested widths/zoom levels
+  - [ ] Text-equivalent table does not overflow its container at 320px (table scrolls horizontally within its container, or reformats)
+  - [ ] No layout issues on the departures list at 320px
+
+### P6-04 — End-to-end QA: accessibility final pass
 - **owner:** accessibility-specialist
 - **status:** todo
-- **depends:** P5-06
-- **why:** The modelled/measured distinction introduces new patterns not seen in the
-  existing UI. Independent review required before shipping.
+- **depends:** —
+- **why:** The Phase 5 changes (measured vs modelled display, confidence column, new legend entries) added UI that was reviewed per-task but has not been tested as a complete product with a screen reader, in forced-colours mode, and in greyscale since the Phase 3 manual audit.
 - **acceptance:**
-  - [ ] All WCAG 2.2 AAA criteria from `specs/accessibility.md` section written in P5-04
-        verified against the built output
-  - [ ] Greyscale render confirms modelled and measured fills are distinguishable without
-        colour
-  - [ ] Screen reader walkthrough confirms modelled segments are announced with source
-        attribution, not just band
-  - [ ] Any violations fixed and re-verified before closing the task
-  - [ ] `npm run verify` green
+  - [ ] Screen reader pass (NVDA or VoiceOver) through the full flow: form, departures, results with signal data, results with no-data segments
+  - [ ] Every signal band is announced with its full text label (not just colour or pattern)
+  - [ ] "Estimated (coverage map)" confidence label is announced for modelled segments
+  - [ ] Keyboard-only navigation: every interactive element reachable, focus order logical, focus indicators visible
+  - [ ] Windows High Contrast Mode: all signal bands distinguishable, text readable, form usable
+  - [ ] Greyscale rendering: all 6 legend entries distinguishable by pattern/icon alone
+  - [ ] axe-core AAA automated suite passes (17 tests, zero violations)
+  - [ ] Update the accessibility statement's "last tested" date if all checks pass
+
+### P6-05 — Update current-state header and declare v1 shipped
+- **owner:** product-manager
+- **status:** todo
+- **depends:** P6-01, P6-02, P6-03, P6-04
+- **why:** The backlog header and journal should clearly state that v1 is shipped, so future work starts from a defined baseline.
+- **acceptance:**
+  - [ ] `agent/PLAN.md` current-state header updated to say v1 is shipped, with the date
+  - [ ] `agent/JOURNAL.md` entry recording: all P6 tasks passed, v1 shipped, what v2 would contain (from brief section 5 out-of-scope list)
+  - [ ] No `todo` tasks remain in PLAN.md except DW-20 (blocked) and any bugs found in P6-01 through P6-04
+  - [ ] If P6-01 through P6-04 found bugs, those are filed with severity and listed in the journal entry
 
 ---
 
