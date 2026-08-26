@@ -35,6 +35,7 @@ describe("classifySegment", () => {
     const result = classifySegment([], "EE");
     expect(result.band).toBe("no-data");
     expect(result.confidence).toBe("no-data");
+    expect(result.source).toBe("no-data");
     expect(result.totalNodes).toBe(0);
   });
 
@@ -44,6 +45,7 @@ describe("classifySegment", () => {
     const result = classifySegment(["6589429705"], "FakeOperator");
     expect(result.band).toBe("no-data");
     expect(result.confidence).toBe("no-data");
+    expect(result.source).toBe("no-data");
   });
 
   it("classifies a real path segment for EE (LDS to WKF)", () => {

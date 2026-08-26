@@ -1247,3 +1247,28 @@ particular way, or its full original acceptance criteria).
   Legend in `VisualTimeline.tsx` expanded from 4 to 6 entries. `specs/design-system.md`
   updated with contrast matrix (text: 12.74:1 light / 10.74:1 dark), decisions log,
   and text wording table. Unit test asserts 6 legend entries in specified order.
+
+### P5-06 — Implement measured vs modelled signal display
+- **owner:** developer
+- **status:** done
+- **depends:** P5-05
+- **why:** Wire the new `source` field from `data/signal-segments.json` into the
+  timeline UI. Modelled segments need distinct visual treatment and distinct text.
+- **acceptance:**
+  - [x] `app/lib/signal.ts`: `SegmentSignal` type gains `source: "measured" | "modelled" | "no-data"`
+        field; populated from the `source` field in `signal-segments.json`
+  - [x] Visual timeline: modelled segments rendered with the design-approved fill/pattern;
+        aria-hidden (the text table carries the semantic content)
+  - [x] Text timeline: modelled rows include the wording approved in P5-04; source is
+        stated explicitly in the table cell
+  - [x] Legend updated to six entries; legend text matches P5-04 approved copy
+  - [x] No existing test broken; new unit tests for the `source` field population
+  - [x] `npm run verify` green
+- **result:** `SegmentSignal.source` is a required field populated by `classifySegment`
+  and `classifySegmentWorstCase`. `JourneyTimeline.tsx` renders modelled wording with
+  `PinIcon`; `confidenceLabel` returns "Estimated (coverage map)" for modelled. "Expected"
+  language reserved for measured data. `VisualTimeline.tsx` `bandClass`/`bandLabel` handle
+  `source === "modelled"` giving `ts-band--modelled-voice`/`ts-band--modelled-none` CSS
+  classes. Legend has six entries in the order specified by `specs/accessibility.md`
+  section 15.4. Test fixtures updated with `source` field; label assertions updated to
+  full wording. 289 unit tests, 17 Playwright AAA tests, all pass. PR #61.

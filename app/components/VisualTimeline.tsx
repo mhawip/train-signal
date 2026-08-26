@@ -18,7 +18,7 @@
  */
 
 import type { Journey } from "@/app/lib/journey-types";
-import type { SegmentSignal, SignalBand } from "@/app/lib/signal";
+import type { SegmentSignal, SignalBand, SignalSource } from "@/app/lib/signal";
 import { elapsedMinutes } from "@/app/components/JourneyTimeline";
 
 export interface VisualTimelineProps {
@@ -49,9 +49,20 @@ const PX_PER_MINUTE = 3;
 const INLINE_LABEL_MIN_PX = 60;
 
 /**
- * Map a signal band to its CSS class name.
+ * Map a signal band + source to its CSS class name.
+ * Modelled segments get dedicated classes with distinct patterns
+ * (135-degree dashed diagonal) per specs/design-system.md section 4.
  */
-function bandClass(band: SignalBand): string {
+function bandClass(band: SignalBand, source?: SignalSource): string {
+  if (source === "modelled") {
+    switch (band) {
+      case "voice":
+      case "video":
+        return "ts-band--modelled-voice";
+      case "none":
+        return "ts-band--modelled-none";
+    }
+  }
   switch (band) {
     case "video":
       return "ts-band--video";
@@ -67,10 +78,14 @@ function bandClass(band: SignalBand): string {
 }
 
 /**
- * Map a signal band to its inline text label.
+ * Map a signal band + source to its inline text label.
  * Plain English per WCAG 3.1.5.
+ * Modelled bands use "Estimated signal" per specs/accessibility.md 15.2.
  */
-function bandLabel(band: SignalBand): string {
+function bandLabel(band: SignalBand, source?: SignalSource): string {
+  if (source === "modelled") {
+    return "Estimated signal";
+  }
   switch (band) {
     case "video":
       return "Voice and video";
@@ -133,6 +148,25 @@ function BandIcon({ band }: { band: SignalBand }) {
     default:
       return null;
   }
+}
+
+/**
+ * Coverage-map pin icon for modelled (estimated) segments.
+ * Same icon used in the legend for the "Estimated signal" entry.
+ */
+function ModelledPinIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="ts-band-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+    >
+      <path d="M8 1a5 5 0 0 0-5 5c0 4.5 5 9 5 9s5-4.5 5-9a5 5 0 0 0-5-5Zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" />
+    </svg>
+  );
 }
 
 export function VisualTimeline({
@@ -242,11 +276,12 @@ export function VisualTimeline({
           const isLast = index === segments.length - 1;
           const signal = segment.signal;
           const band = signal?.band;
+          const source = signal?.source;
 
           // Build CSS classes for the segment bar
           const segmentClasses = ["ts-visual-timeline__segment"];
           if (band) {
-            const bc = bandClass(band);
+            const bc = bandClass(band, source);
             if (bc) segmentClasses.push(bc);
           }
           if (signal?.confidence === "low") {
@@ -289,8 +324,12 @@ export function VisualTimeline({
               >
                 {showInlineLabel && (
                   <span className="ts-visual-timeline__band-label">
-                    {band && <BandIcon band={band} />}
-                    {bandLabel(band!)}
+                    {band && source === "modelled" ? (
+                      <ModelledPinIcon />
+                    ) : (
+                      band && <BandIcon band={band} />
+                    )}
+                    {bandLabel(band!, source)}
                     {signal?.tunnels && signal.tunnels.length > 0 && (
                       <span className="ts-visual-timeline__tunnel-note">
                         {signal.tunnels.join(", ")}

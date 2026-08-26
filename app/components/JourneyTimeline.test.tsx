@@ -190,6 +190,7 @@ describe("JourneyTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 50,
         totalNodes: 60,
         tunnels: [],
@@ -197,6 +198,7 @@ describe("JourneyTimeline", () => {
       {
         band: "voice" as const,
         confidence: "low" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: ["Stoke Tunnel"],
@@ -204,6 +206,7 @@ describe("JourneyTimeline", () => {
       {
         band: "none" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 20,
         totalNodes: 25,
         tunnels: [],
@@ -229,6 +232,7 @@ describe("JourneyTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 50,
         totalNodes: 60,
         tunnels: [],
@@ -236,6 +240,7 @@ describe("JourneyTimeline", () => {
       {
         band: "voice" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],
@@ -243,6 +248,7 @@ describe("JourneyTimeline", () => {
       {
         band: "none" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 20,
         totalNodes: 25,
         tunnels: [],
@@ -269,6 +275,7 @@ describe("JourneyTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 50,
         totalNodes: 60,
         tunnels: [],
@@ -276,6 +283,7 @@ describe("JourneyTimeline", () => {
       {
         band: "voice" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],
@@ -283,6 +291,7 @@ describe("JourneyTimeline", () => {
       {
         band: "none" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 20,
         totalNodes: 25,
         tunnels: [],
@@ -296,8 +305,8 @@ describe("JourneyTimeline", () => {
       />
     );
 
-    expect(screen.getByText("Voice and video")).toBeInTheDocument();
-    expect(screen.getByText("Voice only")).toBeInTheDocument();
+    expect(screen.getByText("Voice and video calls expected")).toBeInTheDocument();
+    expect(screen.getByText("Voice calls expected")).toBeInTheDocument();
     expect(screen.getByText("No signal expected")).toBeInTheDocument();
   });
 
@@ -306,6 +315,7 @@ describe("JourneyTimeline", () => {
       {
         band: "voice" as const,
         confidence: "low" as const,
+        source: "measured" as const,
         coveredNodes: 10,
         totalNodes: 40,
         tunnels: [],
@@ -313,6 +323,7 @@ describe("JourneyTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],
@@ -320,6 +331,7 @@ describe("JourneyTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],
@@ -341,6 +353,7 @@ describe("JourneyTimeline", () => {
       {
         band: "voice" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: ["Stoke Tunnel"],
@@ -348,6 +361,7 @@ describe("JourneyTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],
@@ -355,6 +369,7 @@ describe("JourneyTimeline", () => {
       {
         band: "video" as const,
         confidence: "high" as const,
+        source: "measured" as const,
         coveredNodes: 30,
         totalNodes: 40,
         tunnels: [],

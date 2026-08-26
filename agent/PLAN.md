@@ -97,6 +97,7 @@ and writes to it last.
 | P5-03 | Ofcom Connected Nations 2025: pipeline integration | data-engineer |
 | P5-04 | Accessibility constraints: measured vs modelled signal display | accessibility-specialist |
 | P5-05 | Design: measured vs modelled signal display | designer |
+| P5-06 | Implement measured vs modelled signal display | developer |
 
 ---
 
@@ -203,22 +204,7 @@ P5-04 is done — see the index above.
 
 P5-05 is done — see the index above.
 
-### P5-06 — Implement measured vs modelled signal display
-- **owner:** developer
-- **status:** todo
-- **depends:** P5-05
-- **why:** Wire the new `source` field from `data/signal-segments.json` into the
-  timeline UI. Modelled segments need distinct visual treatment and distinct text.
-- **acceptance:**
-  - [ ] `app/lib/signal.ts`: `SegmentSignal` type gains `source: "measured" | "modelled" | "no-data"`
-        field; populated from the `source` field in `signal-segments.json`
-  - [ ] Visual timeline: modelled segments rendered with the design-approved fill/pattern;
-        aria-hidden (the text table carries the semantic content)
-  - [ ] Text timeline: modelled rows include the wording approved in P5-04; source is
-        stated explicitly in the table cell
-  - [ ] Legend updated to three entries; legend text matches P5-04 approved copy
-  - [ ] No existing test broken; new unit tests for the `source` field population
-  - [ ] `npm run verify` green
+P5-06 is done — see index above.
 
 ### P5-07 — Accessibility review of P5-06
 - **owner:** accessibility-specialist

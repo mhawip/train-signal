@@ -164,40 +164,91 @@ function XIcon() {
 }
 
 /**
+ * Inline SVG icon for modelled (estimated) signal bands.
+ * A coverage-map pin. aria-hidden.
+ */
+function PinIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      className="ts-band-icon"
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+    >
+      <path d="M8 1a5 5 0 0 0-5 5c0 4.5 5 9 5 9s5-4.5 5-9a5 5 0 0 0-5-5Zm0 7a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z" />
+    </svg>
+  );
+}
+
+/**
  * Render the signal cell content for a segment.
  * Returns icon + text label + optional tunnel and confidence notes.
+ *
+ * Wording per specs/accessibility.md section 15.3:
+ * - Measured video: "Voice and video calls expected"
+ * - Measured voice: "Voice calls expected"
+ * - Measured/any none: "No signal expected"
+ * - Modelled voice: "Ofcom coverage maps suggest voice calls may be possible here"
+ * - Modelled none: "Ofcom coverage maps suggest no coverage here"
+ * - No data: "No signal data available"
+ * - Unknown: en dash
  */
 function SignalCell({ signal }: { signal: SegmentSignal }) {
-  const { band, confidence, tunnels } = signal;
+  const { band, confidence, source, tunnels } = signal;
 
   let icon: React.ReactNode = null;
   let label = "";
 
-  switch (band) {
-    case "video":
-      icon = <CheckIcon />;
-      label = "Voice and video";
-      break;
-    case "voice":
-      icon = <PhoneIcon />;
-      label = "Voice only";
-      break;
-    case "none":
-      icon = <XIcon />;
-      label = "No signal expected";
-      break;
-    case "no-data":
-      label = "No data";
-      break;
-    case "unknown":
-      return <>{"\u2013"}</>;
+  if (band === "unknown") {
+    return <>{"\u2013"}</>;
+  }
+
+  if (band === "no-data") {
+    label = "No signal data available";
+  } else if (source === "modelled") {
+    // Modelled segments use hedged wording that attributes the source
+    // explicitly. "Expected" is reserved for measured data only.
+    switch (band) {
+      case "voice":
+        label = "Ofcom coverage maps suggest voice calls may be possible here";
+        break;
+      case "none":
+        label = "Ofcom coverage maps suggest no coverage here";
+        break;
+      case "video":
+        // Modelled data caps at voice -- video should not occur, but
+        // handle it defensively with the voice wording.
+        label = "Ofcom coverage maps suggest voice calls may be possible here";
+        break;
+    }
+    // Coverage-map pin icon for all modelled bands
+    icon = <PinIcon />;
+  } else {
+    // Measured data (or source absent / "no-data" source with a
+    // usable band -- shouldn't happen, but handle defensively)
+    switch (band) {
+      case "video":
+        icon = <CheckIcon />;
+        label = "Voice and video calls expected";
+        break;
+      case "voice":
+        icon = <PhoneIcon />;
+        label = "Voice calls expected";
+        break;
+      case "none":
+        icon = <XIcon />;
+        label = "No signal expected";
+        break;
+    }
   }
 
   return (
     <span className="ts-signal-cell">
       {icon}
       <span className="ts-signal-cell__label">{label}</span>
-      {confidence === "low" && (
+      {confidence === "low" && source !== "modelled" && (
         <span className="ts-signal-cell__note">(limited data)</span>
       )}
       {tunnels.length > 0 && (
@@ -210,10 +261,21 @@ function SignalCell({ signal }: { signal: SegmentSignal }) {
 }
 
 /**
- * Map a confidence value to a display label.
+ * Map a confidence/source combination to a display label.
  * Plain English per WCAG 3.1.5.
+ *
+ * Per specs/accessibility.md section 15.3:
+ * - Modelled segments always show "Estimated (coverage map)"
+ * - No-data source shows "No data"
+ * - Measured segments show "High", "Low", or "No data"
  */
 function confidenceLabel(signal: SegmentSignal): string {
+  if (signal.source === "modelled") {
+    return "Estimated (coverage map)";
+  }
+  if (signal.source === "no-data") {
+    return "No data";
+  }
   switch (signal.confidence) {
     case "high":
       return "High";

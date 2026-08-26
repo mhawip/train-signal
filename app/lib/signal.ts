@@ -26,9 +26,13 @@ import type { Journey } from "@/app/lib/journey-types";
 export type SignalBand = "video" | "voice" | "none" | "no-data" | "unknown";
 export type Confidence = "high" | "low" | "no-data";
 
+export type SignalSource = "measured" | "modelled" | "no-data";
+
 export interface SegmentSignal {
   band: SignalBand;
   confidence: Confidence;
+  /** Data provenance: measured (yellow-train), modelled (coverage map), or no-data */
+  source: SignalSource;
   /** Path nodes that had data for this operator */
   coveredNodes: number;
   /** Total path nodes in this segment */
@@ -256,6 +260,7 @@ export function classifySegment(
     return {
       band: "no-data",
       confidence: "no-data",
+      source: "no-data",
       coveredNodes: 0,
       totalNodes: 0,
     };
@@ -265,6 +270,12 @@ export function classifySegment(
   let voiceCount = 0;
   let noneCount = 0;
   let hasLowConfidence = false;
+  // Track whether any covering node has measured data.
+  // If at least one node with a usable band (video/voice/none) has
+  // source === "measured", the overall segment source is "measured".
+  // If all such nodes are "modelled", the segment source is "modelled".
+  let hasMeasured = false;
+  let hasModelled = false;
 
   for (const nodeId of pathNodeIds) {
     const signalNode = signalData.nodes[nodeId];
@@ -287,6 +298,17 @@ export function classifySegment(
       // measurements for this operator -- treat it as uncovered
     }
 
+    // Only track source for nodes that contribute a usable band
+    if (opData.band !== "no-data") {
+      if (opData.source === "modelled") {
+        hasModelled = true;
+      } else {
+        // Default to measured if source is absent (pre-P5-03 data)
+        // or explicitly "measured"
+        hasMeasured = true;
+      }
+    }
+
     if (opData.confidence === "low") {
       hasLowConfidence = true;
     }
@@ -300,6 +322,7 @@ export function classifySegment(
     return {
       band: "no-data",
       confidence: "no-data",
+      source: "no-data",
       coveredNodes,
       totalNodes,
     };
@@ -318,9 +341,17 @@ export function classifySegment(
     dominantBand = "video";
   }
 
+  // Source: measured if any covering node is measured, else modelled
+  const source: SignalSource = hasMeasured
+    ? "measured"
+    : hasModelled
+      ? "modelled"
+      : "no-data";
+
   return {
     band: dominantBand,
     confidence: hasLowConfidence ? "low" : "high",
+    source,
     coveredNodes,
     totalNodes,
   };
@@ -476,8 +507,13 @@ function classifySegmentWorstCase(
   let maxCoveredNodes = 0;
   const totalNodes = pathNodeIds.length;
 
+  // Collect all per-operator results so we can determine the source
+  // of whichever band is worst across all operators.
+  const opResults: Array<Omit<SegmentSignal, "tunnels">> = [];
+
   for (const op of ALL_OPERATORS) {
     const result = classifySegment(pathNodeIds, op);
+    opResults.push(result);
     if (result.band === "no-data") continue;
 
     if (!hasData) {
@@ -494,12 +530,34 @@ function classifySegmentWorstCase(
   }
 
   if (!hasData) {
-    return { band: "no-data", confidence: "no-data", coveredNodes: 0, totalNodes };
+    return { band: "no-data", confidence: "no-data", source: "no-data", coveredNodes: 0, totalNodes };
+  }
+
+  // Determine source from the operators that produced the worst band.
+  // Prefer "measured" over "modelled" over "no-data" -- if any operator
+  // with the worst band has measured data, the result is measured.
+  const SOURCE_RANK: Record<string, number> = {
+    "measured": 2,
+    "modelled": 1,
+    "no-data": 0,
+  };
+  let bestSourceRank = -1;
+  let resultSource: SignalSource = "no-data";
+
+  for (const r of opResults) {
+    if (r.band === worstBand) {
+      const rank = SOURCE_RANK[r.source] ?? 0;
+      if (rank > bestSourceRank) {
+        bestSourceRank = rank;
+        resultSource = r.source;
+      }
+    }
   }
 
   return {
     band: worstBand,
     confidence: hasLowConfidence ? "low" : "high",
+    source: resultSource,
     coveredNodes: maxCoveredNodes,
     totalNodes,
   };
@@ -540,6 +598,7 @@ export function getJourneySignal(journey: Journey): SegmentSignal[] {
       results.push({
         band: "unknown",
         confidence: "no-data",
+        source: "no-data",
         coveredNodes: 0,
         totalNodes: 0,
         tunnels: [],
@@ -556,6 +615,7 @@ export function getJourneySignal(journey: Journey): SegmentSignal[] {
       results.push({
         band: "unknown",
         confidence: "no-data",
+        source: "no-data",
         coveredNodes: 0,
         totalNodes: 0,
         tunnels: [],

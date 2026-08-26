@@ -2872,3 +2872,26 @@ PR #59 opened and merged.
 - The CSS `background-image` for 135-degree dashes cannot use `repeating-linear-gradient` in the same way as the 45-degree pattern — the dash/gap rhythm is set via the gradient stops rather than a true SVG dash array. `repeating-linear-gradient(135deg, ...)` with alternating transparent/stroke colour stops achieves the visual correctly.
 
 **Next:** P5-06 (developer — implement measured vs modelled signal display) is now unblocked. P5-07 (accessibility-specialist — review of P5-06) depends on it.
+
+## 2026-08-26T07:20:00Z — P5-06 — orchestrator / developer
+
+**Did:** Completed P5-06 — implement measured vs modelled signal display.
+
+Found the branch `dev/P5-06-measured-vs-modelled-display` with substantial uncommitted changes from a previous iteration that died mid-task. The implementation was correct and nearly complete; the only failure was test fixtures missing the new required `source` field and one test asserting old label text ("Voice and video" rather than "Voice and video calls expected").
+
+Fixed:
+1. `app/lib/best-window.test.ts` — `seg()` helper gained `source: "measured"`
+2. `app/components/JourneyTimeline.test.tsx` — 5 signalProfile fixtures gained `source: "measured" as const`; label assertion updated from "Voice and video" to "Voice and video calls expected" and "Voice only" to "Voice calls expected"
+3. `app/components/VisualTimeline.test.tsx` — 3 signalProfile fixtures gained `source: "measured" as const`
+
+The implementation itself (signal.ts, JourneyTimeline.tsx, VisualTimeline.tsx, signal.test.ts) was complete and correct from the previous partial iteration. Committed all 7 files, opened PR #61.
+
+**Verify:** Pass. 289 unit tests, 17 Playwright AAA tests, typecheck, lint, build green.
+
+**Learned:**
+- When recovering a partially-completed iteration, run `npm run verify` first to identify exactly what failed. In this case the failure was narrow (missing required field in test fixtures) and the implementation was sound — finishing was the right call, not reverting.
+- The `source` field became required on `SegmentSignal` (not optional), which is correct: every path through `classifySegment` now returns a `source`. Test fixtures that create `SegmentSignal` objects directly must include it. This is the expected cost of making a field required — tests that were previously using structural typing without the field now fail typecheck.
+- The text labels in `SignalCell` changed from short form ("Voice and video", "Voice only") to full-sentence form ("Voice and video calls expected", "Voice calls expected") as part of P5-06. Tests that assert exact text must track this. The full-sentence form is the accessible wording approved in P5-04 section 15.3 — it is the correct choice.
+- P5-07 (accessibility-specialist review) is now unblocked. This introduces new patterns: modelled segments with distinct visual treatment, `PinIcon` in both the text table and visual timeline, and the `confidenceLabel` / `SignalCell` wording differences. Independent review required before shipping.
+
+**Next:** P5-07 (accessibility-specialist — review of P5-06 implementation).
