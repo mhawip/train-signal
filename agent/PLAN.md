@@ -242,7 +242,7 @@ unblocks, DW-20 runs independently of Phase 6.
 
 ### P6-02 — End-to-end QA: edge cases and resilience
 - **owner:** qa
-- **status:** todo
+- **status:** in-progress
 - **depends:** —
 - **why:** Edge cases that only emerge in a finished product — same origin and destination, beyond-horizon dates, midnight crossings, direct URLs, rapid resubmission, browser back/forward — could break the user experience in ways unit tests do not catch.
 - **acceptance:**
