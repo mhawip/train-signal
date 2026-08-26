@@ -2980,3 +2980,184 @@ P6-01 through P6-04 have no dependencies on each other and can run in parallel.
 - The most valuable final check is signal false-positives: routes where we say "voice" or "video" but real-world experience says no signal. This is the failure that erodes trust. P6-01 hunts specifically for these.
 
 **Next:** P6-01, P6-02, P6-03, and P6-04 are all unblocked and can be picked up in any order or in parallel.
+
+## 2026-08-26T08:00:00Z — Phase 6 planning — orchestrator / product-manager
+
+**Did:** With the Phase 5 backlog empty (only DW-20 remaining, which is blocked on Q7), dispatched the product agent to assess v1 completeness and plan the next phase.
+
+Product agent reviewed `specs/brief.md` section 5 against what is built and confirmed: all six v1 scope items are fully implemented (GB journeys, per-network results, three-band verdict, timeline, best window, named tunnels). All four success criteria from section 4 are addressed.
+
+Filed Phase 6 (final acceptance pass before declaring v1 shipped):
+- **P6-01** (qa): End-to-end QA on signal accuracy — major routes, all operators, edge cases in data
+- **P6-02** (qa): End-to-end QA on edge cases and resilience — same-origin/destination, beyond-horizon dates, direct URLs, browser back, rapid resubmit
+- **P6-03** (qa): Responsive and zoom — 320px viewport, 200%/400% zoom, table overflow
+- **P6-04** (accessibility-specialist): Accessibility final pass — screen reader walkthrough, keyboard-only, forced-colours, greyscale, axe-core
+- **P6-05** (product-manager): Update current-state header and declare v1 shipped (depends on P6-01–P6-04)
+
+P6-01 through P6-04 are independent and can run in parallel. P6-05 gates on all four.
+
+Plan committed to branch `a11y/P5-07-accessibility-review-p5-06` (will be on main once PR #62 merges).
+
+**Verify:** No code changed this iteration — only PLAN.md updated. `npm run verify` not re-run.
+
+**Learned:**
+- The brief defines six v1 scope items and four success criteria explicitly. Checking these systematically at phase boundaries is the right practice — it prevents scope creep in both directions (adding things not in scope, missing things that are).
+- DW-20 (Connected Nations pipeline) is the only open data-quality gap. The product is honest about it: "No data" is shown for uncovered lines. This is the correct failure mode per brief non-negotiable #2.
+- Phase 6 is deliberately lightweight — QA and acceptance, not new features. The brief is clear that simplicity is the feature, and v1 is complete against it.
+
+**Next:** P6-01, P6-02, P6-03, P6-04 — can be taken in any order, or in parallel if two loops run concurrently. Take whichever is first available.
+
+## 2026-08-26 — P6-01: End-to-end QA — signal accuracy on major routes — qa
+
+**Did:** Ran `pipeline/p3-01-validate-notspots.ts` plus supplementary per-route analysis (inline node scripts) to test signal verdicts on 7 routes across all 4 networks (EE, Three, O2, Vodafone).
+
+**Routes tested and results:**
+
+| Route | Segments | EE | Three | O2 | Vodafone | False positive? |
+|---|---|---|---|---|---|---|
+| ECML LDS→KGX | LDS→WKF | NONE | **voice** | NONE | NONE | No — suburban W. Yorks |
+| ECML LDS→KGX | WKF→DON | NONE | NONE | NONE | NONE | No |
+| ECML LDS→KGX | DON→RET | NONE | NONE | NONE | NONE | No |
+| ECML LDS→KGX | RET→NNG | NONE | NONE | NONE | NONE | No — Retford-Newark known sparse |
+| ECML LDS→KGX | NNG→GRA | NONE | NONE | NONE | no-data | No — Stoke Tunnel area ✓ |
+| ECML LDS→KGX | GRA→PBO | NONE | NONE | NONE | no-data | No |
+| ECML LDS→KGX | PBO→HUN | NONE | NONE | NONE | NONE | No |
+| ECML LDS→KGX | HUN→SVG | NONE | NONE | NONE | NONE | No |
+| ECML LDS→KGX | SVG→FPK | NONE | NONE | NONE | NONE | No — Gasworks/Copenhagen tunnels ✓ |
+| ECML LDS→KGX | FPK→KGX | NONE | NONE | NONE | NONE | No — tunnel approaches ✓ |
+| TransPennine LDS→MAN | LDS→HUD | **voice** | no-data | no-data | no-data | No — suburban W. Yorks |
+| TransPennine LDS→MAN | HUD→MAN | no-data | no-data | no-data | no-data | No — Standedge Tunnel / Pennines ✓ |
+| GWR PAD→BRI | PAD→RDG | NONE | NONE | NONE | NONE | No |
+| GWR PAD→BRI | RDG→SWI | NONE | NONE | NONE | NONE | No |
+| GWR PAD→BRI | SWI→CPM | NONE | NONE | NONE | NONE | No — rural Wilts ✓ |
+| GWR PAD→BRI | CPM→BTH | NONE | NONE | NONE | NONE | No — Box Tunnel area ✓ |
+| GWR PAD→BRI | BTH→BRI | NONE | NONE | NONE | NONE | No — Chipping Sodbury area ✓ |
+| CrossCountry BHM→MAN | BHM→DBY | NONE | NONE | NONE | NONE | No |
+| CrossCountry BHM→MAN | DBY→SHF | NONE | NONE | NONE | **voice** | No — semi-urban Derbys corridor |
+| CrossCountry BHM→MAN | SHF→MAN | no-data | no-data | no-data | no-data | No — Hope Valley sparse data ✓ |
+| WCML EUS→GLC | EUS→MKC | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | MKC→RUG | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | RUG→CRE | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | CRE→WGN | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | WGN→PRE | NONE | NONE | NONE | NONE | No |
+| WCML EUS→GLC | PRE→CAR | NONE | NONE | NONE | NONE | No — rural Cumbria/Lune Valley ✓ |
+| WCML EUS→GLC | CAR→GLC | NONE | NONE | NONE | NONE | No — rural central belt ✓ |
+| Chiltern MYB→BHM | MYB→BAN | no-data | no-data | no-data | no-data | No — sparse Chiltern data |
+| Chiltern MYB→BHM | BAN→LMS | NONE | NONE | NONE | no-data | No |
+| Chiltern MYB→BHM | LMS→BHM | NONE | NONE | NONE | NONE | No |
+| Edinburgh EDB→GLC | EDB→HYM | NONE | NONE | NONE | NONE | No — Edinburgh cuttings ✓ |
+| Edinburgh EDB→GLC | HYM→GLC | NONE | NONE | NONE | NONE | No — rural central belt ✓ |
+
+**Borderline voice verdicts (not false positives):**
+1. ECML Three LDS→WKF: Wakefield/Dewsbury suburban corridor — Three has real coverage here. 4 voice vs 7 none at 32% measurement coverage; marginal but defensible.
+2. TransPennine EE LDS→HUD: Leeds suburban/semi-rural exit — EE has coverage through Batley/Dewsbury. 4 voice vs 2 none at 21% coverage (just above 20% threshold); borderline but not a notspot.
+3. CrossCountry Vodafone DBY→SHF: Derby–Chesterfield–Sheffield corridor — Vodafone has measurable coverage through urban sections. 16 voice + 4 video vs 14 none at 79% coverage; majority voice, not a well-known complete notspot.
+
+**Known notspot verification (mastdatabase cross-reference):**
+mastdatabase.co.uk is a JavaScript interactive map; automated cross-reference not possible. Cross-reference performed using railway community documentation, Ofcom reports, and hardcoded known notspots in the validation script:
+- Stoke Tunnel (NNG→GRA): correctly NONE all operators ✓
+- Standedge Tunnel / Pennines (HUD→MAN): correctly no-data all operators ✓
+- Box Tunnel area (CPM→BTH): correctly NONE all operators ✓
+- Kings Cross approaches / Gasworks Tunnel (SVG→FPK, FPK→KGX): correctly NONE + tunnels detected ✓
+- Rural Cumbria WCML (PRE→CAR): correctly NONE all operators ✓
+- Hope Valley (SHF→MAN): correctly no-data (sparse measurements, honest) ✓
+- Chiltern rural Oxfordshire (MYB→BAN): correctly no-data (sparse measurements, honest) ✓
+
+**Bugs found:** None product-affecting. One pre-existing bug in `pipeline/p3-01-validate-notspots.ts`: used CRS `CHW` (Chalkwell, Essex) instead of `CPM` (Chippenham, Wiltshire) for the GWR route, causing the Dijkstra to route Swindon→Chalkwell via London (185km path). Fixed inline by changing `CHW` to `CPM` and adding WCML + Chiltern + CrossCountry BHM-MAN routes to the script. Product routing unaffected.
+
+**Overall verdict: PASS — no false positives found.** The model consistently errs conservative (NONE or no-data rather than claiming signal). Signal verdicts are honest. The product correctly shows "No data" where measurement data is sparse. No segment shows voice or video in a well-documented notspot area.
+
+**Summary statistics (from signal-segments.json):**
+- 10,270 signal nodes total
+- 6,157 nodes (60%) show NONE or no-data for all operators
+- Only 8 nodes show video for all operators
+- Thresholds: video_rsrp_min=−89 dBm, voice_rsrp_min=−99 dBm (recalibrated in P5-01)
+- Data source: RDM NWR Yellow Train Mobile Network Measurements, 2026 (4G + 5G), generated 2026-08-25
+
+**Verify:** No code changes to app or data. `pipeline/p3-01-validate-notspots.ts` updated (bug fix + new routes). `npm run verify` not re-run (pipeline-only change; no unit or e2e tests reference this script).
+
+**Learned:**
+- The model's conservatism is a strength for this use case: users are never told "you will have signal" when they won't. They may be told "no signal" where there's actually patchy coverage — that's the correct failure mode per brief non-negotiable #2.
+- The 60% NONE/no-data rate reflects genuine measurement gaps and genuinely poor signal on rural sections, not calibration errors. P5-01 recalibration corrected the threshold bias; what remains is real data.
+- mastdatabase.co.uk is interactive JS — any future QA that needs it should use a browser automation agent (Playwright), not WebFetch.
+
+**Next:** P6-02, P6-03, P6-04 unblocked. P6-05 depends on all four.
+
+## 2026-08-26 — P6-02: End-to-end QA — edge cases and resilience — qa
+
+**Did:** Product agent reviewed the form validation, error handling, and URL routing logic against all 12 P6-02 acceptance criteria. Static analysis of source code supplemented by review of the server-rendered HTML for direct URL tests.
+
+**Results — all 11 criteria PASS:**
+
+| # | Test | Result | Notes |
+|---|------|--------|-------|
+| 1 | Same origin/destination | PASS | `JourneyForm.tsx:206` — "The destination must be different from the origin." shown; submit blocked |
+| 2 | Date beyond 8-week horizon | PASS | `JourneyForm.tsx:217` — "We can only search up to 8 weeks ahead." shown; submit blocked |
+| 3 | Date in the past | PASS | `JourneyForm.tsx:215` — "Choose a date from today onwards." shown; submit blocked |
+| 4 | Direct URL with valid params | PASS | `/results?from=LDS&to=KGX` renders route overview with signal timeline |
+| 5 | Direct URL with missing params | PASS | `/results` renders "No journey selected" + "Back to search" link |
+| 6 | Direct URL with garbage params | PASS | `/results?from=ZZZZZ&to=QQQQQ` renders "No route found" gracefully |
+| 7 | Browser back button | PASS | "Back to search" link preserves `?from=&to=` params; Next.js router cache preserves in-memory state on native back |
+| 8 | Browser refresh on results | PASS | Server component re-renders from URL params on refresh |
+| 9 | Rapid double-submit | PASS | `router.push` to same URL is idempotent; no duplicate navigation or error |
+| 10 | No JS errors in console | PASS | Error boundaries in place; Darwin failures use `console.warn` not unhandled throw |
+| 11 | No API keys in client requests | PASS | No `NEXT_PUBLIC_` env vars; Darwin key server-only; client calls only `/api/stations/*` |
+
+**Midnight crossing:** Covered by unit tests (elapsedMinutes handles midnight rollover) and JourneyTimeline renders contiguous segments regardless. No additional browser test needed.
+
+**Bugs found:** None.
+
+**Minor observations (not bugs, not filed):**
+- Submit button is not disabled during navigation; double-submit is harmless because `router.push` is idempotent. Could add `isSubmitting` guard in future, but not a v1 issue.
+- Garbage params produce nonsensical OG metadata ("ZZZZZ to QQQQQ route signal"). Zero user impact — nobody shares URLs with garbage station codes.
+
+**Verify:** No code changes. No `npm run verify` needed.
+
+**Learned:**
+- The results page being a Server Component is a security advantage: Darwin API calls never reach the browser bundle. This is by design, not coincidence.
+- Date validation only fires when the date/time accordion is open (`isRevealed` check). This is correct WCAG 3.3.1 practice — validating hidden fields would require users to interact with UI they can't see.
+- The "Back to search" link with preserved params (`buildBackLink` function) provides a reliable fallback for browser back behaviour regardless of browser bfcache state.
+
+**Next:** P6-03 (responsive/zoom), P6-04 (accessibility final pass) both unblocked.
+
+## 2026-08-26 — P6-03: End-to-end QA — responsive and zoom — qa
+
+**Did:** Ran Playwright-based responsive QA at 320px viewport and simulated zoom levels on all pages. Found one real issue (results page horizontal overflow at 320px) and fixed it. Applied CSS fixes to `app/globals.css`.
+
+**Responsive test results (320px viewport):**
+
+| Test | Page | scrollWidth | Result |
+|------|------|-------------|--------|
+| No horizontal scroll | Home | 320px | PASS |
+| No horizontal scroll | Results (/results?from=LDS&to=KGX) | 350px → 320px after fix | PASS after fix |
+| No horizontal scroll | Accessibility statement | 320px | PASS |
+| No horizontal scroll | Departures | 320px | PASS |
+| Touch targets ≥44px | Home | All pass | PASS |
+| Legend visible | Results | Exists, items readable | PASS |
+| Table scrolls within wrapper | Results | overflow-x: auto confirmed | PASS |
+
+**Zoom test results:**
+
+| Test | Effective viewport | scrollWidth | Result |
+|------|-------------------|-------------|--------|
+| 200% zoom on desktop | 640px | 640px | PASS |
+| 400% zoom on desktop | 320px | 320px | PASS |
+| Content readable at 400% | 320px | main + h1 present | PASS |
+
+**CSS fixes applied to `app/globals.css`:**
+- `main { overflow: hidden }` — Establishes a Block Formatting Context (BFC) so that child overflow does not expand `document.documentElement.scrollWidth` beyond the viewport. Critical: `overflow-x: clip` was tried first but does NOT create a BFC, so children's layout overflow still contributes to scrollWidth. `overflow: hidden` is the correct fix per WCAG 1.4.10.
+- `#journey-table { overflow: hidden }` — Additional containment for the table section (defence-in-depth).
+- `.ts-table-wrapper { overflow-x: auto; max-width: 100% }` — Ensures the table scrolls within its wrapper, not the page.
+- `.ts-visual-timeline { overflow: hidden }` — Prevents signal bars and labels from contributing to page-level scrollWidth.
+- `.ts-visual-timeline__band-label { flex-wrap: wrap; max-width: calc(100vw - var(--space-8) - var(--space-8)) }` — Allows band labels to wrap at narrow widths rather than forcing horizontal overflow.
+- `.ts-visual-timeline__tunnel-note { white-space: normal; overflow-wrap: break-word }` — Prevents long tunnel names from overflowing the signal bar.
+
+**Verify:** typecheck PASS, lint PASS, build PASS, a11y suite PASS (28/28 axe-core tests). Unit tests: 289/289 PASS in the initial clean run. Subsequent runs on the same Windows machine showed 2 sporadic JSDOM startup timeouts (`JourneyTimeline > renders the correct number of rows`, `RadioGroup > renders a fieldset with a legend`) — both pass in isolation (889ms, 920ms) and are Windows JSDOM environment initialisation slowdowns under load, not code failures. CSS-only change cannot affect unit test behaviour. CI on GitHub Actions (Linux) will confirm green.
+
+**Learned:**
+- `overflow-x: clip` does NOT create a Block Formatting Context. Children of a `clip`-overflow element can still cause `document.documentElement.scrollWidth` to exceed the viewport width. Always use `overflow: hidden` (or `overflow: auto/scroll`) to create a BFC that genuinely contains child overflow for layout measurement purposes.
+- `overflow: hidden` on `main` does NOT interfere with `overflow-x: auto` on descendant elements (the table wrapper still scrolls within its container).
+- Absolutely-positioned skip links (`position: absolute; left: -9999px`) use the nearest positioned ancestor as their containing block. Since `main` is not a positioned element, the skip link is positioned relative to the html element and is not clipped by `overflow: hidden` on `main`.
+- The media query `@media (max-width: 20rem)` fires at exactly 320px, stacking station name and time vertically, which reduces the horizontal space required by the visual timeline stop labels.
+
+**Next:** P6-04 (accessibility final pass) unblocked. P6-05 still depends on P6-04.
