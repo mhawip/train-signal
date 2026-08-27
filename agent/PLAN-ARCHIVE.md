@@ -1388,3 +1388,17 @@ particular way, or its full original acceptance criteria).
   - [x] axe-core AAA automated suite passes (17 tests, zero violations)
   - [x] Update the accessibility statement's "last tested" date if all checks pass
 - **result:** Three issues found and fixed: (1) bare en-dashes in specific-train table announced as "en dash" by screen readers — wrapped with aria-hidden + visually-hidden "Not applicable" text; (2) missing global skip link — only results page had one, home/departures/accessibility-statement pages had none; (3) missing `<header>` landmark in root layout — spec requires it but it was absent. Accessibility statement last-tested date updated to 2026-08-27. 17/17 axe-core AAA tests pass, zero violations. PR #66.
+
+### P6-05 — Update current-state header and declare v1 shipped
+- **owner:** product-manager
+- **status:** done
+- **depends:** P6-01, P6-02, P6-03, P6-04
+- **why:** The backlog header and journal should clearly state that v1 is shipped, so future work starts from a defined baseline.
+- **acceptance:**
+  - [x] `agent/PLAN.md` current-state header updated to say v1 is shipped, with the date
+  - [x] `agent/JOURNAL.md` entry recording: all P6 tasks passed, v1 shipped, what v2 would contain (from brief section 5 out-of-scope list)
+  - [x] No `todo` tasks remain in PLAN.md except DW-20 (blocked) and any bugs found in P6-01 through P6-04
+  - [x] If P6-01 through P6-04 found bugs, those are filed with severity and listed in the journal entry
+- **result:** Current-state header updated to "v1 is shipped (2026-08-27)". Journal entry
+  appended recording all P6 tasks passed with zero bugs, v1 shipped, and v2 scope drawn
+  from brief section 5. Only open item is DW-20 (blocked on Q7). No code changes.

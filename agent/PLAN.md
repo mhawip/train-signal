@@ -1,17 +1,13 @@
 ## Current state
 
-**v1 scope is complete.** All scope items from `specs/brief.md` section 5 are
-implemented, tested, and accessibility-reviewed (72+ tasks, 46+ PRs). Phase 5 (signal
-accuracy recalibration and measured vs modelled display) is complete. The only remaining
-open item is DW-20 (Connected Nations data merge), which is blocked on Q7 (Matt
-providing Ofcom API credentials or alternative data source). The product works correctly
-without it — uncovered lines show "No data" honestly rather than guessing.
-
-**Phase 6 is a final v1 acceptance pass.** The product has been built incrementally over
-five phases. Before declaring v1 shipped, a holistic end-to-end QA pass verifies the
-complete product against every success criterion in `specs/brief.md` section 4, hunts
-signal false-positives (the failure that matters most), and tests the edge cases that
-only emerge in a finished product. No new features. No scope expansion.
+**v1 is shipped (2026-08-27).** All scope items from `specs/brief.md` section 5 are
+implemented, tested, and accessibility-reviewed (72+ tasks, 46+ PRs). Phase 6 acceptance
+pass (signal accuracy, edge cases, responsive/zoom, accessibility) found zero bugs
+requiring fixes beyond the pass itself. The only remaining open item is DW-20 (Connected
+Nations data merge), which is blocked on Q7 (Matt providing Ofcom API credentials or
+alternative data source). The product works correctly without it — uncovered lines show
+"No data" honestly rather than guessing. DW-20 is a data-quality enhancement for a
+future iteration, not a v1 blocker.
 
 ---
 
@@ -104,6 +100,7 @@ and writes to it last.
 | P6-02 | End-to-end QA: edge cases and resilience | qa |
 | P6-03 | End-to-end QA: responsive and zoom | qa |
 | P6-04 | End-to-end QA: accessibility final pass | accessibility-specialist |
+| P6-05 | Update current-state header and declare v1 shipped | product-manager |
 
 ---
 
@@ -266,16 +263,7 @@ P6-03 is done — see index above.
 
 P6-04 is done — see index above.
 
-### P6-05 — Update current-state header and declare v1 shipped
-- **owner:** product-manager
-- **status:** todo
-- **depends:** P6-01, P6-02, P6-03, P6-04
-- **why:** The backlog header and journal should clearly state that v1 is shipped, so future work starts from a defined baseline.
-- **acceptance:**
-  - [ ] `agent/PLAN.md` current-state header updated to say v1 is shipped, with the date
-  - [ ] `agent/JOURNAL.md` entry recording: all P6 tasks passed, v1 shipped, what v2 would contain (from brief section 5 out-of-scope list)
-  - [ ] No `todo` tasks remain in PLAN.md except DW-20 (blocked) and any bugs found in P6-01 through P6-04
-  - [ ] If P6-01 through P6-04 found bugs, those are filed with severity and listed in the journal entry
+P6-05 is done — see index above.
 
 ---
 
