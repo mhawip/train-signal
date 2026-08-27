@@ -483,14 +483,37 @@ export function JourneyTimeline({
               return (
                 <tr key={point.crs}>
                   <th scope="row">{point.name}</th>
-                  <td>{point.scheduledArrival ?? "\u2013"}</td>
-                  <td>{point.scheduledDeparture ?? "\u2013"}</td>
+                  <td>
+                    {point.scheduledArrival ?? (
+                      <>
+                        <span aria-hidden="true">{"\u2013"}</span>
+                        <span className="ts-visually-hidden">
+                          Not applicable
+                        </span>
+                      </>
+                    )}
+                  </td>
+                  <td>
+                    {point.scheduledDeparture ?? (
+                      <>
+                        <span aria-hidden="true">{"\u2013"}</span>
+                        <span className="ts-visually-hidden">
+                          Not applicable
+                        </span>
+                      </>
+                    )}
+                  </td>
                   {hasSignal && (
                     <td>
                       {segmentSignal ? (
                         <SignalCell signal={segmentSignal} />
                       ) : (
-                        "\u2013"
+                        <>
+                          <span aria-hidden="true">{"\u2013"}</span>
+                          <span className="ts-visually-hidden">
+                            Not applicable
+                          </span>
+                        </>
                       )}
                     </td>
                   )}
@@ -499,12 +522,24 @@ export function JourneyTimeline({
                       {segmentSignal ? (
                         confidenceLabel(segmentSignal)
                       ) : (
-                        "\u2013"
+                        <>
+                          <span aria-hidden="true">{"\u2013"}</span>
+                          <span className="ts-visually-hidden">
+                            Not applicable
+                          </span>
+                        </>
                       )}
                     </td>
                   )}
                   <td>
-                    {elapsed !== null ? formatDuration(elapsed) : "\u2013"}
+                    {elapsed !== null ? formatDuration(elapsed) : (
+                      <>
+                        <span aria-hidden="true">{"\u2013"}</span>
+                        <span className="ts-visually-hidden">
+                          Not applicable
+                        </span>
+                      </>
+                    )}
                   </td>
                 </tr>
               );
