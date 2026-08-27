@@ -268,7 +268,7 @@ P6-04 is done — see index above.
 
 ### P6-05 — Update current-state header and declare v1 shipped
 - **owner:** product-manager
-- **status:** todo
+- **status:** in-progress
 - **depends:** P6-01, P6-02, P6-03, P6-04
 - **why:** The backlog header and journal should clearly state that v1 is shipped, so future work starts from a defined baseline.
 - **acceptance:**
