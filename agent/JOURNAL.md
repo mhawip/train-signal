@@ -3161,3 +3161,23 @@ mastdatabase.co.uk is a JavaScript interactive map; automated cross-reference no
 - The media query `@media (max-width: 20rem)` fires at exactly 320px, stacking station name and time vertically, which reduces the horizontal space required by the visual timeline stop labels.
 
 **Next:** P6-04 (accessibility final pass) unblocked. P6-05 still depends on P6-04.
+
+## 2026-08-27 — P6-04 — accessibility-specialist
+**Did:** End-to-end accessibility final pass over the complete product. Static code review of all key components plus full automated axe-core AAA suite. Three real issues found and fixed:
+
+1. **Bare en-dashes in specific-train table (JourneyTimeline.tsx)** — the origin and destination rows in the specific-train results table used bare `–` characters for cells that don't apply (e.g. "Arrives" for the origin, "Departs" for the destination). Screen readers announced these as "en dash" with no context. Fixed by wrapping each with `<span aria-hidden="true">–</span><span className="ts-visually-hidden">Not applicable</span>` — the same pattern already used in the route-overview table. WCAG 1.3.1.
+
+2. **Missing global skip link (layout.tsx)** — the root layout had no skip link. Only the results page had a page-specific "Skip to journey details" link. The home page, departures page, and accessibility statement page had no mechanism to bypass repeated navigation. Added `<a href="#main-content" className="ts-skip-link">Skip to main content</a>` as the first element in `<body>`, targeting the existing `id="main-content"` on every page's `<main>`. WCAG 2.4.1.
+
+3. **Missing `<header>` landmark (layout.tsx)** — the root layout had a `<footer>` but no `<header>`. The accessibility spec section 2.2 explicitly requires both. Added `<header className="ts-header">` with a site-name link using existing `ts-header` / `ts-header__link` CSS classes that were defined but unused. WCAG 1.3.1.
+
+Also confirmed passing: every signal band announced with full text label; "Estimated (coverage map)" text in the Confidence column of the text-equivalent table for modelled segments; all 6 legend entries distinguishable by pattern + icon + text (no colour dependency); `forced-colors` media query coverage for Windows High Contrast Mode; keyboard navigation focus order logical and all elements reachable; accessibility statement last-tested date updated to 2026-08-27.
+
+**Verify:** npm run verify — typecheck PASS, lint PASS, 289 unit tests PASS, build PASS, 17/17 Playwright/axe-core tests PASS, zero violations at wcag2aaa ruleset.
+
+**Learned:**
+- The root layout `<header>` landmark was missing for the entire project lifetime. The CSS classes for it existed in `globals.css` from Phase 0 but were never used in the layout. Always check that the root layout implements the spec's landmark requirements, not just individual page components.
+- The en-dash pattern fix for specific-train table was already solved for the route-overview table — the fix was a direct copy of the existing pattern. When reviewing for screen-reader issues, check all table variants against the same template, not just the first one implemented.
+- `axe-core` at `wcag2aaa` does not catch bare punctuation characters that are semantically meaningless to screen readers (the en-dash issue). Static review is essential alongside automated testing for this class of problem.
+
+**Next:** P6-05 (update current-state header and declare v1 shipped) is now unblocked — all P6 tasks are done.

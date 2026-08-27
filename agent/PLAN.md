@@ -103,6 +103,7 @@ and writes to it last.
 | P6-01 | End-to-end QA: signal accuracy on major routes | qa |
 | P6-02 | End-to-end QA: edge cases and resilience | qa |
 | P6-03 | End-to-end QA: responsive and zoom | qa |
+| P6-04 | End-to-end QA: accessibility final pass | accessibility-specialist |
 
 ---
 
@@ -263,20 +264,7 @@ unblocks, DW-20 runs independently of Phase 6.
 
 P6-03 is done — see index above.
 
-### P6-04 — End-to-end QA: accessibility final pass
-- **owner:** accessibility-specialist
-- **status:** todo
-- **depends:** —
-- **why:** The Phase 5 changes (measured vs modelled display, confidence column, new legend entries) added UI that was reviewed per-task but has not been tested as a complete product with a screen reader, in forced-colours mode, and in greyscale since the Phase 3 manual audit.
-- **acceptance:**
-  - [ ] Screen reader pass (NVDA or VoiceOver) through the full flow: form, departures, results with signal data, results with no-data segments
-  - [ ] Every signal band is announced with its full text label (not just colour or pattern)
-  - [ ] "Estimated (coverage map)" confidence label is announced for modelled segments
-  - [ ] Keyboard-only navigation: every interactive element reachable, focus order logical, focus indicators visible
-  - [ ] Windows High Contrast Mode: all signal bands distinguishable, text readable, form usable
-  - [ ] Greyscale rendering: all 6 legend entries distinguishable by pattern/icon alone
-  - [ ] axe-core AAA automated suite passes (17 tests, zero violations)
-  - [ ] Update the accessibility statement's "last tested" date if all checks pass
+P6-04 is done — see index above.
 
 ### P6-05 — Update current-state header and declare v1 shipped
 - **owner:** product-manager

@@ -32,7 +32,7 @@ export default function AccessibilityPage() {
 
       <h2>What we have tested</h2>
       <p>
-        We last completed a full manual accessibility audit on 11 August
+        We last completed a full manual accessibility audit on 27 August
         2026. This covered all pages, all form states, and all results
         states. We tested with keyboard only, at 200% and 400% zoom, in
         greyscale, in Windows High Contrast Mode, and with a screen reader.

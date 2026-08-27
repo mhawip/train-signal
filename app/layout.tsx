@@ -16,6 +16,16 @@ export default function RootLayout({
   return (
     <html lang="en-GB">
       <body>
+        <a href="#main-content" className="ts-skip-link">
+          Skip to main content
+        </a>
+
+        <header className="ts-header">
+          <Link href="/" className="ts-header__link">
+            Train Signal
+          </Link>
+        </header>
+
         {children}
 
         <footer className="ts-footer">
