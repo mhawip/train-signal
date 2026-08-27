@@ -3181,3 +3181,32 @@ Also confirmed passing: every signal band announced with full text label; "Estim
 - `axe-core` at `wcag2aaa` does not catch bare punctuation characters that are semantically meaningless to screen readers (the en-dash issue). Static review is essential alongside automated testing for this class of problem.
 
 **Next:** P6-05 (update current-state header and declare v1 shipped) is now unblocked — all P6 tasks are done.
+
+## 2026-08-27T12:00:00Z — P6-05 — product-manager
+
+**Did:** Declared v1 shipped. Updated `agent/PLAN.md` current-state header to read "v1 is shipped (2026-08-27)". Moved P6-05 to the completed index in PLAN.md and archived its full entry to `agent/PLAN-ARCHIVE.md`. Appended this journal entry.
+
+Phase 6 acceptance pass results (all four tasks passed, zero bugs filed):
+- **P6-01 (signal accuracy):** 7 routes, 4 operators, 33 segments tested. Zero false positives. Model errs conservative throughout. All known notspots confirmed as NONE or no-data.
+- **P6-02 (edge cases):** All 11 acceptance criteria pass. Same-origin rejection, beyond-horizon date rejection, direct URL handling, browser back/refresh, rapid resubmit, no API keys in client requests.
+- **P6-03 (responsive/zoom):** No horizontal scroll at 320px (after CSS fix shipped in PR #65). 200% and 400% zoom pass. All touch targets at least 44px.
+- **P6-04 (accessibility):** Three screen-reader gaps found and fixed in PR #66 (bare en-dashes, missing global skip link, missing header landmark). 17/17 axe-core AAA tests pass. Accessibility statement last-tested date updated to 2026-08-27.
+
+Bugs found in P6-01 through P6-04: none product-affecting. P6-03 fixed a CSS overflow issue (responsive, not a bug in the product logic). P6-04 fixed three accessibility gaps (screen-reader quality, not signal-accuracy issues). No signal false-positives found anywhere in the acceptance pass.
+
+Only open item: DW-20 (Connected Nations data merge), blocked on Q7. Not a v1 blocker.
+
+**Verify:** No code changes in this task. Documentation-only update to PLAN.md, PLAN-ARCHIVE.md, and JOURNAL.md.
+
+**Learned:**
+- The product survived a full acceptance pass with zero signal false-positives. The conservative calibration (P5-01) is working as intended: the model under-promises rather than over-promises, which is the correct failure mode for this use case.
+- 72+ tasks across 6 phases, 46+ PRs, 289 unit tests, 17 Playwright AAA tests, and the product does one thing: tells you when you can take a call on a train. Simplicity held.
+- The things we decided not to build (accounts, saved journeys, sharing links, map views, live disruption, onboard wifi, non-GB journeys, underground/metro/tram) are the most valuable decisions in the project. Each is defensible alone. Together they would have destroyed the product.
+
+**Next:** v1 is shipped. Future work (v2) would draw from `specs/brief.md` section 5 "Out of scope for v1":
+- Saved journeys, accounts, sharing links
+- Non-GB journeys (data availability elsewhere far worse)
+- Underground / metro / tram networks
+- Live disruption or delay adjustment
+- Onboard wifi quality
+DW-20 (Connected Nations data merge) runs independently whenever Q7 unblocks.
