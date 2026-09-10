@@ -202,3 +202,26 @@ Downloaded 3 zip files to `data/raw/`:
 - `Global_View_5G.zip` (105 MB) — 5G measurements
 
 **Action taken:** DW-04 unblocked. QUESTIONS.md updated; Q6 archived here.
+
+---
+
+## Q7 — Ofcom Connected Nations per-pixel per-operator coverage data
+
+**Status:** resolved 2026-08-27 — Matt registered for the Ofcom Connected Nations Mobile API directly online and has access.
+**Filed:** 2026-08-25 (P5-03)
+**Blocks:** P5-03 coverage gap-fill pipeline — now unblocked
+
+The publicly downloadable Connected Nations 2025 data contains only aggregated statistics
+at parliamentary constituency and local authority level. The pipeline needed per-postcode
+per-operator 4G voice outdoor coverage to fill the 53% of track-graph nodes with no
+yellow-train measurements.
+
+**Options considered:**
+1. Register for the Ofcom Connected Nations API (cnapisupport@ofcom.org.uk) — per-postcode per-operator, 100 calls/min, 50k/month
+2. FOI request for the underlying 100m grid data
+3. Query individual operator coverage checker APIs (EE, O2, Three, Vodafone)
+4. Accept the 53% gap and rely solely on measured data
+
+**Answer:** (Matt, 2026-08-27)
+Chose option 1. Signed up online and now have access to the Ofcom Connected Nations
+Mobile API. API credentials to be added to `.env.local` and Vercel environment variables.

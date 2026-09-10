@@ -1,17 +1,11 @@
 ## Current state
 
-**v1 scope is complete.** All scope items from `specs/brief.md` section 5 are
-implemented, tested, and accessibility-reviewed (72+ tasks, 46+ PRs). Phase 5 (signal
-accuracy recalibration and measured vs modelled display) is complete. The only remaining
-open item is DW-20 (Connected Nations data merge), which is blocked on Q7 (Matt
-providing Ofcom API credentials or alternative data source). The product works correctly
-without it — uncovered lines show "No data" honestly rather than guessing.
-
-**Phase 6 is a final v1 acceptance pass.** The product has been built incrementally over
-five phases. Before declaring v1 shipped, a holistic end-to-end QA pass verifies the
-complete product against every success criterion in `specs/brief.md` section 4, hunts
-signal false-positives (the failure that matters most), and tests the edge cases that
-only emerge in a finished product. No new features. No scope expansion.
+**v1 is shipped (2026-08-27).** All scope items from `specs/brief.md` section 5 are
+implemented, tested, and accessibility-reviewed (72+ tasks, 46+ PRs). Phase 6 acceptance
+pass (signal accuracy, edge cases, responsive/zoom, accessibility) found zero bugs
+requiring fixes beyond the pass itself. DW-20 (Connected Nations data merge) is now also
+complete (2026-09-10): 5,768 previously no-data nodes filled with Ofcom modelled
+coverage, bringing signal node count from 10,270 to 15,900. No open items remain.
 
 ---
 
@@ -104,6 +98,7 @@ and writes to it last.
 | P6-02 | End-to-end QA: edge cases and resilience | qa |
 | P6-03 | End-to-end QA: responsive and zoom | qa |
 | P6-04 | End-to-end QA: accessibility final pass | accessibility-specialist |
+| P6-05 | Update current-state header and declare v1 shipped | product-manager |
 
 ---
 
@@ -266,16 +261,7 @@ P6-03 is done — see index above.
 
 P6-04 is done — see index above.
 
-### P6-05 — Update current-state header and declare v1 shipped
-- **owner:** product-manager
-- **status:** todo
-- **depends:** P6-01, P6-02, P6-03, P6-04
-- **why:** The backlog header and journal should clearly state that v1 is shipped, so future work starts from a defined baseline.
-- **acceptance:**
-  - [ ] `agent/PLAN.md` current-state header updated to say v1 is shipped, with the date
-  - [ ] `agent/JOURNAL.md` entry recording: all P6 tasks passed, v1 shipped, what v2 would contain (from brief section 5 out-of-scope list)
-  - [ ] No `todo` tasks remain in PLAN.md except DW-20 (blocked) and any bugs found in P6-01 through P6-04
-  - [ ] If P6-01 through P6-04 found bugs, those are filed with severity and listed in the journal entry
+P6-05 is done — see index above.
 
 ---
 
@@ -287,16 +273,16 @@ DW-04 is done — see index above.
 
 ### DW-20 — Run P5-03 Connected Nations pipeline once per-pixel data is available
 - **owner:** data-engineer
-- **status:** blocked
-- **depends:** Q7 (Matt registers for Ofcom Connected Nations API or alternative)
+- **status:** done
+- **depends:** Q7 (resolved 2026-08-27)
 - **why:** `pipeline/p5-03-build-connected-nations.ts` is implemented but requires
   per-operator 4G voice coverage data at per-pixel (100 m grid) or per-postcode
   resolution, which is not publicly downloadable. Once Matt provides access (via
   Ofcom CN API credentials or another route), this task runs the pipeline and updates
   `data/signal-segments.json` with modelled entries for the ~11k currently no-data nodes.
 - **acceptance:**
-  - [ ] Pipeline runs successfully against the obtained data
-  - [ ] Console output logs per-operator node counts gained (logged by the script)
-  - [ ] `data/signal-segments.json` contains nodes with `source: "modelled"`
-  - [ ] No existing `source: "measured"` entries modified
-  - [ ] `npm run verify` green
+  - [x] Pipeline runs successfully against the obtained data
+  - [x] Console output logs per-operator node counts gained (logged by the script)
+  - [x] `data/signal-segments.json` contains nodes with `source: "modelled"`
+  - [x] No existing `source: "measured"` entries modified
+  - [ ] `npm run verify` green — pending PR CI

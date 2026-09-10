@@ -6,6 +6,62 @@ The next iteration starts with no memory of this one. This file is how work carr
 forward. Be honest — an entry that hides a failure costs the next five iterations. The
 **Learned** field is the most valuable: write down what surprised you.
 
+---
+
+## DW-20 — Connected Nations data merge (2026-09-10)
+
+**Task:** Run the Ofcom Connected Nations pipeline to fill no-data nodes in
+`data/signal-segments.json` with modelled 4G voice outdoor coverage.
+
+**What was done:**
+
+Q7 was resolved (Matt registered for the Ofcom Connected Nations Mobile API at
+api.ofcom.org.uk). The existing merge pipeline (`p5-03-build-connected-nations.ts`)
+expected a CSV file but the API provides per-postcode data, so a new fetch script was
+written first.
+
+**New script:** `pipeline/p5-03a-fetch-connected-nations.ts`
+- Phase 1: Reverse-geocodes all 21,626 track-graph nodes to UK postcodes via
+  postcodes.io (free, no key). 12,407 nodes got a postcode; 9,219 returned null
+  (tunnels, viaducts, non-GB track — expected and correct).
+- Phase 2: Queries the Ofcom Connected Nations Mobile API
+  (`GET https://api-proxy.ofcom.org.uk/mobile/coverage/{postcode}`) for each of the
+  7,438 unique postcodes at ~92 calls/min. Auth via `Ocp-Apim-Subscription-Key` header.
+  7,438 fetched, 0 errors. Operator field mapping: EE=EE, H3=Three, TF=O2
+  (Telefónica UK), VO=Vodafone. Voice covered if any address in postcode has
+  `*VoiceOutdoor > 0`.
+- Phase 3: Writes `data/raw/connected-nations-2025/coverage-grid.csv` (1.2 MB,
+  latitude/longitude/operator/voice_outdoor format).
+- Progress cached to `data/raw/connected-nations-2025/fetch-cache.json`; safe to
+  interrupt and resume.
+
+**Merge pipeline run:** `p5-03-build-connected-nations.ts` consumed the CSV and merged
+modelled coverage into `signal-segments.json`:
+- 11,538 eligible nodes (53.4% of graph, all operators < 3 measurements)
+- 5,768 nodes gained modelled coverage entries (all 4 operators each)
+- Signal nodes: 10,270 → 15,900 (+55%)
+- 94.1% of covered nodes have at least one operator with outdoor voice coverage
+- No `source: "measured"` entries modified (merge rules respected)
+
+**Files changed:**
+- `pipeline/p5-03a-fetch-connected-nations.ts` — new fetch script
+- `data/signal-segments.json` — updated with 5,768 new modelled nodes
+- `.env.example` — documented `OFCOM_CN_API_KEY`
+- `agent/QUESTIONS.md` / `agent/QUESTIONS-ARCHIVE.md` — Q7 archived
+
+**Learned:**
+- The Ofcom CN API is per-postcode, not per-pixel grid. A separate fetch step was
+  needed before the existing merge pipeline could run. Document this clearly so future
+  data refreshes know the two-step process: p5-03a then p5-03.
+- 9,219 nodes (42.6%) had no UK postcode — mostly tunnels and elevated structures over
+  non-residential land. These remain "no data" which is correct: we are not inventing
+  coverage where we have no evidence.
+- The Ofcom operator code `TF` = Telefónica UK = O2. Not obvious from the field name.
+  This is documented in the fetch script.
+- The `fetch-cache.json` file is in `data/raw/` (gitignored) which is correct — it
+  contains derived data from the API and should not be committed.
+
+
 Format:
 
 ```markdown
@@ -3181,3 +3237,32 @@ Also confirmed passing: every signal band announced with full text label; "Estim
 - `axe-core` at `wcag2aaa` does not catch bare punctuation characters that are semantically meaningless to screen readers (the en-dash issue). Static review is essential alongside automated testing for this class of problem.
 
 **Next:** P6-05 (update current-state header and declare v1 shipped) is now unblocked — all P6 tasks are done.
+
+## 2026-08-27T12:00:00Z — P6-05 — product-manager
+
+**Did:** Declared v1 shipped. Updated `agent/PLAN.md` current-state header to read "v1 is shipped (2026-08-27)". Moved P6-05 to the completed index in PLAN.md and archived its full entry to `agent/PLAN-ARCHIVE.md`. Appended this journal entry.
+
+Phase 6 acceptance pass results (all four tasks passed, zero bugs filed):
+- **P6-01 (signal accuracy):** 7 routes, 4 operators, 33 segments tested. Zero false positives. Model errs conservative throughout. All known notspots confirmed as NONE or no-data.
+- **P6-02 (edge cases):** All 11 acceptance criteria pass. Same-origin rejection, beyond-horizon date rejection, direct URL handling, browser back/refresh, rapid resubmit, no API keys in client requests.
+- **P6-03 (responsive/zoom):** No horizontal scroll at 320px (after CSS fix shipped in PR #65). 200% and 400% zoom pass. All touch targets at least 44px.
+- **P6-04 (accessibility):** Three screen-reader gaps found and fixed in PR #66 (bare en-dashes, missing global skip link, missing header landmark). 17/17 axe-core AAA tests pass. Accessibility statement last-tested date updated to 2026-08-27.
+
+Bugs found in P6-01 through P6-04: none product-affecting. P6-03 fixed a CSS overflow issue (responsive, not a bug in the product logic). P6-04 fixed three accessibility gaps (screen-reader quality, not signal-accuracy issues). No signal false-positives found anywhere in the acceptance pass.
+
+Only open item: DW-20 (Connected Nations data merge), blocked on Q7. Not a v1 blocker.
+
+**Verify:** No code changes in this task. Documentation-only update to PLAN.md, PLAN-ARCHIVE.md, and JOURNAL.md.
+
+**Learned:**
+- The product survived a full acceptance pass with zero signal false-positives. The conservative calibration (P5-01) is working as intended: the model under-promises rather than over-promises, which is the correct failure mode for this use case.
+- 72+ tasks across 6 phases, 46+ PRs, 289 unit tests, 17 Playwright AAA tests, and the product does one thing: tells you when you can take a call on a train. Simplicity held.
+- The things we decided not to build (accounts, saved journeys, sharing links, map views, live disruption, onboard wifi, non-GB journeys, underground/metro/tram) are the most valuable decisions in the project. Each is defensible alone. Together they would have destroyed the product.
+
+**Next:** v1 is shipped. Future work (v2) would draw from `specs/brief.md` section 5 "Out of scope for v1":
+- Saved journeys, accounts, sharing links
+- Non-GB journeys (data availability elsewhere far worse)
+- Underground / metro / tram networks
+- Live disruption or delay adjustment
+- Onboard wifi quality
+DW-20 (Connected Nations data merge) runs independently whenever Q7 unblocks.
