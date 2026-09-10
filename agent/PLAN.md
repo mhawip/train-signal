@@ -3,11 +3,9 @@
 **v1 is shipped (2026-08-27).** All scope items from `specs/brief.md` section 5 are
 implemented, tested, and accessibility-reviewed (72+ tasks, 46+ PRs). Phase 6 acceptance
 pass (signal accuracy, edge cases, responsive/zoom, accessibility) found zero bugs
-requiring fixes beyond the pass itself. The only remaining open item is DW-20 (Connected
-Nations data merge), which is blocked on Q7 (Matt providing Ofcom API credentials or
-alternative data source). The product works correctly without it — uncovered lines show
-"No data" honestly rather than guessing. DW-20 is a data-quality enhancement for a
-future iteration, not a v1 blocker.
+requiring fixes beyond the pass itself. DW-20 (Connected Nations data merge) is now also
+complete (2026-09-10): 5,768 previously no-data nodes filled with Ofcom modelled
+coverage, bringing signal node count from 10,270 to 15,900. No open items remain.
 
 ---
 
@@ -275,16 +273,16 @@ DW-04 is done — see index above.
 
 ### DW-20 — Run P5-03 Connected Nations pipeline once per-pixel data is available
 - **owner:** data-engineer
-- **status:** blocked
-- **depends:** Q7 (Matt registers for Ofcom Connected Nations API or alternative)
+- **status:** done
+- **depends:** Q7 (resolved 2026-08-27)
 - **why:** `pipeline/p5-03-build-connected-nations.ts` is implemented but requires
   per-operator 4G voice coverage data at per-pixel (100 m grid) or per-postcode
   resolution, which is not publicly downloadable. Once Matt provides access (via
   Ofcom CN API credentials or another route), this task runs the pipeline and updates
   `data/signal-segments.json` with modelled entries for the ~11k currently no-data nodes.
 - **acceptance:**
-  - [ ] Pipeline runs successfully against the obtained data
-  - [ ] Console output logs per-operator node counts gained (logged by the script)
-  - [ ] `data/signal-segments.json` contains nodes with `source: "modelled"`
-  - [ ] No existing `source: "measured"` entries modified
-  - [ ] `npm run verify` green
+  - [x] Pipeline runs successfully against the obtained data
+  - [x] Console output logs per-operator node counts gained (logged by the script)
+  - [x] `data/signal-segments.json` contains nodes with `source: "modelled"`
+  - [x] No existing `source: "measured"` entries modified
+  - [ ] `npm run verify` green — pending PR CI

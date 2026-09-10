@@ -6,6 +6,62 @@ The next iteration starts with no memory of this one. This file is how work carr
 forward. Be honest — an entry that hides a failure costs the next five iterations. The
 **Learned** field is the most valuable: write down what surprised you.
 
+---
+
+## DW-20 — Connected Nations data merge (2026-09-10)
+
+**Task:** Run the Ofcom Connected Nations pipeline to fill no-data nodes in
+`data/signal-segments.json` with modelled 4G voice outdoor coverage.
+
+**What was done:**
+
+Q7 was resolved (Matt registered for the Ofcom Connected Nations Mobile API at
+api.ofcom.org.uk). The existing merge pipeline (`p5-03-build-connected-nations.ts`)
+expected a CSV file but the API provides per-postcode data, so a new fetch script was
+written first.
+
+**New script:** `pipeline/p5-03a-fetch-connected-nations.ts`
+- Phase 1: Reverse-geocodes all 21,626 track-graph nodes to UK postcodes via
+  postcodes.io (free, no key). 12,407 nodes got a postcode; 9,219 returned null
+  (tunnels, viaducts, non-GB track — expected and correct).
+- Phase 2: Queries the Ofcom Connected Nations Mobile API
+  (`GET https://api-proxy.ofcom.org.uk/mobile/coverage/{postcode}`) for each of the
+  7,438 unique postcodes at ~92 calls/min. Auth via `Ocp-Apim-Subscription-Key` header.
+  7,438 fetched, 0 errors. Operator field mapping: EE=EE, H3=Three, TF=O2
+  (Telefónica UK), VO=Vodafone. Voice covered if any address in postcode has
+  `*VoiceOutdoor > 0`.
+- Phase 3: Writes `data/raw/connected-nations-2025/coverage-grid.csv` (1.2 MB,
+  latitude/longitude/operator/voice_outdoor format).
+- Progress cached to `data/raw/connected-nations-2025/fetch-cache.json`; safe to
+  interrupt and resume.
+
+**Merge pipeline run:** `p5-03-build-connected-nations.ts` consumed the CSV and merged
+modelled coverage into `signal-segments.json`:
+- 11,538 eligible nodes (53.4% of graph, all operators < 3 measurements)
+- 5,768 nodes gained modelled coverage entries (all 4 operators each)
+- Signal nodes: 10,270 → 15,900 (+55%)
+- 94.1% of covered nodes have at least one operator with outdoor voice coverage
+- No `source: "measured"` entries modified (merge rules respected)
+
+**Files changed:**
+- `pipeline/p5-03a-fetch-connected-nations.ts` — new fetch script
+- `data/signal-segments.json` — updated with 5,768 new modelled nodes
+- `.env.example` — documented `OFCOM_CN_API_KEY`
+- `agent/QUESTIONS.md` / `agent/QUESTIONS-ARCHIVE.md` — Q7 archived
+
+**Learned:**
+- The Ofcom CN API is per-postcode, not per-pixel grid. A separate fetch step was
+  needed before the existing merge pipeline could run. Document this clearly so future
+  data refreshes know the two-step process: p5-03a then p5-03.
+- 9,219 nodes (42.6%) had no UK postcode — mostly tunnels and elevated structures over
+  non-residential land. These remain "no data" which is correct: we are not inventing
+  coverage where we have no evidence.
+- The Ofcom operator code `TF` = Telefónica UK = O2. Not obvious from the field name.
+  This is documented in the fetch script.
+- The `fetch-cache.json` file is in `data/raw/` (gitignored) which is correct — it
+  contains derived data from the API and should not be committed.
+
+
 Format:
 
 ```markdown

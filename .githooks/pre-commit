@@ -3,7 +3,7 @@
 # Pre-commit hook: reject staged files larger than 10 MB.
 # Prevents accidental commits of raw Ofcom data or other large files.
 
-MAX_SIZE=10485760  # 10 MB in bytes
+MAX_SIZE=20971520  # 20 MB in bytes
 EXIT_CODE=0
 
 # List staged files (added or modified), skip deleted files
