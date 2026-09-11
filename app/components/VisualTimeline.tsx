@@ -54,7 +54,8 @@ const INLINE_LABEL_MIN_PX = 60;
  * (135-degree dashed diagonal) per specs/design-system.md section 4.
  */
 function bandClass(band: SignalBand, source?: SignalSource): string {
-  if (source === "modelled") {
+  if (source === "modelled" || source === "interpolated") {
+    // Interpolated data reuses modelled visual style — both are estimated.
     switch (band) {
       case "voice":
       case "video":
@@ -83,16 +84,17 @@ function bandClass(band: SignalBand, source?: SignalSource): string {
  * Modelled bands use "Estimated signal" per specs/accessibility.md 15.2.
  */
 function bandLabel(band: SignalBand, source?: SignalSource): string {
-  if (source === "modelled") {
+  if (source === "modelled" || source === "interpolated") {
+    // Both modelled and interpolated are estimated — same visual label.
     return "Estimated signal";
   }
   switch (band) {
     case "video":
-      return "Voice and video";
+      return "Good data";
     case "voice":
-      return "Voice only";
+      return "Limited data";
     case "none":
-      return "No signal expected";
+      return "No data expected";
     case "no-data":
       return "No data";
     case "unknown":
@@ -116,7 +118,9 @@ function BandIcon({ band }: { band: SignalBand }) {
           viewBox="0 0 16 16"
           fill="currentColor"
         >
-          <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+          <rect x="1" y="11" width="3" height="4" rx="0.5" />
+          <rect x="6" y="7" width="3" height="8" rx="0.5" />
+          <rect x="11" y="3" width="3" height="12" rx="0.5" />
         </svg>
       );
     case "voice":
@@ -129,7 +133,9 @@ function BandIcon({ band }: { band: SignalBand }) {
           viewBox="0 0 16 16"
           fill="currentColor"
         >
-          <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328Z" />
+          <rect x="1" y="11" width="3" height="4" rx="0.5" />
+          <rect x="6" y="7" width="3" height="8" rx="0.5" opacity="0.3" />
+          <rect x="11" y="3" width="3" height="12" rx="0.5" opacity="0.3" />
         </svg>
       );
     case "none":
@@ -223,12 +229,12 @@ export function VisualTimeline({
           <div className="ts-legend__item">
             <span className="ts-legend__swatch ts-band--video" />
             <BandIcon band="video" />
-            <span className="ts-legend__label">Voice and video</span>
+            <span className="ts-legend__label">Good data</span>
           </div>
           <div className="ts-legend__item">
             <span className="ts-legend__swatch ts-band--voice" />
             <BandIcon band="voice" />
-            <span className="ts-legend__label">Voice only</span>
+            <span className="ts-legend__label">Limited data</span>
           </div>
           <div className="ts-legend__item">
             <span className="ts-legend__swatch ts-band--modelled-voice" />
@@ -247,7 +253,7 @@ export function VisualTimeline({
           <div className="ts-legend__item">
             <span className="ts-legend__swatch ts-band--none" />
             <BandIcon band="none" />
-            <span className="ts-legend__label">No signal expected</span>
+            <span className="ts-legend__label">No data expected</span>
           </div>
           <div className="ts-legend__item">
             <span className="ts-legend__swatch ts-band--tunnel" />
@@ -324,7 +330,7 @@ export function VisualTimeline({
               >
                 {showInlineLabel && (
                   <span className="ts-visual-timeline__band-label">
-                    {band && source === "modelled" ? (
+                    {band && (source === "modelled" || source === "interpolated") ? (
                       <ModelledPinIcon />
                     ) : (
                       band && <BandIcon band={band} />

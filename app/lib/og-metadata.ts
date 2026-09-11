@@ -80,8 +80,8 @@ export interface BestWindowSummary {
 /**
  * Template A: specific-train results with a best window.
  *
- * "Best window: [StartStation] to [EndStation], [duration]. Expected
- *  voice and video signal on [origin] to [destination], [date]."
+ * "Best window: [StartStation] to [EndStation], [duration]. Good
+ *  mobile data expected on [origin] to [destination], [date]."
  *
  * Truncated to 155 characters. If the full description exceeds the
  * limit, the date clause is dropped first, then station names in the
@@ -96,8 +96,8 @@ export function buildResultsDescriptionWithWindow(
   const duration = formatDurationOg(window.durationMinutes);
   const qualityPhrase =
     window.quality === "video"
-      ? "Expected voice and video signal"
-      : "Expected voice signal";
+      ? "Good mobile data expected"
+      : "Mobile data expected";
 
   // Try full description first
   const full =
@@ -124,7 +124,7 @@ export function buildResultsDescriptionWithWindow(
 /**
  * Template B: specific-train results with no best window.
  *
- * "No clear window for a video call on this journey. Signal varies
+ * "No clear window for good mobile data on this journey. Coverage varies
  *  between [origin] and [destination], [date]."
  */
 export function buildResultsDescriptionNoWindow(
@@ -133,8 +133,8 @@ export function buildResultsDescriptionNoWindow(
   date: string,
 ): string {
   const full =
-    `No clear window for a video call on this journey. ` +
-    `Signal varies between ${originName} and ${destName}, ${date}.`;
+    `No clear window for reliable mobile data on this journey. ` +
+    `Coverage varies between ${originName} and ${destName}, ${date}.`;
 
   if (full.length <= OG_DESC_MAX) {
     return full;
@@ -142,8 +142,8 @@ export function buildResultsDescriptionNoWindow(
 
   // Drop date clause
   const noDate =
-    `No clear window for a video call on this journey. ` +
-    `Signal varies between ${originName} and ${destName}.`;
+    `No clear window for reliable mobile data on this journey. ` +
+    `Coverage varies between ${originName} and ${destName}.`;
 
   if (noDate.length <= OG_DESC_MAX) {
     return noDate;
@@ -155,16 +155,16 @@ export function buildResultsDescriptionNoWindow(
 /**
  * Template C: route-overview mode (no date/time params).
  *
- * "Typical signal for [origin] to [destination]. Check when you are
- *  likely to have signal for a call on this route."
+ * "Typical mobile data coverage for [origin] to [destination]. Check
+ *  when you are likely to have internet access on this route."
  */
 export function buildRouteOverviewDescription(
   originName: string,
   destName: string,
 ): string {
   const full =
-    `Typical signal for ${originName} to ${destName}. ` +
-    `Check when you are likely to have signal for a call on this route.`;
+    `Typical mobile data coverage for ${originName} to ${destName}. ` +
+    `Check when you are likely to have internet access on this route.`;
 
   if (full.length <= OG_DESC_MAX) {
     return full;

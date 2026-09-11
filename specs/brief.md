@@ -29,12 +29,12 @@ abandon, twenty minutes of "sorry, you're breaking up".
 
 ## 2. What we're building
 
-A web app that answers one question: **"During my train journey, when can I take a
-call?"**
+A web app that answers one question: **"During my train journey, when will I have
+mobile data?"**
 
 The user enters where they're travelling from, where to, and when. The app returns a
-visual timeline of the journey showing — minute by minute — where they'll have signal
-good enough for a voice call, good enough for a video call, or no usable signal at all.
+visual timeline of the journey showing — minute by minute — where they'll have good
+mobile data, limited data, or no connectivity at all.
 
 That's the whole product. Nothing else.
 
@@ -62,15 +62,15 @@ and want an answer in under fifteen seconds.
 - **GB National Rail journeys only.** Origin, destination, date and time.
 - **Per-network results.** The user selects EE, O2, Vodafone or Three. Results are
   tailored to their network, because the differences are large and material.
-- **Three-band signal verdict** along the journey:
-  - *Voice and video* — good enough for a Teams call
-  - *Voice only* — a phone call will hold, video will not
-  - *No usable signal* — do not schedule anything here
+- **Three-band coverage verdict** along the journey:
+  - *Good mobile data* — fast enough for video calls, streaming, and browsing
+  - *Mobile data* — enough for email, messaging, and basic browsing; video will not hold
+  - *No mobile data* — do not rely on a connection here
 - **Journey timeline visualisation** showing calling points, times, and the signal
   bands between them.
-- **"Best window to book"** — the app explicitly surfaces the longest continuous
-  stretch of good signal, with clock times, because that is the actual thing the user
-  came for.
+- **"Best window"** — the app explicitly surfaces the longest continuous
+  stretch of good mobile data, with clock times, because that is the actual thing the
+  user came for.
 - **Tunnels called out explicitly**, by name, as guaranteed dead zones.
 
 ### Out of scope for v1
@@ -174,11 +174,11 @@ The interface is two screens' worth of content, and no more.
 No hero image, no marketing copy, no cookie banner.
 
 **Screen two — the answer.** A vertical timeline of the journey. Calling points marked
-with their times. The line between them rendered in signal bands. Above it, in plain
+with their times. The line between them rendered in coverage bands. Above it, in plain
 language and large type, the headline answer:
 
 > **Best window: 14:35 – 15:20**
-> 45 minutes of good signal between York and Doncaster. Suitable for a video call.
+> 45 minutes of good mobile data between York and Doncaster.
 
 The timeline is the supporting evidence. The sentence is the product.
 

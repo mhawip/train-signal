@@ -1621,3 +1621,100 @@ gains: the pipeline targets the 11,356 graph nodes (53%) that currently have zer
 measurements. Of those, nodes near built-up areas with 4G coverage should gain "voice"
 classifications for most operators. Rural and remote nodes may remain "none" even with
 modelled data.
+
+---
+
+## P5-04 interpolated coverage (tunnel marking + graph interpolation)
+
+### Purpose
+
+After DW-20, 15,900 of 21,626 track nodes (73.5%) have signal data. The remaining
+5,726 nodes show "No data" to users. They split into two categories:
+
+1. **Tunnel nodes** — physically no signal. These should be `band: "none"`,
+   `source: "tunnel"`, not "no data".
+2. **Non-tunnel no-data nodes** — rural viaducts, isolated structures, gaps in the
+   yellow-train measurement routes. Signal is continuous spatially; neighbours on the
+   graph carry enough information for an honest estimate.
+
+### Phase A — Tunnel marking
+
+Script: `pipeline/p5-04-interpolate-coverage.ts`, Phase A
+
+1. Load `data/tunnels.json` (3,537 tunnel ways from OpenStreetMap).
+2. Build a grid spatial index over track-graph nodes.
+3. For each tunnel, walk its coordinate polyline and snap each waypoint to the nearest
+   graph node within **200 m** (same threshold as the app's `findTunnelsOnPath`).
+4. Collect the union of all snapped node IDs across all tunnels.
+5. For each snapped node **not already in signal-segments.json** (measured or modelled
+   data takes priority):
+   - Add entry: all 4 operators → `band: "none"`, `source: "tunnel"`,
+     `confidence: "high"`, `count: 0`.
+
+`source: "tunnel"` is treated by the app at the same confidence tier as `"measured"` —
+it is a factual physical property, not a prediction.
+
+### Phase B — Graph interpolation
+
+Script: `pipeline/p5-04-interpolate-coverage.ts`, Phase B (default when no `--tunnels-only`)
+
+**Eligibility:** nodes not in signal-segments.json after Phase A.
+
+For each eligible node, run a Dijkstra traversal outward along the track graph
+adjacency list, accumulating distance in metres, stopping at **MAX_DISTANCE = 5,000 m**.
+
+For each **operator** independently:
+- Collect all reachable nodes (within MAX_DISTANCE) that existed in signal-segments.json
+  before Phase B started (Phase B results do not feed into each other — deterministic).
+- For each such node with a usable band (`"video"`, `"voice"`, or `"none"`):
+  - Compute weight = `1 / (1 + dist_m / 1000)`:
+    - at 0 m → weight 1.0
+    - at 1 km → weight 0.5
+    - at 5 km → weight 0.17
+  - Accumulate `covered_weight` (band = video or voice) and `none_weight` (band = none)
+- **Minimum evidence threshold:** `covered_weight + none_weight >= 0.3`
+  (roughly equivalent to one data node within ~2.3 km — prevents guessing from a
+  single distant point)
+- If threshold not met → skip this operator (leave absent from node operators)
+- If `covered_weight > none_weight` → `band: "voice"` (capped — never "video")
+- Else → `band: "none"`
+
+Node entry if **any** operator gets a result:
+- `source: "interpolated"`, `confidence: "low"`, `count: 0`
+- Numeric fields (rsrp_p10 etc.) all 0, sinr_p10 null — same as modelled
+- Operators with insufficient evidence are omitted (absent = no-data in the app)
+
+### Source field values (P5-04 additions)
+
+| Value | Meaning |
+|---|---|
+| `"tunnel"` | Node is on a known tunnel; signal is physically absent |
+| `"interpolated"` | Band estimated from weighted average of nearby covered nodes |
+
+### CLI flags
+
+| Flag | Effect |
+|---|---|
+| `--dry-run` | Print statistics, do not write output |
+| `--tunnels-only` | Phase A only (no graph interpolation) |
+
+### Threshold rationale
+
+- **5,000 m radius:** Railway signal coverage changes slowly in rural areas (a mast
+  covers several km). 5 km is conservative enough to avoid bridging genuine coverage
+  boundaries but wide enough to fill most isolated gaps.
+- **0.3 weight threshold:** Prevents a single node 2.3+ km away from generating a
+  verdict. Requires at least one data node within ~2.3 km, or more distant nodes to
+  accumulate equivalent weight.
+- **"voice" cap:** Interpolated data is never promoted to "video". Interpolation cannot
+  know signal strength, only whether coverage is present. Capping at voice matches the
+  same policy as modelled (Ofcom Connected Nations) data.
+- **"low" confidence:** Always set on interpolated results. The UI shows "Estimated
+  (interpolated)" rather than a confidence level.
+
+### Pipeline script
+
+- **File:** `pipeline/p5-04-interpolate-coverage.ts`
+- **Usage:** `npx tsx pipeline/p5-04-interpolate-coverage.ts [--dry-run] [--tunnels-only]`
+- **Input:** `data/tunnels.json`, `data/track-graph.json`, `data/signal-segments.json`
+- **Output:** updated `data/signal-segments.json` (in place)

@@ -3,9 +3,12 @@
 **v1 is shipped (2026-08-27).** All scope items from `specs/brief.md` section 5 are
 implemented, tested, and accessibility-reviewed (72+ tasks, 46+ PRs). Phase 6 acceptance
 pass (signal accuracy, edge cases, responsive/zoom, accessibility) found zero bugs
-requiring fixes beyond the pass itself. DW-20 (Connected Nations data merge) is now also
-complete (2026-09-10): 5,768 previously no-data nodes filled with Ofcom modelled
-coverage, bringing signal node count from 10,270 to 15,900. No open items remain.
+requiring fixes beyond the pass itself. DW-20 (Connected Nations data merge) is complete
+(2026-09-10): 5,768 previously no-data nodes filled with Ofcom modelled coverage,
+bringing signal node count from 10,270 to 15,900. DW-21 (tunnel marking + graph
+interpolation) is complete (2026-09-10): pipeline and UI support for `source: "tunnel"`
+and `source: "interpolated"` added; run `npx tsx pipeline/p5-04-interpolate-coverage.ts`
+to update signal-segments.json. No open items remain.
 
 ---
 
@@ -286,3 +289,23 @@ DW-04 is done — see index above.
   - [x] `data/signal-segments.json` contains nodes with `source: "modelled"`
   - [x] No existing `source: "measured"` entries modified
   - [ ] `npm run verify` green — pending PR CI
+
+### DW-21 — Signal gap-fill: tunnel marking + graph interpolation
+- **owner:** data-engineer
+- **status:** done
+- **depends:** DW-20 (done)
+- **why:** After DW-20, 5,726 nodes (26.5% of the graph) still show "No data". Two
+  sub-categories: tunnel nodes (physically no signal) and non-tunnel gaps (spatially
+  isolated, neighbours carry enough evidence for an honest estimate). Filling both
+  honestly removes "No data" on all routes where neighbouring evidence exists.
+- **acceptance:**
+  - [x] `pipeline/p5-04-interpolate-coverage.ts` created (Phase A tunnel marking,
+        Phase B graph interpolation)
+  - [x] `app/lib/signal.ts` extended: `SignalSource` includes `"interpolated"`;
+        `OperatorSignal.source` includes `"tunnel"` and `"interpolated"`;
+        `classifySegment` tracks `hasInterpolated`; `SOURCE_RANK` updated
+  - [x] `app/components/JourneyTimeline.tsx` updated: interpolated display strings
+  - [x] `app/components/VisualTimeline.tsx` updated: interpolated reuses modelled CSS
+  - [x] `specs/signal-model.md` documents P5-04 algorithm and thresholds
+  - [ ] Pipeline run: `npx tsx pipeline/p5-04-interpolate-coverage.ts` (pending)
+  - [ ] `npm run verify` green

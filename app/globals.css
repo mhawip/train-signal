@@ -122,6 +122,16 @@
   /* --- Border radius --- */
   --radius-sm: 0.25rem; /* 4px */
   --radius-md: 0.5rem;  /* 8px */
+
+  /* --- Granular signal bar colours (decorative, aria-hidden) ---
+   * These are saturated for visual clarity; no text-contrast requirement. */
+  --bar-video:     #16a34a;  /* green-600 */
+  --bar-voice:     #d97706;  /* amber-600 */
+  --bar-none:      #dc2626;  /* red-600 */
+  --bar-nodata:    #9ca3af;  /* gray-400 */
+  --bar-video-est: #86efac;  /* green-300 (estimated) */
+  --bar-voice-est: #fcd34d;  /* amber-300 (estimated) */
+  --bar-none-est:  #fca5a5;  /* red-300 (estimated) */
 }
 
 /* ================================================================
@@ -188,6 +198,15 @@
     /* #999999 vs all dark bands >= 3.11:1 */
     --band-border: #999999;
     --band-tunnel-border: #999999;
+
+    /* Granular bar colours -- lighter in dark mode for visibility */
+    --bar-video:     #4ade80;  /* green-400 */
+    --bar-voice:     #fbbf24;  /* amber-400 */
+    --bar-none:      #f87171;  /* red-400 */
+    --bar-nodata:    #6b7280;  /* gray-500 */
+    --bar-video-est: #bbf7d0;  /* green-200 */
+    --bar-voice-est: #fef08a;  /* yellow-200 */
+    --bar-none-est:  #fecaca;  /* red-200 */
   }
 }
 
@@ -1168,6 +1187,139 @@ legend.ts-field__label + * {
 }
 
 /* ================================================================
+ * UNIFIED TIMELINE
+ *
+ * Single vertical timeline replacing the separate table + visual bars.
+ * Two-column layout per leg: connector column (node + spine) on the
+ * left, content column (station info + signal band card) on the right.
+ *
+ * Signal band card backgrounds and patterns come from the existing
+ * ts-band--* classes. The connector spine is neutral — colour is
+ * conveyed through the band card, not the spine.
+ * ================================================================ */
+
+.ts-unified-timeline {
+  margin-bottom: var(--space-8);
+}
+
+.ts-unified-timeline__leg {
+  display: flex;
+  gap: var(--space-3);
+}
+
+/* Left column: node dot + vertical spine */
+.ts-unified-timeline__connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 1rem; /* matches terminus node width */
+}
+
+/* Intermediate stop: filled circle */
+.ts-unified-timeline__node {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background-color: var(--color-page-fg);
+  flex-shrink: 0;
+  margin-top: 0.35rem; /* align vertically with the station name */
+}
+
+/* Origin and destination: hollow ring, slightly larger */
+.ts-unified-timeline__node--terminus {
+  width: 1rem;
+  height: 1rem;
+  background-color: var(--color-page-bg);
+  border: 3px solid var(--color-page-fg);
+  margin-left: -0.125rem; /* re-centre the wider ring over the spine */
+  margin-top: 0.28rem;
+}
+
+/* Vertical line connecting consecutive nodes */
+.ts-unified-timeline__spine {
+  flex: 1;
+  width: 2px;
+  background-color: var(--color-page-fg);
+  opacity: 0.18;
+  margin-top: var(--space-1);
+  border-radius: 1px;
+}
+
+/* Right column */
+.ts-unified-timeline__content {
+  flex: 1;
+  min-width: 0; /* allow text to wrap within flex child */
+}
+
+/* Station name + time row */
+.ts-unified-timeline__stop-info {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding: var(--space-1) 0;
+}
+
+.ts-unified-timeline__station-name {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-page-fg);
+}
+
+.ts-unified-timeline__time {
+  font-size: var(--font-size-sm);
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+/* Container for one or more sub-segment band cards within a leg */
+.ts-unified-timeline__bands {
+  margin-top: var(--space-2);
+  margin-bottom: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Signal band card — background/colour from ts-band--* */
+.ts-unified-timeline__band-info {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--band-border);
+}
+
+.ts-unified-timeline__band-info.ts-band--tunnel {
+  border-color: var(--band-tunnel-border);
+}
+
+/* Dashed border for low-confidence measured segments */
+.ts-unified-timeline__band-info.ts-band--low-confidence {
+  border-style: dashed;
+}
+
+/* Icon + signal text, side by side */
+.ts-unified-timeline__signal-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Confidence level + duration + tunnel note */
+.ts-unified-timeline__band-meta {
+  margin-top: var(--space-1);
+  font-size: var(--font-size-xs);
+  color: currentColor;
+  opacity: 0.8;
+}
+
+.ts-unified-timeline__tunnel-note {
+  font-style: italic;
+}
+
+/* ================================================================
  * SIGNAL BAND ICONS
  *
  * Icons within signal bands: 16x16px minimum, 3:1 contrast against
@@ -1519,5 +1671,68 @@ legend.ts-field__label + * {
   .ts-notice--network {
     border-left: 4px solid ButtonText;
     background-color: Canvas;
+  }
+}
+
+/* ================================================================
+ * GRANULAR SIGNAL BAR
+ *
+ * A narrow decorative heat strip running alongside the journey
+ * timeline, colour-coded green→amber→red by signal quality.
+ * Always aria-hidden — the JourneyTimeline table carries the data
+ * accessibly.  No colour-contrast requirements apply.
+ * ================================================================ */
+
+.ts-journey-with-bar {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+
+.ts-granular-bar {
+  position: relative;
+  width: 12px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--band-border);
+  display: flex;
+  flex-direction: column;
+  /* min-height ensures the bar is visible even on very short journeys */
+  min-height: 8rem;
+}
+
+/* Each colour run — flex-grow value comes from distanceFraction via inline style */
+.ts-granular-bar__seg {
+  min-height: 2px; /* prevent invisible slivers */
+}
+
+.ts-granular-bar__seg--video     { background-color: var(--bar-video); }
+.ts-granular-bar__seg--voice     { background-color: var(--bar-voice); }
+.ts-granular-bar__seg--none      { background-color: var(--bar-none); }
+.ts-granular-bar__seg--nodata    { background-color: var(--bar-nodata); }
+.ts-granular-bar__seg--video-est { background-color: var(--bar-video-est); }
+.ts-granular-bar__seg--voice-est { background-color: var(--bar-voice-est); }
+.ts-granular-bar__seg--none-est  { background-color: var(--bar-none-est); }
+
+/* Thin white separator line at each inter-leg boundary */
+.ts-granular-bar__sep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-page-bg);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Forced-colour mode: simplify bar to a plain bordered rectangle */
+@media (forced-colors: active) {
+  .ts-granular-bar {
+    border: 2px solid ButtonText;
+    background: Canvas;
+  }
+  .ts-granular-bar__seg {
+    display: none;
   }
 }
