@@ -26,7 +26,7 @@ import type { Journey } from "@/app/lib/journey-types";
 export type SignalBand = "video" | "voice" | "none" | "no-data" | "unknown";
 export type Confidence = "high" | "low" | "no-data";
 
-export type SignalSource = "measured" | "modelled" | "no-data";
+export type SignalSource = "measured" | "modelled" | "interpolated" | "no-data";
 
 export interface SegmentSignal {
   band: SignalBand;
@@ -39,6 +39,54 @@ export interface SegmentSignal {
   totalNodes: number;
   /** Tunnels on this segment (display name) */
   tunnels: string[];
+}
+
+/**
+ * A contiguous stretch of track within a leg that has consistent signal
+ * quality. Multiple SubSegments make up one leg of the journey.
+ */
+export interface SubSegment {
+  band: SignalBand;
+  confidence: Confidence;
+  /** Dominant data source for this stretch */
+  source: SignalSource;
+  /**
+   * This sub-segment's share of the total leg path distance (0–1).
+   * Multiply by the leg's known duration to estimate the time in minutes.
+   */
+  distanceFraction: number;
+  /** Tunnels whose coordinates fall within this sub-segment */
+  tunnels: string[];
+}
+
+/** Per-leg signal broken down into contiguous same-band sub-segments. */
+export interface LegSignal {
+  subSegments: SubSegment[];
+}
+
+/**
+ * One colour run in the granular signal bar visualisation.
+ * Each segment is a merged stretch of consecutive same-(band, source) nodes.
+ */
+export interface GranularSegment {
+  band: SignalBand;
+  source: SignalSource;
+  /** This segment's share of total journey track distance (0–1). */
+  distanceFraction: number;
+}
+
+/**
+ * Full-journey granular signal data for the heat-strip visualisation.
+ * Decorative — the JourneyTimeline table is the accessible equivalent.
+ */
+export interface GranularJourneySignal {
+  segments: GranularSegment[];
+  /**
+   * Cumulative distance fractions (0..1) where each calling point falls.
+   * First element is always 0.0 (journey start), last is always 1.0.
+   * Interior values mark the inter-leg boundaries.
+   */
+  callingPointFractions: number[];
 }
 
 // ---------------------------------------------------------------------------
@@ -60,7 +108,7 @@ interface OperatorSignal {
   date_max: string;
   band: "video" | "voice" | "none" | "no-data";
   confidence: "high" | "low" | "no-data";
-  source?: "measured" | "modelled" | "no-data";
+  source?: "measured" | "modelled" | "interpolated" | "tunnel" | "no-data";
 }
 
 interface SignalNode {
@@ -270,11 +318,10 @@ export function classifySegment(
   let voiceCount = 0;
   let noneCount = 0;
   let hasLowConfidence = false;
-  // Track whether any covering node has measured data.
-  // If at least one node with a usable band (video/voice/none) has
-  // source === "measured", the overall segment source is "measured".
-  // If all such nodes are "modelled", the segment source is "modelled".
+  // Track the highest-quality source seen across covering nodes.
+  // Priority: measured (incl. tunnel) > interpolated > modelled > no-data
   let hasMeasured = false;
+  let hasInterpolated = false;
   let hasModelled = false;
 
   for (const nodeId of pathNodeIds) {
@@ -300,12 +347,15 @@ export function classifySegment(
 
     // Only track source for nodes that contribute a usable band
     if (opData.band !== "no-data") {
-      if (opData.source === "modelled") {
-        hasModelled = true;
-      } else {
-        // Default to measured if source is absent (pre-P5-03 data)
-        // or explicitly "measured"
+      const src = opData.source;
+      if (src === "measured" || src === "tunnel" || !src) {
+        // tunnel = physically factual, same confidence tier as measured.
+        // Absent source (pre-P5-03 data) is assumed measured.
         hasMeasured = true;
+      } else if (src === "interpolated") {
+        hasInterpolated = true;
+      } else if (src === "modelled") {
+        hasModelled = true;
       }
     }
 
@@ -341,12 +391,14 @@ export function classifySegment(
     dominantBand = "video";
   }
 
-  // Source: measured if any covering node is measured, else modelled
+  // Source: highest-quality tier seen across covering nodes
   const source: SignalSource = hasMeasured
     ? "measured"
-    : hasModelled
-      ? "modelled"
-      : "no-data";
+    : hasInterpolated
+      ? "interpolated"
+      : hasModelled
+        ? "modelled"
+        : "no-data";
 
   return {
     band: dominantBand,
@@ -537,9 +589,10 @@ function classifySegmentWorstCase(
   // Prefer "measured" over "modelled" over "no-data" -- if any operator
   // with the worst band has measured data, the result is measured.
   const SOURCE_RANK: Record<string, number> = {
-    "measured": 2,
-    "modelled": 1,
-    "no-data": 0,
+    "measured":      3,
+    "interpolated":  2,
+    "modelled":      1,
+    "no-data":       0,
   };
   let bestSourceRank = -1;
   let resultSource: SignalSource = "no-data";
@@ -561,6 +614,230 @@ function classifySegmentWorstCase(
     coveredNodes: maxCoveredNodes,
     totalNodes,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Source rank (module-level, reused by detailed classification)
+// ---------------------------------------------------------------------------
+
+const SOURCE_RANK_MAP: Record<string, number> = {
+  measured:      3,
+  interpolated:  2,
+  modelled:      1,
+  "no-data":     0,
+};
+
+/**
+ * Derive a normalised SignalSource from a raw pipeline source string.
+ * "tunnel" is treated at the same confidence tier as "measured".
+ */
+function normalisedSource(raw: string | undefined): SignalSource {
+  if (raw === "measured" || raw === "tunnel" || !raw) return "measured";
+  if (raw === "interpolated") return "interpolated";
+  if (raw === "modelled") return "modelled";
+  return "no-data";
+}
+
+// ---------------------------------------------------------------------------
+// Detailed (sub-segment) classification
+//
+// For each leg, walks the individual track nodes and groups consecutive nodes
+// with the same (band, source tier) into runs. Source tier collapses
+// "modelled" and "interpolated" together so they share a visual style.
+// Runs shorter than MIN_RUN_FRACTION of the total leg distance are absorbed
+// into the adjacent run to avoid showing noise as meaningful signal changes.
+// ---------------------------------------------------------------------------
+
+/**
+ * Classify the signal at a single node for a given operator,
+ * or worst-case across all operators when operator is null.
+ */
+function classifyNode(
+  nodeId: string,
+  operator: string | null
+): { band: SignalBand; confidence: Confidence; source: SignalSource } {
+  const signalNode = signalData.nodes[nodeId];
+  if (!signalNode) {
+    return { band: "no-data", confidence: "no-data", source: "no-data" };
+  }
+
+  if (operator) {
+    const opData = signalNode.operators[operator];
+    if (!opData) {
+      return { band: "no-data", confidence: "no-data", source: "no-data" };
+    }
+    return {
+      band: opData.band as SignalBand,
+      confidence: opData.confidence as Confidence,
+      source: normalisedSource(opData.source),
+    };
+  }
+
+  // Worst-case across all operators
+  let worstBand: SignalBand = "no-data";
+  let hasLow = false;
+  let bestSourceRank = -1;
+  let resultSource: SignalSource = "no-data";
+
+  for (const op of ALL_OPERATORS) {
+    const opData = signalNode.operators[op];
+    if (!opData || opData.band === "no-data") continue;
+
+    const band = opData.band as SignalBand;
+    const bandRankVal = BAND_RANK[band] ?? -1;
+    const worstRankVal = BAND_RANK[worstBand] ?? -1;
+    if (worstBand === "no-data" || bandRankVal < worstRankVal) {
+      worstBand = band;
+    }
+    if (opData.confidence === "low") hasLow = true;
+
+    const src = normalisedSource(opData.source);
+    const rank = SOURCE_RANK_MAP[src] ?? 0;
+    if (rank > bestSourceRank) {
+      bestSourceRank = rank;
+      resultSource = src;
+    }
+  }
+
+  return {
+    band: worstBand,
+    confidence: hasLow ? "low" : "high",
+    source: resultSource,
+  };
+}
+
+/**
+ * "Visual tier" used as the grouping key alongside band.
+ * Modelled and interpolated use the same CSS pattern so are merged.
+ */
+function sourceTierKey(source: SignalSource): "measured" | "estimated" | "none" {
+  if (source === "measured") return "measured";
+  if (source === "modelled" || source === "interpolated") return "estimated";
+  return "none";
+}
+
+/**
+ * How far below 3% of the total leg distance a run must be before it is
+ * absorbed into its neighbour. Prevents brief signal flickers from showing
+ * as distinct sub-segments.
+ */
+const MIN_RUN_FRACTION = 0.03;
+
+/**
+ * Compute intra-leg sub-segments for a single leg defined by its ordered
+ * path node IDs and the operator (or null for worst-case).
+ */
+function computeSubSegments(
+  pathNodes: string[],
+  operator: string | null
+): SubSegment[] {
+  if (pathNodes.length === 0) {
+    return [{
+      band: "no-data",
+      confidence: "no-data",
+      source: "no-data",
+      distanceFraction: 1,
+      tunnels: [],
+    }];
+  }
+
+  // Edge distances along the path (index i = dist from node i to node i+1)
+  const edgeDists: number[] = [];
+  let totalDist = 0;
+
+  for (let i = 0; i < pathNodes.length - 1; i++) {
+    const adj = adjacency.get(pathNodes[i]);
+    const edge = adj?.find(e => e.to === pathNodes[i + 1]);
+    const d = edge?.dist ?? 0;
+    edgeDists.push(d);
+    totalDist += d;
+  }
+
+  // Build initial runs: group consecutive same (band, source-tier) nodes
+  type Run = {
+    band: SignalBand;
+    confidence: Confidence;
+    source: SignalSource;      // dominant source (highest rank seen in run)
+    distM: number;
+    nodeIds: string[];
+  };
+
+  const runs: Run[] = [];
+
+  for (let i = 0; i < pathNodes.length; i++) {
+    const { band, confidence, source } = classifyNode(pathNodes[i], operator);
+    // Distance contributed by THIS node is the edge TO the next node
+    const d = i < edgeDists.length ? edgeDists[i] : 0;
+
+    const last = runs.at(-1);
+    const tierMatch =
+      last &&
+      last.band === band &&
+      sourceTierKey(last.source) === sourceTierKey(source);
+
+    if (tierMatch) {
+      last.distM += d;
+      last.nodeIds.push(pathNodes[i]);
+      // Upgrade source if this node has higher-rank provenance
+      if ((SOURCE_RANK_MAP[source] ?? 0) > (SOURCE_RANK_MAP[last.source] ?? 0)) {
+        last.source = source;
+      }
+      // Downgrade confidence conservatively
+      if (confidence === "low") last.confidence = "low";
+    } else {
+      runs.push({
+        band,
+        confidence,
+        source,
+        distM: d,
+        nodeIds: [pathNodes[i]],
+      });
+    }
+  }
+
+  // Absorb runs shorter than MIN_RUN_FRACTION into their larger neighbour.
+  // Repeat until stable (a single pass may leave new short runs after merging).
+  if (totalDist > 0) {
+    let changed = true;
+    while (changed && runs.length > 1) {
+      changed = false;
+      for (let i = 0; i < runs.length; i++) {
+        if (runs[i].distM / totalDist < MIN_RUN_FRACTION) {
+          // Determine which neighbour to merge into (prefer the larger one)
+          const mergeIdx =
+            i === 0
+              ? 1
+              : i === runs.length - 1
+                ? i - 1
+                : runs[i - 1].distM >= runs[i + 1].distM
+                  ? i - 1
+                  : i + 1;
+
+          const target = runs[mergeIdx];
+          target.distM += runs[i].distM;
+          if (mergeIdx < i) {
+            target.nodeIds.push(...runs[i].nodeIds);
+          } else {
+            target.nodeIds.unshift(...runs[i].nodeIds);
+          }
+          if (runs[i].confidence === "low") target.confidence = "low";
+
+          runs.splice(i, 1);
+          changed = true;
+          break; // restart scan
+        }
+      }
+    }
+  }
+
+  // Convert runs to SubSegments
+  return runs.map(run => ({
+    band: run.band,
+    confidence: run.confidence,
+    source: run.source,
+    distanceFraction: totalDist > 0 ? run.distM / totalDist : 1 / runs.length,
+    tunnels: findTunnelsOnPath(run.nodeIds),
+  }));
 }
 
 // ---------------------------------------------------------------------------
@@ -635,4 +912,165 @@ export function getJourneySignal(journey: Journey): SegmentSignal[] {
   }
 
   return results;
+}
+
+/**
+ * Compute per-leg sub-segment signal detail for a journey.
+ *
+ * Returns one LegSignal per leg (callingPoints.length - 1 entries).
+ * Each LegSignal.subSegments contains consecutive same-band stretches
+ * within the leg, ordered from the departure station to the arrival station.
+ * Short flickers (< 3% of leg distance) are absorbed into their neighbours.
+ *
+ * For each leg:
+ *   1. Look up station nodes and find the shortest path
+ *   2. Call computeSubSegments to group path nodes into runs
+ *   3. If stations are unmapped, return a single no-data sub-segment
+ */
+export function getJourneySignalDetailed(journey: Journey): LegSignal[] {
+  const { callingPoints, network } = journey;
+  const results: LegSignal[] = [];
+
+  for (let i = 0; i < callingPoints.length - 1; i++) {
+    const fromCrs = callingPoints[i].crs;
+    const toCrs = callingPoints[i + 1].crs;
+
+    const fromStation = trackGraph.stationNodes[fromCrs];
+    const toStation = trackGraph.stationNodes[toCrs];
+
+    if (!fromStation || !toStation) {
+      results.push({
+        subSegments: [{
+          band: "unknown",
+          confidence: "no-data",
+          source: "no-data",
+          distanceFraction: 1,
+          tunnels: [],
+        }],
+      });
+      continue;
+    }
+
+    const fromNodeId = String(fromStation.nodeId);
+    const toNodeId = String(toStation.nodeId);
+    const pathNodes = findPath(fromNodeId, toNodeId);
+
+    if (pathNodes.length === 0) {
+      results.push({
+        subSegments: [{
+          band: "unknown",
+          confidence: "no-data",
+          source: "no-data",
+          distanceFraction: 1,
+          tunnels: [],
+        }],
+      });
+      continue;
+    }
+
+    const operator = network || null;
+    const subSegments = computeSubSegments(pathNodes, operator);
+    results.push({ subSegments });
+  }
+
+  return results;
+}
+
+/**
+ * Produce a flat, distance-normalised array of (band, source) segments
+ * covering the whole journey, for the granular heat-strip visualisation.
+ *
+ * Each leg's path is walked node-by-node; signal is classified per node
+ * and attributed to the edge leading out of it.  Consecutive nodes with
+ * the same (band, source) are merged into a single GranularSegment.
+ *
+ * The callingPointFractions array lets the bar overlay separator lines at
+ * the exact proportional positions of intermediate station stops.
+ *
+ * This function is intentionally kept separate from getJourneySignalDetailed
+ * so it can be called independently on the server without running
+ * computeSubSegments.
+ */
+export function getJourneyGranularSignal(
+  journey: Journey,
+): GranularJourneySignal {
+  const { callingPoints, network } = journey;
+  const operator = network || null;
+
+  interface EdgeRecord {
+    band: SignalBand;
+    source: SignalSource;
+    distM: number;
+  }
+
+  const edgeRecords: EdgeRecord[] = [];
+  // Indices into edgeRecords where each leg starts (and a terminal sentinel)
+  const legBoundaryIndices: number[] = [0];
+
+  for (let i = 0; i < callingPoints.length - 1; i++) {
+    const fromCrs = callingPoints[i].crs;
+    const toCrs = callingPoints[i + 1].crs;
+    const fromStation = trackGraph.stationNodes[fromCrs];
+    const toStation = trackGraph.stationNodes[toCrs];
+
+    if (!fromStation || !toStation) {
+      // Placeholder: use a nominal 10 km no-data segment so the bar proportions
+      // still make rough geographic sense even when a station is unmapped.
+      edgeRecords.push({ band: "no-data", source: "no-data", distM: 10_000 });
+      legBoundaryIndices.push(edgeRecords.length);
+      continue;
+    }
+
+    const fromNodeId = String(fromStation.nodeId);
+    const toNodeId = String(toStation.nodeId);
+    const pathNodes = findPath(fromNodeId, toNodeId);
+
+    if (pathNodes.length === 0) {
+      edgeRecords.push({ band: "no-data", source: "no-data", distM: 10_000 });
+      legBoundaryIndices.push(edgeRecords.length);
+      continue;
+    }
+
+    for (let j = 0; j < pathNodes.length - 1; j++) {
+      const adj = adjacency.get(pathNodes[j]);
+      const edge = adj?.find((e) => e.to === pathNodes[j + 1]);
+      const distM = edge?.dist ?? 0;
+      const { band, source } = classifyNode(pathNodes[j], operator);
+      edgeRecords.push({ band, source, distM });
+    }
+    legBoundaryIndices.push(edgeRecords.length);
+  }
+
+  const totalDist = edgeRecords.reduce((s, e) => s + e.distM, 0);
+
+  if (totalDist === 0) {
+    return {
+      segments: [{ band: "no-data", source: "no-data", distanceFraction: 1 }],
+      callingPointFractions: [0, 1],
+    };
+  }
+
+  // Merge consecutive same-(band, source) edges
+  const segments: GranularSegment[] = [];
+  for (const rec of edgeRecords) {
+    const frac = rec.distM / totalDist;
+    const last = segments.at(-1);
+    if (last && last.band === rec.band && last.source === rec.source) {
+      last.distanceFraction += frac;
+    } else {
+      segments.push({ band: rec.band, source: rec.source, distanceFraction: frac });
+    }
+  }
+
+  // Cumulative distances at each leg boundary index
+  const cumDist: number[] = [0];
+  for (const rec of edgeRecords) {
+    cumDist.push(cumDist.at(-1)! + rec.distM);
+  }
+
+  const callingPointFractions = legBoundaryIndices.map(
+    (idx) => cumDist[idx] / totalDist,
+  );
+
+  return { segments, callingPointFractions };
 }

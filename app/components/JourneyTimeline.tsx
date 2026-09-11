@@ -106,11 +106,11 @@ function formatDate(isoDate: string): string {
 // ---------------------------------------------------------------------------
 
 /**
- * Inline SVG icon for the "voice and video" band.
- * A checkmark indicating good signal. aria-hidden because the text
+ * Inline SVG icon for the "good data" band.
+ * Three signal bars, all filled. aria-hidden because the text
  * label carries the meaning.
  */
-function CheckIcon() {
+function FullSignalIcon() {
   return (
     <svg
       aria-hidden="true"
@@ -120,16 +120,18 @@ function CheckIcon() {
       viewBox="0 0 16 16"
       fill="currentColor"
     >
-      <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z" />
+      <rect x="1" y="11" width="3" height="4" rx="0.5" />
+      <rect x="6" y="7" width="3" height="8" rx="0.5" />
+      <rect x="11" y="3" width="3" height="12" rx="0.5" />
     </svg>
   );
 }
 
 /**
- * Inline SVG icon for the "voice only" band.
- * A phone handset. aria-hidden.
+ * Inline SVG icon for the "limited data" band.
+ * One filled bar, two faint bars indicating weaker signal. aria-hidden.
  */
-function PhoneIcon() {
+function LimitedSignalIcon() {
   return (
     <svg
       aria-hidden="true"
@@ -139,7 +141,9 @@ function PhoneIcon() {
       viewBox="0 0 16 16"
       fill="currentColor"
     >
-      <path d="M3.654 1.328a.678.678 0 0 0-1.015-.063L1.605 2.3c-.483.484-.661 1.169-.45 1.77a17.568 17.568 0 0 0 4.168 6.608 17.569 17.569 0 0 0 6.608 4.168c.601.211 1.286.033 1.77-.45l1.034-1.034a.678.678 0 0 0-.063-1.015l-2.307-1.794a.678.678 0 0 0-.58-.122l-2.19.547a1.745 1.745 0 0 1-1.657-.459L5.482 8.062a1.745 1.745 0 0 1-.46-1.657l.548-2.19a.678.678 0 0 0-.122-.58L3.654 1.328Z" />
+      <rect x="1" y="11" width="3" height="4" rx="0.5" />
+      <rect x="6" y="7" width="3" height="8" rx="0.5" opacity="0.3" />
+      <rect x="11" y="3" width="3" height="12" rx="0.5" opacity="0.3" />
     </svg>
   );
 }
@@ -187,11 +191,11 @@ function PinIcon() {
  * Returns icon + text label + optional tunnel and confidence notes.
  *
  * Wording per specs/accessibility.md section 15.3:
- * - Measured video: "Voice and video calls expected"
- * - Measured voice: "Voice calls expected"
- * - Measured/any none: "No signal expected"
- * - Modelled voice: "Ofcom coverage maps suggest voice calls may be possible here"
- * - Modelled none: "Ofcom coverage maps suggest no coverage here"
+ * - Measured video: "Good mobile data expected"
+ * - Measured voice: "Mobile data expected"
+ * - Measured/any none: "No mobile data expected"
+ * - Modelled voice: "Ofcom coverage maps suggest mobile data may be available here"
+ * - Modelled none: "Ofcom coverage maps suggest no mobile coverage here"
  * - No data: "No signal data available"
  * - Unknown: en dash
  */
@@ -212,34 +216,52 @@ function SignalCell({ signal }: { signal: SegmentSignal }) {
     // explicitly. "Expected" is reserved for measured data only.
     switch (band) {
       case "voice":
-        label = "Ofcom coverage maps suggest voice calls may be possible here";
+        label = "Ofcom coverage maps suggest mobile data may be available here";
         break;
       case "none":
-        label = "Ofcom coverage maps suggest no coverage here";
+        label = "Ofcom coverage maps suggest no mobile coverage here";
         break;
       case "video":
         // Modelled data caps at voice -- video should not occur, but
         // handle it defensively with the voice wording.
-        label = "Ofcom coverage maps suggest voice calls may be possible here";
+        label = "Ofcom coverage maps suggest mobile data may be available here";
         break;
     }
     // Coverage-map pin icon for all modelled bands
     icon = <PinIcon />;
+  } else if (source === "interpolated") {
+    // Interpolated segments use hedged wording that signals the estimate
+    // came from neighbouring track data, not a direct measurement or
+    // operator coverage map.
+    switch (band) {
+      case "voice":
+      case "video":
+        label =
+          "Surrounding data suggests mobile data may be available here";
+        break;
+      case "none":
+        label =
+          "No mobile data expected based on nearby coverage data";
+        break;
+    }
+    // Reuse coverage-map pin icon — same estimated-data quality tier
+    icon = <PinIcon />;
   } else {
     // Measured data (or source absent / "no-data" source with a
-    // usable band -- shouldn't happen, but handle defensively)
+    // usable band -- shouldn't happen, but handle defensively).
+    // Tunnel nodes (source "tunnel") are treated as measured: factual.
     switch (band) {
       case "video":
-        icon = <CheckIcon />;
-        label = "Voice and video calls expected";
+        icon = <FullSignalIcon />;
+        label = "Good mobile data expected";
         break;
       case "voice":
-        icon = <PhoneIcon />;
-        label = "Voice calls expected";
+        icon = <LimitedSignalIcon />;
+        label = "Mobile data expected";
         break;
       case "none":
         icon = <XIcon />;
-        label = "No signal expected";
+        label = "No mobile data expected";
         break;
     }
   }
@@ -248,7 +270,7 @@ function SignalCell({ signal }: { signal: SegmentSignal }) {
     <span className="ts-signal-cell">
       {icon}
       <span className="ts-signal-cell__label">{label}</span>
-      {confidence === "low" && source !== "modelled" && (
+      {confidence === "low" && source !== "modelled" && source !== "interpolated" && (
         <span className="ts-signal-cell__note">(limited data)</span>
       )}
       {tunnels.length > 0 && (
@@ -272,6 +294,9 @@ function SignalCell({ signal }: { signal: SegmentSignal }) {
 function confidenceLabel(signal: SegmentSignal): string {
   if (signal.source === "modelled") {
     return "Estimated (coverage map)";
+  }
+  if (signal.source === "interpolated") {
+    return "Estimated (interpolated)";
   }
   if (signal.source === "no-data") {
     return "No data";

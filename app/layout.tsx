@@ -30,11 +30,10 @@ export default function RootLayout({
 
         <footer className="ts-footer">
           <p>
-            Signal data: RDM NWR Yellow Train Mobile Network Measurements,
-            2026 (4G + 5G). Track geometry: OpenStreetMap contributors (ODbL).
-            Station data: NaPTAN, Open Government Licence v3.
-          </p>
-          <p>
+            <Link href="/about" className="ts-footer__link">
+              About the data
+            </Link>
+            {" · "}
             <Link href="/accessibility" className="ts-footer__link">
               Accessibility statement
             </Link>

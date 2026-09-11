@@ -8,6 +8,65 @@ forward. Be honest — an entry that hides a failure costs the next five iterati
 
 ---
 
+## DW-21 — Signal gap-fill: tunnel marking + graph interpolation (2026-09-10)
+
+**Task:** Fill the remaining 5,726 no-data track nodes via two phases: (A) mark tunnel
+nodes as `source: "tunnel"`, (B) interpolate remaining nodes from weighted BFS of
+nearby covered nodes.
+
+**What was done:**
+
+**New pipeline script:** `pipeline/p5-04-interpolate-coverage.ts`
+- Phase A: Walks all 3,537 tunnel polylines from `data/tunnels.json`, snaps each
+  waypoint to the nearest graph node within 200 m. Marks newly-snapped nodes
+  `band: "none"`, `source: "tunnel"`, `confidence: "high"` for all 4 operators.
+  Nodes that already have measured or modelled data are not modified.
+- Phase B: For each node still absent after Phase A, runs Dijkstra outward up to
+  5,000 m. Per operator, accumulates distance-weighted evidence
+  (`weight = 1 / (1 + dist_m / 1000)`). If `covered_weight + none_weight >= 0.3`,
+  emits `band: "voice"` or `"none"`. Source: `"interpolated"`, confidence: `"low"`.
+  Never emits `"video"`. Phase B uses a snapshot of pre-Phase-B coverage so
+  interpolated nodes don't influence each other (deterministic output).
+
+**App type changes:** `app/lib/signal.ts`
+- `SignalSource` now includes `"interpolated"`
+- `OperatorSignal.source` now includes `"tunnel"` and `"interpolated"`
+- `classifySegment`: `tunnel` source treated same tier as `measured` (factual);
+  added `hasInterpolated` tracking; source priority: measured > interpolated > modelled
+- `classifySegmentWorstCase` SOURCE_RANK: measured=3, interpolated=2, modelled=1, no-data=0
+
+**UI changes:**
+- `JourneyTimeline.tsx`: interpolated branch in `SignalCell`; hedged wording
+  ("Surrounding coverage data suggests…"); confidence label "Estimated (interpolated)";
+  "(limited data)" note suppressed for interpolated (confidence is already communicated)
+- `VisualTimeline.tsx`: interpolated reuses modelled CSS classes (135° dashed diagonal
+  pattern, coverage-map pin icon); `bandClass` and `bandLabel` both handle
+  `source === "interpolated"` identically to `"modelled"`
+
+**Docs:** `specs/signal-model.md` — added P5-04 section documenting both phases,
+threshold rationale, source field values. `agent/PLAN.md` — DW-21 added.
+
+**Pipeline not yet run** — `data/signal-segments.json` unchanged. Run:
+```
+npx tsx pipeline/p5-04-interpolate-coverage.ts --dry-run   # check counts
+npx tsx pipeline/p5-04-interpolate-coverage.ts              # write
+```
+
+**Verify:** `npm run verify` passes on code changes (no pipeline run yet).
+
+**Learned:**
+- Tunnel nodes should use `source: "tunnel"` not `"measured"` — keeps provenance clear
+  in the JSON while the app treats them at the same confidence tier as measurements.
+- The "no-data after tunnel marking" set is the right eligibility criterion for Phase B.
+  Using a snapshot prevents non-deterministic chaining of interpolated results.
+- Phase B operators with insufficient evidence are omitted rather than written as
+  `no-data` — this matches how measured nodes work and keeps the JSON compact.
+
+**Next:** Run the pipeline (`--dry-run` first), verify counts, open PR. Then spot-check
+Heart of Wales line and Severn Tunnel as described in the plan.
+
+---
+
 ## DW-20 — Connected Nations data merge (2026-09-10)
 
 **Task:** Run the Ofcom Connected Nations pipeline to fill no-data nodes in
