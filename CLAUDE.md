@@ -1,7 +1,7 @@
 # Train Signal
 
 A web app that tells you when during a train journey you'll have good enough mobile
-signal to take a call.
+data to work online.
 
 **Read [specs/brief.md](specs/brief.md) first.** It is the source of truth for what we
 are building and why. If this file and the brief disagree, the brief wins.
@@ -9,8 +9,8 @@ are building and why. If this file and the brief disagree, the brief wins.
 ## The one-sentence product
 
 The user enters a GB rail journey and their mobile network; the app returns a timeline
-showing when they can take a voice call, a video call, or nothing at all — and names the
-single best window to book a meeting in.
+showing when they can expect good mobile data, limited data, or no connectivity — and
+names the single best window for working online.
 
 ## Non-negotiables
 

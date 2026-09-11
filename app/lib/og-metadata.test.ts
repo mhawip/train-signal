@@ -160,7 +160,7 @@ describe("buildResultsDescriptionWithWindow", () => {
       "14 August 2026",
       videoWindow,
     );
-    expect(desc).toContain("Expected voice and video signal");
+    expect(desc).toContain("Good mobile data expected");
     expect(desc).toContain("Best window: Doncaster to Peterborough, 45 min");
     expect(desc.length).toBeLessThanOrEqual(155);
   });
@@ -172,8 +172,8 @@ describe("buildResultsDescriptionWithWindow", () => {
       "14 August 2026",
       voiceWindow,
     );
-    expect(desc).toContain("Expected voice signal");
-    expect(desc).not.toContain("voice and video");
+    expect(desc).toContain("Mobile data expected");
+    expect(desc).not.toContain("Good mobile data");
     expect(desc.length).toBeLessThanOrEqual(155);
   });
 
@@ -215,8 +215,8 @@ describe("buildResultsDescriptionNoWindow", () => {
       "London Kings Cross",
       "14 August 2026",
     );
-    expect(desc).toContain("No clear window for a video call");
-    expect(desc).toContain("Signal varies");
+    expect(desc).toContain("No clear window for reliable mobile data");
+    expect(desc).toContain("Coverage varies");
     expect(desc.length).toBeLessThanOrEqual(155);
   });
 
@@ -259,7 +259,7 @@ describe("buildResultsDescriptionNoWindow", () => {
 describe("buildRouteOverviewDescription", () => {
   it("uses route-level framing without claiming a specific window", () => {
     const desc = buildRouteOverviewDescription("Leeds", "London Kings Cross");
-    expect(desc).toContain("Typical signal for");
+    expect(desc).toContain("Typical mobile data coverage for");
     expect(desc).toContain("likely");
     expect(desc).not.toContain("best window");
     expect(desc.length).toBeLessThanOrEqual(155);

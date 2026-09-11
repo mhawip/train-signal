@@ -284,7 +284,7 @@ describe("VisualTimeline", () => {
     expect(legend).toBeTruthy();
 
     // Legend must have exactly 6 entries in order:
-    // Voice and video, Voice only, Estimated signal, No signal, Tunnel, No data
+    // Good data, Limited data, Estimated signal, No data expected, Tunnel, No data
     // (specs/accessibility.md section 15.4)
     const items = legend!.querySelectorAll(".ts-legend__item");
     expect(items).toHaveLength(6);
@@ -293,10 +293,10 @@ describe("VisualTimeline", () => {
       (item) => item.querySelector(".ts-legend__label")?.textContent
     );
     expect(labels).toEqual([
-      "Voice and video",
-      "Voice only",
+      "Good data",
+      "Limited data",
       "Estimated signal",
-      "No signal expected",
+      "No data expected",
       "Tunnel",
       "No data",
     ]);

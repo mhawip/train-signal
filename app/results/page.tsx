@@ -1,9 +1,12 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { JourneyTimeline } from "@/app/components/JourneyTimeline";
-import { VisualTimeline } from "@/app/components/VisualTimeline";
-import { BestWindow } from "@/app/components/BestWindow";
-import { getJourneySignal } from "@/app/lib/signal";
+import { UnifiedTimeline } from "@/app/components/UnifiedTimeline";
+import { GranularSignalBar } from "@/app/components/GranularSignalBar";
+import {
+  getJourneySignal,
+  getJourneySignalDetailed,
+  getJourneyGranularSignal,
+} from "@/app/lib/signal";
 import { findBestWindow } from "@/app/lib/best-window";
 import type { Journey } from "@/app/lib/journey-types";
 import { fetchDepartures } from "@/app/lib/darwin";
@@ -318,15 +321,14 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
 
   const heading = `${journey.origin.name} to ${journey.destination.name} signal`;
 
-  // Compute signal profile server-side
-  const signalProfile = getJourneySignal(journey);
+  // Compute detailed per-leg sub-segment signal profile server-side.
+  // getJourneySignal is still used in generateMetadata for OG descriptions.
+  const legSignals = getJourneySignalDetailed(journey);
+  const granularSignal = getJourneyGranularSignal(journey);
 
   // Network name to show -- prefer URL param, fall back to journey data.
   // Empty string means no network was selected (worst-case mode).
   const networkName = params.network || journey.network || "";
-
-  // Find the best window for a call on this journey
-  const bestWindow = findBestWindow(journey, signalProfile);
 
   return (
     <main id="main-content">
@@ -342,13 +344,8 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
         </p>
       )}
 
-      <BestWindow
-        window={bestWindow}
-        networkName={networkName || "all networks"}
-      />
-
       {networkName ? (
-        <p>Showing expected signal for {networkName} on this route.</p>
+        <p>Showing expected mobile data coverage for {networkName} on this route.</p>
       ) : (
         <div
           className="ts-notice ts-notice--network"
@@ -356,8 +353,8 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
           aria-label="Network notice"
         >
           <p>
-            No mobile network selected. These results show the worst expected signal
-            across EE, O2, Vodafone, and Three. If you know your network, results
+            No mobile network selected. These results show the worst expected mobile data
+            coverage across EE, O2, Vodafone, and Three. If you know your network, results
             will be more accurate.
           </p>
           <p className="ts-notice__action">
@@ -376,15 +373,10 @@ export default async function ResultsPage({ searchParams }: ResultsPageProps) {
         </div>
       )}
 
-      <p className="ts-notice ts-notice--vintage">
-        Signal data is based on Network Rail yellow-train measurements from
-        2026, including 4G and 5G. Results show expected signal, not a
-        guarantee.
-      </p>
-
-      <JourneyTimeline journey={journey} signalProfile={signalProfile} />
-
-      <VisualTimeline journey={journey} signalProfile={signalProfile} />
+      <div className="ts-journey-with-bar">
+        <GranularSignalBar granular={granularSignal} />
+        <UnifiedTimeline journey={journey} legSignals={legSignals} />
+      </div>
 
       <nav aria-label="Page navigation" className="ts-results-nav">
         <Link href={backLink} className="ts-back-link">

@@ -270,7 +270,7 @@ describe("JourneyTimeline", () => {
     expect(cells[2]).toHaveTextContent("\u2013");
   });
 
-  it("shows band labels: Voice and video, Voice only, No signal expected", () => {
+  it("shows band labels: Good mobile data, Mobile data, No mobile data expected", () => {
     const signalProfile = [
       {
         band: "video" as const,
@@ -305,9 +305,9 @@ describe("JourneyTimeline", () => {
       />
     );
 
-    expect(screen.getByText("Voice and video calls expected")).toBeInTheDocument();
-    expect(screen.getByText("Voice calls expected")).toBeInTheDocument();
-    expect(screen.getByText("No signal expected")).toBeInTheDocument();
+    expect(screen.getByText("Good mobile data expected")).toBeInTheDocument();
+    expect(screen.getByText("Mobile data expected")).toBeInTheDocument();
+    expect(screen.getByText("No mobile data expected")).toBeInTheDocument();
   });
 
   it("shows limited data note for low confidence segments", () => {
