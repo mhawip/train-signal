@@ -8,7 +8,14 @@ requiring fixes beyond the pass itself. DW-20 (Connected Nations data merge) is 
 bringing signal node count from 10,270 to 15,900. DW-21 (tunnel marking + graph
 interpolation) is complete (2026-09-10): pipeline and UI support for `source: "tunnel"`
 and `source: "interpolated"` added; run `npx tsx pipeline/p5-04-interpolate-coverage.ts`
-to update signal-segments.json. No open items remain.
+to update signal-segments.json.
+
+**Review, 2026-11-16: the answer is not useful yet, and the service is degrading.**
+`specs/review-2026-11-signal-and-workflow.md` found that the pipeline misreads the
+2026 measurements (it pools every cell the scanner heard and takes the worst tenth),
+that the results page no longer shows a recommendation, and that the weekly timetable
+refresh has never succeeded. **Phase 7 below is open.** Start with 7A. Questions Q8 to
+Q15 are waiting on Matt.
 
 ---
 
@@ -265,6 +272,381 @@ P6-03 is done — see index above.
 P6-04 is done — see index above.
 
 P6-05 is done — see index above.
+
+---
+
+## Phase 7 — Useful answers
+
+**Goal:** A journey search ends in a recommendation a person can act on. It is checked
+against real in-carriage results in both directions. The service keeps itself running.
+
+**Read first:** `specs/review-2026-11-signal-and-workflow.md`. Section numbers below
+refer to it. It holds the evidence and the design decisions. Do not re-derive them.
+
+**Rules for this phase**
+- Owners are the four agent names in `.claude/agents/`: `product`, `designer`,
+  `developer`, `infra`.
+- Do not change a threshold, percentile or band rule by hand. Cut points come from
+  P7-12 and are judged by P7-11.
+- P7-04, P7-05 and P7-06 change the loop's own instructions. Open those PRs, do not
+  auto-merge them, and file a question asking Matt to review.
+- A task that depends on a question waits for the answer. Take other work meanwhile.
+
+**Not in this phase:** passing times for stations a train does not call at, an
+allowance by train class, a peak-time caveat (review section 5, last paragraph).
+
+### 7A — Keep the service running
+
+### P7-01 — Timetable refresh that works unattended
+- **owner:** infra
+- **status:** todo
+- **depends:** Q8
+- **why:** The weekly refresh failed 14 weeks running (no secrets) and is now disabled.
+  The timetable is from 12 August. Journeys after 13 December return "No service
+  found". The workflow also pushes to `main`, which six required checks forbid.
+- **acceptance:**
+  - [ ] `tsx` is a devDependency; the workflow runs it with `npx --no-install tsx`
+  - [ ] The workflow does not push to `main`. It replaces `schedule-index.json.gz` on a
+        release tagged `data-latest`, then calls the Vercel deploy hook
+  - [ ] A `prebuild` script downloads that asset into `data/`, checks it unzips and
+        parses, and falls back to the committed copy with a logged warning
+  - [ ] Workflow re-enabled; a manual run is green; a second run is also green
+  - [ ] Production: Leeds to Kings Cross on a weekday after 13 December returns a train
+  - [ ] About page shows the timetable date. A date later than the timetable covers
+        gets a plain-English "our timetable is out of date" message, built from the
+        existing notice pattern
+  - [ ] If this design proves unworkable, record why in the journal and file a
+        question. Never weaken branch protection
+
+### P7-02 — Tests that cannot go quietly stale
+- **owner:** developer
+- **status:** todo
+- **depends:** —
+- **why:** `e2e/results.spec.ts` pins 14 August 2026 and checks only for accessibility
+  violations. After a timetable refresh it will test the "No service found" page and
+  still pass. No test checks that a result has a recommendation: PR #70 removed it
+  with green CI.
+- **acceptance:**
+  - [ ] A committed fixture journey can be served to the results page under a
+        server-only test flag. No test depends on the live timetable or today's date
+  - [ ] Each results-state e2e test asserts which state it is on (the `h1`, plus one
+        band row or the error heading) before running axe
+  - [ ] "No service found" and "No route found" each have their own test
+  - [ ] A `test.fixme` naming P7-17 asserts that the headline section exists
+  - [ ] Unit test: a date outside the timetable returns null, not an exception
+
+### P7-03 — Housekeeping
+- **owner:** infra
+- **status:** todo
+- **depends:** —
+- **why:** Stale state misleads a loop that starts with no memory.
+- **acceptance:**
+  - [ ] PR #67 closed with a one-line reason
+  - [ ] Remote branches whose PRs are merged or closed are deleted (67 at review time)
+  - [ ] `.claude/settings.json` path rules no longer point at the OneDrive folder
+
+### 7B — Guard rails for the loop
+
+### P7-04 — Runner hardening
+- **owner:** infra
+- **status:** todo
+- **depends:** —
+- **why:** The runner inherits whatever model the session defaults to, records no cost,
+  and its prompt stages every file in the folder into a public repo.
+- **acceptance:**
+  - [ ] `ralph.ps1` takes `-Model` (default `opus`) and passes `--model` on every call
+  - [ ] Output captured as JSON. One row per iteration appended to
+        `agent/logs/metrics.csv`: start, task ID, result, exit code, minutes, turns,
+        cost. The prompt's final line is `RESULT task=<id> status=<done|blocked|none>`
+  - [ ] Console and log encoding set to UTF-8; an em dash in a log reads correctly
+  - [ ] On `main` with a non-empty `git status --porcelain`, the runner lists the files
+        and stops without running
+  - [ ] `agent/prompts/ralph.md` step 5 stages named paths. `git add -A` is gone from
+        the prompt and the README
+  - [ ] PR opened, not auto-merged; question filed for Matt to review and run `-Once`
+
+### P7-05 — One vocabulary, current facts
+- **owner:** product
+- **status:** todo
+- **depends:** —
+- **why:** Four agents exist but the backlog, README, `CLAUDE.md` and the prompt name
+  seven. Several files still call the data a 2018-19 snapshot, which is the stale
+  reason the model was kept conservative.
+- **acceptance:**
+  - [ ] `agent/PLAN.md` rules, `agent/README.md`, `CLAUDE.md` and
+        `agent/prompts/ralph.md` name only the four roles. Reviews go to `designer`,
+        test tasks to `product`
+  - [ ] `CLAUDE.md` non-negotiable 2, `.claude/agents/developer.md`,
+        `.claude/agents/infra.md` and the header of `app/lib/signal.ts` describe the
+        data as it is: measured 2026, measured 2018-19, estimated
+  - [ ] `specs/data-sources.md`: the RDM section is current, with licence and
+        attribution as shown on the product page (question for Matt if sign-in is
+        needed)
+  - [ ] The commit trailer in the prompt matches the pinned model
+  - [ ] PR opened, not auto-merged; question filed for Matt to review
+
+### P7-06 — Two-sided accuracy, evidence, demo gate, health check
+- **owner:** product
+- **status:** todo
+- **depends:** Q9
+- **why:** Every accuracy gate so far measured one kind of error. A model that says
+  "no signal" everywhere passed them all, and v1 was declared shipped.
+- **acceptance:**
+  - [ ] The accuracy rule in review section 7.3 item 2 replaces the one-sided wording
+        in `product.md`, `infra.md` and `developer.md`
+  - [ ] `ralph.md`: a behaviour criterion passes on a test added or command output
+        quoted in the journal. Reading the code is not a pass
+  - [ ] `ralph.md` step 1 adds a health check: scheduled workflow runs that failed in
+        the last 8 days, PRs open over 3 days, timetable older than 10 days. Each
+        finding becomes a task or question before other work
+  - [ ] `ralph.md`: when a phase's last task is done, write `agent/DEMO.md`, file a
+        question and create `agent/PAUSE`
+  - [ ] `ralph.md` step 7: anything Matt must do by hand gets a question that stays
+        open until an agent has verified the result
+  - [ ] `specs/brief.md` success criterion 2 reworded as Matt approves in Q9
+  - [ ] PR opened, not auto-merged; question filed for Matt to review
+
+### 7C — Signal model
+
+### P7-07 — Calibration targets from Ofcom's in-carriage study
+- **owner:** infra
+- **status:** todo
+- **depends:** —
+- **why:** Review section 4. It is the only measured ground truth for what a phone in
+  the carriage gets, and it lets us test both kinds of error.
+- **acceptance:**
+  - [ ] `data/calibration/ofcom-trains-2026.json`: Table 1 (24 lines, four networks,
+        Wi-Fi), Tables 2, 3, 4 and 11, each with its page number, plus source URL and
+        retrieval date
+  - [ ] Table 1 is transcribed from the rendered PDF page. Text extraction scrambles
+        its columns. Check: each network's lowest and highest line equal Table 2 (EE 9
+        and 82, Three 4 and 48, O2 4 and 73, Vodafone 6 and 68), and the four rows in
+        review section 4 match
+  - [ ] `pipeline/eval/lines.ts`: each line as ordered CRS codes including the "via"
+        points. Each resolves on the track graph. Lengths checked where the report
+        gives one (Basingstoke to Coventry 117 miles, Victoria to East Croydon 10)
+  - [ ] `specs/data-sources.md` entry: used for calibration only
+
+### P7-08 — Track shape and tunnel names
+- **owner:** infra
+- **status:** todo
+- **depends:** —
+- **why:** Review sections 3.6 and 3.7. Edges have a length but no shape, so signal
+  cannot be placed along them. Tunnels carry the line's name, not their own.
+- **acceptance:**
+  - [ ] Every graph edge stores its shape, simplified to 10 m, as an encoded polyline.
+        Added size at most 3 MB. Node IDs and topology unchanged
+  - [ ] `pointsAlongPath(nodeIds, stepM)` returns positions with cumulative distance.
+        Test: Newark North Gate to Grantham is 23.7 km within 2%
+  - [ ] Tunnel name read from `tunnel:name` (see `p2-02-extract-osm.js:257`), falling
+        back to `name` only when that is not the line name. Ways with the same tunnel
+        name that touch are merged. Tunnels under 100 m dropped
+  - [ ] Present with plausible lengths: Standedge (about 4.9 km), Severn (7.0 km), Box
+        (about 2.9 km), Chipping Sodbury (about 4.0 km), Stoke, Gasworks, Copenhagen
+  - [ ] Tunnels are matched to a path by shape within 30 m. Leeds to Kings Cross lists
+        no High Speed 1 or Thameslink tunnels
+
+### P7-09 — Measured signal grid from the 2026 survey
+- **owner:** infra
+- **status:** todo
+- **depends:** —
+- **why:** Review sections 3.1 to 3.5. This is the main fix: strongest cell per place,
+  per pass, read with the right network.
+- **acceptance:**
+  - [ ] New `pipeline/build-signal-grid.ts`, deterministic, streams both zips. Start
+        from `pipeline/analysis/review-2026-11-grid-and-routes.js`
+  - [ ] Row rules, each with a logged count: network from `mnc` (10 and 02 are O2, 15
+        Vodafone, 20 Three, 30 to 33 EE), name column ignored; exact duplicates
+        dropped; `rsrp` of -30 or above, or below -150, dropped; under 5 km/h dropped.
+        4G counts within half a point of review section 3.5
+  - [ ] Unit: pass (train and date) by cell (0.002 degrees latitude, 0.003 longitude)
+        by network by technology. Value: strongest `rsrp` over all carriers and cells,
+        with that row's `sinr`. Strongest `WB_Rsrp` kept alongside
+  - [ ] Per cell across passes: median, minimum, pass count, first and last date. 4G
+        and 5G are separate layers, never pooled
+  - [ ] `data/signal-grid.json` at most 3 MB, arrays not per-cell objects, format
+        described at the top of the script
+  - [ ] Journal reproduces the table in review section 3.3 within 2 points
+  - [ ] Carrier inventory in the journal: network, carrier, band, rows. Licensed
+        carriers that never appear are listed
+  - [ ] Unit tests: duplicate row, wrong operator name, zero `rsrp`, two cells on one
+        carrier, two carriers, two passes
+
+### P7-10 — Older measured layer from the 2018-19 survey
+- **owner:** infra
+- **status:** todo
+- **depends:** P7-09
+- **why:** The 2026 survey covers about half the network. Liverpool Street to Norwich
+  has six measured cells. The 2018-19 file is already in `data/raw/`.
+- **acceptance:**
+  - [ ] First record what one row is: rows per position, time and network, and how
+        many carriers and cells. Journal it before choosing the statistic
+  - [ ] Same unit and statistic using `cal_rsrp`. Layer `m2019` added to the grid
+        file. Never used where a 2026 value exists
+  - [ ] Journal: route gained, and for cells with both layers how often the 2019 band
+        is the same as, below or above the 2026 band
+
+### P7-11 — Scorecard that fails in both directions
+- **owner:** infra
+- **status:** todo
+- **depends:** P7-07, P7-08, P7-09
+- **why:** Review section 7.3 item 1. Without it any tuning drifts, as it did.
+- **acceptance:**
+  - [ ] `npm run eval:signal` prints a table, writes `pipeline/out/eval.json`, and
+        exits non-zero when a gate fails
+  - [ ] For each Ofcom line and network: predicted share of the route by distance in
+        each band, from the grid, the path shape and the calibration file
+  - [ ] Gates, starting tolerances: (a) mean predicted good share over the 24 lines
+        within 8 points of Ofcom's mean per network (42, 21, 20, 17); (b) mean
+        absolute error per line at most 15 points per network; (c) predicted no-data
+        share between 2% and 20% per network; (d) each named tunnel of 500 m or more
+        on those lines is no-data for its length within 300 m
+  - [ ] Reported, not gated: rank correlation per network, share of each line with
+        measured evidence
+  - [ ] Golden journeys: 10 fixture journeys on each network. Headline text and band
+        minutes are snapshotted in `pipeline/eval/golden/` and the diff is printed
+  - [ ] CI job `signal-eval` runs when `data/**`, `pipeline/**`, `app/lib/signal*` or
+        `app/lib/best-window*` change. It may fail without blocking until P7-12 lands
+
+### P7-12 — Calibrate the bands to in-carriage results
+- **owner:** infra
+- **status:** todo
+- **depends:** P7-10, P7-11
+- **why:** Review section 4. Replaces the guessed "10 to 30 dB" carriage loss and the
+  hand-set thresholds with a fit to what phones in carriages measured.
+- **acceptance:**
+  - [ ] Roof-to-phone allowance per network: model median on the 24 lines minus
+        Ofcom's in-carriage median. Recorded
+  - [ ] No-data cut: phone -120 dBm plus the allowance. Good cut per network:
+        least-squares fit of predicted good share to Table 1 over the 24 lines
+  - [ ] Candidates compared by leave-one-line-out error: `rsrp` or `WB_Rsrp`; with or
+        without `sinr` of 0 or better; with or without 5G raising a cell. Table in the
+        journal. Best one chosen
+  - [ ] `data/signal-calibration.json`: cut points, allowance, chosen metric, fit
+        statistics, date. No threshold constants left in code
+  - [ ] P7-11 gates pass. Tolerances tightened to the achieved leave-one-out error
+        plus 3 points. CI job now blocks, and a question asks Matt to make it required
+  - [ ] If a network's rank correlation for the good band is under 0.5, say so in
+        `specs/signal-model.md` and in the P7-15 task. For that network the page
+        describes signal, and any speed claim is Ofcom's network-wide figure. Do not
+        force a fit
+  - [ ] `specs/signal-model.md` becomes "Current model", at most 200 lines. The old
+        file moves unchanged to `specs/history/signal-model-2026-08.md`
+
+### P7-13 — App reads the grid
+- **owner:** developer
+- **status:** todo
+- **depends:** P7-08, P7-12
+- **why:** Review sections 3.6 and 3.8. The app classifies whole legs from sparse
+  nodes. It should place measured signal along the real path.
+- **acceptance:**
+  - [ ] Journey profile: sample the path every 100 m; look up the cell, then its eight
+        neighbours if empty; take the first tier with a value (measured 2026, measured
+        2018-19, estimated, none); classify with the calibration file; tunnels
+        override; merge equal neighbours into stretches with distance and clock time
+        (linear in distance within a leg)
+  - [ ] 5G can raise a stretch, never lower it
+  - [ ] Each stretch carries its tier and pass count. One pass is shown as weaker
+        evidence than several
+  - [ ] Removed once unused: `classifySegment`, `classifySegmentWorstCase`,
+        `data/signal-segments.json`, `pipeline/p2-03-build-signal.ts`,
+        `pipeline/p5-03*`, `pipeline/p5-04*` and their tests
+  - [ ] Unit tests on a fixture grid: band edges, tier order, tunnel override, empty
+        cells, 5G rule
+  - [ ] Data loaded at start totals at most 8 MB. Load time logged once
+  - [ ] Golden snapshots updated and shown in the PR. Scorecard green
+  - [ ] Existing timeline components render the new stretches. Any visual change gets
+        a `designer` review task
+
+### P7-14 — Estimated layer rebuilt
+- **owner:** infra
+- **status:** todo
+- **depends:** P7-09, Q15
+- **why:** Review section 3.7. The current layer gives all four networks the same
+  answer and counts "no record" as "no coverage".
+- **acceptance:**
+  - [ ] One live API response saved as a fixture with the key removed. Field names and
+        value meanings confirmed against it
+  - [ ] Per network, the outdoor and indoor data fields with their grade. A 404 is "no
+        data"
+  - [ ] Positions: grid cells on track with no measured value. Nearest postcode within
+        1 km, distance recorded, cache reused
+  - [ ] Grade-to-band mapping learned from cells that have both a 2026 measurement and
+        an estimate. Agreement table per network in the journal. Under 60% agreement,
+        estimates are capped at limited
+  - [ ] Gaps of at most 1 km between measured cells in the same band take that band,
+        tier "estimated". No other interpolation
+  - [ ] Scorecard still green. Liverpool Street to Norwich no longer shows identical
+        results for all four networks
+
+### 7D — The recommendation
+
+### P7-15 — Constraints and design for the recommendation
+- **owner:** designer
+- **status:** todo
+- **depends:** Q9, Q10
+- **why:** The brief says "The sentence is the product". The page has no sentence.
+  Constraints come before design, and design before code.
+- **acceptance:**
+  - [ ] `specs/accessibility.md` and `specs/design-system.md` cover: the headline
+        recommendation (reuse the reviewed `BestWindow` pattern), the list of
+        stretches to avoid, the four-network comparison for when no network is chosen,
+        and a label for each evidence tier
+  - [ ] The confidence label "Limited data" is replaced. It reads as a signal band
+  - [ ] All band and tier wording is hedged and at lower-secondary reading level
+  - [ ] Review of the PR #70 interface (`UnifiedTimeline`, `GranularSignalBar`)
+        against `specs/accessibility.md`: is the text table still required and
+        present, is the colour strip redundant and hidden from assistive technology,
+        heading order, target sizes. Each finding filed as a task
+
+### P7-16 — Window finder
+- **owner:** developer
+- **status:** todo
+- **depends:** P7-13
+- **why:** Review section 3.8. Today's finder needs whole legs of unbroken signal. On
+  a long leg that is all or nothing.
+- **acceptance:**
+  - [ ] `findWindows(stretches, { lengths: [30, 60] })`, pure, replaces
+        `findBestWindow`
+  - [ ] For each length that fits: the start minute with the most good minutes (ties:
+        fewer no-data minutes, then earlier). Returns good, limited and no-data
+        minutes, the longest no-data gap, and the weakest evidence tier used
+  - [ ] No-data runs of 60 seconds or less are short dips: counted, not excluded
+  - [ ] Also returns the longest unbroken good run, and every no-data stretch of 2
+        minutes or more with clock times and tunnel name
+  - [ ] No good signal anywhere: returns the best limited window, flagged
+  - [ ] Route-overview mode returns minutes from departure, not clock times
+  - [ ] Tests: two-hour non-stop leg with mixed bands; no good anywhere; all no-data;
+        midnight crossing; journey under 30 minutes
+
+### P7-17 — Recommendation on the results page
+- **owner:** developer
+- **status:** todo
+- **depends:** P7-15, P7-16
+- **why:** This is the feature the product exists for.
+- **acceptance:**
+  - [ ] Results open with the recommendation built to P7-15: best window for a
+        30-minute call with clock times and stations, how much of it is good, the
+        longest gap, then the stretches to avoid
+  - [ ] No network chosen: the comparison agreed in Q10
+  - [ ] The link-preview description uses the same sentence
+  - [ ] Wording is "likely" or "expected". A window resting on older or estimated
+        evidence says so
+  - [ ] The `test.fixme` from P7-02 is enabled and passes
+  - [ ] `designer` review task filed
+
+### P7-18 — Demo gate
+- **owner:** product
+- **status:** todo
+- **depends:** P7-14, P7-17
+- **why:** Review section 7.3 item 4. A person checks the output before the phase is
+  called done.
+- **acceptance:**
+  - [ ] `agent/DEMO.md`: for the 10 golden journeys on each network, the old headline
+        and band shares beside the new; the scorecard; what is still uncertain
+  - [ ] Question filed for Matt. `agent/PAUSE` created
+  - [ ] After approval: the about page and vintage notice match the evidence tiers,
+        and the current-state header above is updated
 
 ---
 
